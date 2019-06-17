@@ -1,0 +1,28 @@
+{
+    "apiEndpoint": "ENDPOINT",
+    "nodesMainnet": [
+        {
+            "provider": "https://MYNODE1",
+            "depth": 3,
+            "mwm": 14
+        },
+        {
+            "provider": "https://MYNODE2",
+            "depth": 3,
+            "mwm": 14
+        }
+    ],
+    "nodesDevnet": [
+        {
+            "provider": "https://MYNODE1",
+            "depth": 3,
+            "mwm": 9
+        },
+        {
+            "provider": "https://MYNODE2",
+            "depth": 3,
+            "mwm": 9
+        }
+    ],
+    "googleAnalyticsId": ""
+}

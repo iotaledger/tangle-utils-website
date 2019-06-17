@@ -1,0 +1,174 @@
+.transaction-object {
+  display: flex;
+  flex-direction: column;
+
+  h2 {
+    color: var(--jade);
+  }
+
+  .row {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    @media (max-width: 767px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    &.top {
+      align-items: flex-start;
+    }
+
+    .col {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+
+      @media (max-width: 767px) {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      &.top {
+        align-items: flex-start;
+      }
+
+      &.right {
+        justify-content: flex-end;
+
+        @media (max-width: 767px) {
+          margin-top: 20px;
+          justify-content: flex-start;
+        }
+      }
+
+      &.fill {
+          width: 100%;
+      }
+    }
+
+    .col + .col {
+      @media (max-width: 767px) {
+        margin-top: 10px;
+      }
+    }
+
+    .label {
+      font-weight: bold;
+      min-width: 100px;
+    }
+
+    .label + .value {
+      margin-left: 20px;
+
+      @media (max-width: 767px) {
+        margin-left: 0px;
+        margin-top: 5px;
+      }
+    }
+
+    .value {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      font-weight: normal;
+      word-break: break-all;
+      word-break: break-word;
+
+      &.fill {
+          width: 100%;
+      }
+
+      &.success,
+      &.danger {
+        font-weight: bold;
+      }
+    }
+
+    .value + button {
+      margin-left: 10px;
+
+      @media (max-width: 767px) {
+        margin-left: 0px;
+        margin-top: 10px;
+      }
+    }
+
+    .checksum {
+      font-weight: bold;
+    }
+
+    .link-button {
+      display: flex;
+      align-items: center;
+      background-color: var(--white);
+      border: 1px solid var(--blueberry);
+      border-radius: 5px;
+      color: var(--blueberry);
+      font-weight: bold;
+      outline: none;
+      padding: 2px 16px;
+      min-height: 40px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #eeeeee;
+        text-decoration: none;
+      }
+    }
+
+    a {
+      color: var(--blueberry);
+      font-weight: normal;
+      line-height: 1;
+
+      &.small {
+        font-size: 12px;
+        line-height: 1.5;
+      }
+    }
+
+    pre {
+      margin: 0;
+      width: 100%;
+
+      &.ascii,
+      &.json,
+      &.trytes {
+        border: 1px solid var(--light-grey);
+        padding: 10px;
+        border-radius: 5px;
+      }
+
+      &.trytes {
+        white-space: pre-line;
+        max-height: 100px;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+    }
+  }
+
+  .action-container {
+    display: flex;
+    flex-direction: row;
+
+    @media (max-width: 767px) {
+      margin-top: 10px;
+    }
+
+    .link-button {
+      margin-left: 10px;
+
+      @media (max-width: 767px) {
+        margin-left: 0px;
+        margin-right: 10px;
+      }
+    }
+  }
+}

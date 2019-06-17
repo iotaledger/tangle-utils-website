@@ -1,0 +1,63 @@
+{
+    "name": "tangle-utils-client",
+    "description": "Tangle Tools UI",
+    "version": "0.1.0",
+    "author": "Martyn Janes <martyn.janes@iota.org>",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/iotaledger/tangle-utils.git/tree/master/client"
+    },
+    "license": "MIT",
+    "dependencies": {
+        "@iota/client-load-balancer": "github:iotaledger/client-load-balancer",
+        "@iota/core": "^1.0.0-beta.15",
+        "@iota/tryte-compress": "github:iotaledger/tryte-compress-js",
+        "@iota/unit-converter": "^1.0.0-beta.15",
+        "@tangle-frost/iota-qr-lib": "0.0.9",
+        "axios": "^0.19.0",
+        "classnames": "^2.2.6",
+        "core-js": "^3.1.4",
+        "iota-css-theme": "github:iotaledger/iota-css-theme",
+        "iota-react-components": "github:iotaledger/iota-react-components",
+        "moment": "^2.24.0",
+        "react": "^16.8.6",
+        "react-dom": "^16.8.6",
+        "react-router-dom": "^4.3.1",
+        "react-scripts": "^3.0.1",
+        "socket.io-client": "^2.2.0"
+    },
+    "engines": {
+        "node": "10.x.x"
+    },
+    "scripts": {
+        "start": "cross-env PORT=3000 react-scripts start",
+        "lint": "tslint --project ./tsconfig.json",
+        "build": "react-scripts build",
+        "test": "react-scripts test",
+        "eject": "react-scripts eject",
+        "sass-lint": "sass-lint -v -c ./.sass-lint.yml"
+    },
+    "browserslist": [
+        ">0.2%",
+        "not dead",
+        "not ie <= 11",
+        "not op_mini all"
+    ],
+    "devDependencies": {
+        "@types/classnames": "^2.2.8",
+        "@types/jest": "^24.0.15",
+        "@types/node": "^12.0.8",
+        "@types/react": "^16.8.20",
+        "@types/react-dom": "^16.8.4",
+        "@types/react-router-dom": "^4.3.4",
+        "@types/socket.io-client": "^1.4.32",
+        "cross-env": "^5.2.0",
+        "node-sass": "^4.12.0",
+        "sass-lint": "^1.13.1",
+        "tslint": "^5.17.0",
+        "tslint-eslint-rules": "^5.4.0",
+        "tslint-microsoft-contrib": "^6.2.0",
+        "tslint-react": "^4.0.0",
+        "typescript": "^3.5.2"
+    }
+}

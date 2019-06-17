@@ -1,0 +1,107 @@
+.explore {
+  width: 100%;
+
+  .list {
+    display: flex;
+    flex-direction: column;
+
+    .row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      margin-bottom: 10px;
+
+      @media (max-width: 767px) {
+        flex-direction: column;
+      }
+
+      .label {
+        font-weight: bold;
+        margin-top: 4px;
+        min-width: 200px;
+      }
+
+      .label + .value {
+        margin-left: 20px;
+
+        @media (max-width: 767px) {
+          margin-left: 0px;
+          margin-top: 20px;
+        }
+      }
+
+      .value {
+        font-weight: normal;
+        word-break: break-all;
+        word-break: break-word;
+        margin-top: 4px;
+      }
+    }
+
+    .hash {
+      font-size: 16px;
+      margin-top: 4px;
+      word-break: break-all;
+      word-break: break-word;
+
+      @media (max-width: 767px) {
+        margin-bottom: 0px;
+      }
+
+      .checksum {
+        font-weight: bold;
+      }
+    }
+
+    .count {
+      @media (max-width: 767px) {
+        margin-top: 20px;
+      }
+    }
+
+    .items {
+      display: flex;
+      flex-direction: column;
+
+      a {
+        color: var(--blueberry);
+        font-weight: normal;
+        line-height: 1;
+        word-break: break-all;
+        word-break: break-word;
+        margin-bottom: 20px;
+      }
+
+      .item {
+        margin-bottom: 40px;
+      }
+    }
+
+    .link-button {
+      display: flex;
+      align-items: center;
+      background-color: var(--white);
+      border: 1px solid var(--blueberry);
+      border-radius: 5px;
+      color: var(--blueberry);
+      font-weight: bold;
+      outline: none;
+      padding: 2px 16px;
+      min-height: 40px;
+      margin-right: 10px;
+
+      &:hover {
+        background-color: #eeeeee;
+      }
+    }
+
+    .hash + button {
+      margin-left: 10px;
+
+      @media (max-width: 767px) {
+        margin-left: 0px;
+        margin-top: 10px;
+      }
+    }
+  }
+}

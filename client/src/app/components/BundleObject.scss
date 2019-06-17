@@ -1,0 +1,63 @@
+.bundle-object {
+  .group {
+    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
+    padding-top: 20px;
+
+    @media (max-width: 767px) {
+        flex-direction: column;        
+    }
+
+    .transaction {
+        margin-bottom: 20px;
+    }
+
+    .caption-wrapper {
+        position: relative;
+
+        .confirmation {
+            position: absolute;
+            top: -4px;
+            right: 0px;;
+        }        
+    }
+
+    .caption {
+        display: flex;
+        justify-content: space-between;
+        min-height: 40px;
+        margin-bottom: 20px;
+        font-size: 16px;
+        font-weight: bold;
+        border-bottom: 2px solid var(--light-grey);
+        color: var(--jade);
+        padding-top: 10px;
+
+        @media (max-width: 767px) {
+            flex-direction: column;
+        }        
+    }
+
+    .inputs {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-right: 10px;
+
+        @media (max-width: 767px) {
+            margin-right: 0px;
+        }
+    }
+
+    .outputs {
+        margin-left: 10px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        @media (max-width: 767px) {
+            margin-left: 0px;
+        }
+    }
+  }
+}
