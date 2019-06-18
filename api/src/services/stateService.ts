@@ -25,7 +25,7 @@ export class StateService extends AmazonDynamoDbService<IState> {
      */
     public async updateCurrencies(config: IConfiguration): Promise<string> {
         let currentState;
-        let log = "Currency Update\n";
+        let log = "Currency Updating\n";
         try {
             const stateService = new StateService(config.dynamoDbConnection);
             const now = Date.now();
@@ -35,7 +35,7 @@ export class StateService extends AmazonDynamoDbService<IState> {
                 now - currentState.lastCurrencyUpdate > 3600000) { // every hour
                 let updated = false;
 
-                log += `Updating fixer ${config.fixerApiKey}\n`;
+                log += `Updating fixer\n`;
 
                 const fixerClient = new FixerClient(config.fixerApiKey);
                 const rates = await fixerClient.latest("EUR");
@@ -47,7 +47,7 @@ export class StateService extends AmazonDynamoDbService<IState> {
                     updated = true;
                 }
 
-                log += `CMC ${config.cmcApiKey}\n`;
+                log += `CMC\n`;
 
                 const coinMarketCapClient = new CoinMarketCapClient(config.cmcApiKey);
 
