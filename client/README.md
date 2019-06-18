@@ -1,4 +1,4 @@
-# Tangle Utils 
+# Tangle Utils
 
 An app with a multitude of tools for working with the tangle and transaction data.
 
