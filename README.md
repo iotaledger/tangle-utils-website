@@ -20,5 +20,5 @@ See [./client/README.md](./client/README.md) for more details.
 
 A demonstration version of the application is currently deployed at the following url:
 
-* client - <https://tangle-utils-client.dag.sh>
-* api - <https://tangle-utils-api.dag.sh>
+* client - <https://utils.iota.org>
+* api - <https://utils-api.iota.org>
