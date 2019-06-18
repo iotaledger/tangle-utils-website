@@ -13,9 +13,7 @@ export async function init(config: IConfiguration): Promise<string[]> {
         const stateService = new StateService(config.dynamoDbConnection);
         log += await stateService.createTable();
 
-        const state = await stateService.updateCurrencies(config);
-
-        log += `Created state ${JSON.stringify(state)}`;
+        log += await stateService.updateCurrencies(config);
     } catch (err) {
         log += `Failed\n${err.toString()}\n`;
     }

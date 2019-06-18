@@ -21,10 +21,11 @@ export class StateService extends AmazonDynamoDbService<IState> {
     /**
      * Update the stored currencies.
      * @param config The configuration.
-     * @returns The current state.
+     * @returns Log of operations.
      */
-    public async updateCurrencies(config: IConfiguration): Promise<IState> {
+    public async updateCurrencies(config: IConfiguration): Promise<string> {
         let currentState;
+        let log = "Currency Update\n";
         try {
             const stateService = new StateService(config.dynamoDbConnection);
             const now = Date.now();
@@ -34,17 +35,25 @@ export class StateService extends AmazonDynamoDbService<IState> {
                 now - currentState.lastCurrencyUpdate > 3600000) { // every hour
                 let updated = false;
 
+                log += `Updating fixer ${config.fixerApiKey}\n`;
+
                 const fixerClient = new FixerClient(config.fixerApiKey);
                 const rates = await fixerClient.latest("EUR");
+
+                log += `Rates ${JSON.stringify(rates)}\n`;
 
                 if (rates) {
                     currentState.exchangeRatesEUR = rates;
                     updated = true;
                 }
 
+                log += `CMC ${config.cmcApiKey}\n`;
+
                 const coinMarketCapClient = new CoinMarketCapClient(config.cmcApiKey);
 
                 const currency = await coinMarketCapClient.quotesLatest("1720", "EUR");
+                log += `Currency ${JSON.stringify(currency)}\n`;
+
                 if (currency && currency.quote && currency.quote.EUR) {
                     currentState.coinMarketCapRateEUR = currency.quote.EUR.price;
                     updated = true;
@@ -54,10 +63,12 @@ export class StateService extends AmazonDynamoDbService<IState> {
                     currentState.lastCurrencyUpdate = now;
                     await this.set(currentState);
                 }
+            } else {
+                log += "No update required\n";
             }
         } catch (err) {
-            throw new Error(`Error updating currencies ${err.toString()}`);
+            log += `Error updating currencies ${err.toString()}\n`;
         }
-        return currentState;
+        return log;
     }
 }
