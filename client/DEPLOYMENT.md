@@ -9,14 +9,14 @@ You should copy `./public/data/config.template.json` to `./public/data/config.de
     "apiEndpoint": "ENDPOINT",                      /* The url of the api endpoint e.g. https://api.my-domain.com */
     "nodesMainnet": [                               /* List of mainnet nodes to load balance across */  
         {
-            "provider": "https://MYNODE/",          /* A node to perform Tangle operations */
+            "provider": "MYNODE",                   /* A node to perform Tangle operations */
             "depth": 3,                             /* Depth to use for attaches */
             "mwm": 9                                /* MWM to use for attaches */
         }
     ],
     "nodesDevnet": [                                /* List of devnet nodes to load balance across */  
         {
-            "provider": "https://MYNODE/",          /* A node to perform Tangle operations */
+            "provider": "MYNODE",                   /* A node to perform Tangle operations */
             "depth": 3,                             /* Depth to use for attaches */
             "mwm": 9                                /* MWM to use for attaches */
         }
