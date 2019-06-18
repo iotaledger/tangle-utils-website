@@ -56,7 +56,7 @@ export class StateService extends AmazonDynamoDbService<IState> {
                 }
             }
         } catch (err) {
-            console.error("Error updating currencies", err);
+            throw new Error(`Error updating currencies ${err.toString()}`);
         }
         return currentState;
     }
