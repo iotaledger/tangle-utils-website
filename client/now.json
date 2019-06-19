@@ -1,4 +1,13 @@
 {
     "version": 1,
-    "name": "tangle-utils-client"
+    "name": "tangle-utils-client",
+    "features": {
+        "cloud": "v1"
+    },
+    "scale": {
+        "sfo": {
+            "min": 1,
+            "max": 1
+        }
+    }
 }
