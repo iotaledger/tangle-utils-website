@@ -1,5 +1,5 @@
-import { isHash, isTag, isTrytesOfExactLength } from "@iota/validators";
 import { addChecksum } from "@iota/checksum";
+import { isHash, isTag, isTrytesOfExactLength } from "@iota/validators";
 import { ClipboardHelper, Form, FormStatus, Heading } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { Link } from "react-router-dom";

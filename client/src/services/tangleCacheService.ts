@@ -248,7 +248,7 @@ export class TangleCacheService {
         const unknownStates = hashes.filter(h =>
             !this._transactionCache[network][h] ||
             this._transactionCache[network][h].confirmedState === "unknown" ||
-            now - this._transactionCache[network][h].cached > 60000);
+            now - this._transactionCache[network][h].cached > 15000);
 
         if (unknownStates.length > 0) {
             try {

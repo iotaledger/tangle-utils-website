@@ -25,6 +25,11 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
     private readonly _tangleCacheService: TangleCacheService;
 
     /**
+     * Confirmation state timer.
+     */
+    private _confirmationTimerId?: NodeJS.Timer;
+
+    /**
      * Create a new instance of TransactionObject.
      * @param props The props.
      */
@@ -57,10 +62,9 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
      * The component mounted.
      */
     public async componentDidMount(): Promise<void> {
-        const confirmationStates = await this._tangleCacheService.getTransactionConfirmationStates([this.props.hash], this.props.network);
+        await this.checkConfirmation();
 
         this.setState({
-            confirmationState: confirmationStates[0],
             nextTransactionHash: this.state.transactionObject.currentIndex < this.state.transactionObject.lastIndex ?
                 this.state.transactionObject.trunkTransaction : undefined
         });
@@ -219,7 +223,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             {this.state.isBundleValid !== undefined && (
                                 <div className="col">
                                     <div className="label">Is Valid</div>
-                                    <div className={`value ${this.state.isBundleValid ? "success" : "danger"}`}>{this.state.isBundleValid ? "Yes" : "No - This bundle will never confirm"}</div>
+                                    <div className={`value ${this.state.isBundleValid ? "yes" : "no"}`}>{this.state.isBundleValid ? "Yes" : "No - This bundle will never confirm"}</div>
                                 </div>
                             )}
                         </div>
@@ -335,6 +339,26 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                 )}
             </div>
         );
+    }
+
+    /**
+     * Check the confirmation state.
+     */
+    private async checkConfirmation(): Promise<void> {
+        if (this._confirmationTimerId) {
+            clearTimeout(this._confirmationTimerId);
+            this._confirmationTimerId = undefined;
+        }
+
+        const confirmationStates = await this._tangleCacheService.getTransactionConfirmationStates([this.props.hash], this.props.network);
+
+        this.setState({
+            confirmationState: confirmationStates[0]
+        });
+
+        if (confirmationStates[0] !== "confirmed") {
+            this._confirmationTimerId = setTimeout(() => this.checkConfirmation(), 15000);
+        }
     }
 }
 

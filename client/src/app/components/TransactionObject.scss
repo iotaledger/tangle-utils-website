@@ -48,7 +48,7 @@
       }
 
       &.fill {
-          width: 100%;
+        width: 100%;
       }
     }
 
@@ -81,12 +81,23 @@
       word-break: break-word;
 
       &.fill {
-          width: 100%;
+        width: 100%;
       }
 
-      &.success,
-      &.danger {
+      &.yes,
+      &.no {
+        border-radius: 5px;
         font-weight: bold;
+        color: var(--white);
+        padding: 10px;
+      }
+
+      &.yes {
+        background-color: var(--success);
+      }
+
+      &.no {
+        background-color: var(--danger);
       }
     }
 
