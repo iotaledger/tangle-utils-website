@@ -134,6 +134,12 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                                         <div className="label">Value</div>
                                         <div className="value">{UnitsHelper.formatBest(t.tx.value)}</div>
                                     </div>
+                                    {t.currencyConverted && (
+                                        <div className="row top">
+                                            <div className="label">Currency</div>
+                                            <div className="value">{t.currencyConverted}</div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             {group.transactions.filter(f => f.tx.value > 0).length === 0 && (
