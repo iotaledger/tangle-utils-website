@@ -1,10 +1,7 @@
 import { Fieldset, Form, Heading, Input, Select, StatusMessage } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
-import { IConfiguration } from "../../models/config/IConfiguration";
-import { ApiClient } from "../../services/apiClient";
-import { ConfigurationService } from "../../services/configurationService";
-import { SettingsService } from "../../services/settingsService";
+import { CurrencyService } from "../../services/currencyService";
 import { CurrencyConversionState } from "./CurrencyConversionState";
 
 /**
@@ -26,17 +23,7 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
     /**
      * The network to use for transaction requests.
      */
-    private readonly _settingsService: SettingsService;
-
-    /**
-     * The configuration.
-     */
-    private readonly _configuration: IConfiguration;
-
-    /**
-     * The api client.
-     */
-    private readonly _apiClient: ApiClient;
+    private readonly _currencyService: CurrencyService;
 
     /**
      * Create a new instance of CurrencyConversion.
@@ -45,9 +32,7 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
     constructor(props: any) {
         super(props);
 
-        this._configuration = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration").get();
-        this._apiClient = new ApiClient(this._configuration.apiEndpoint);
-        this._settingsService = ServiceFactory.get<SettingsService>("settings");
+        this._currencyService = ServiceFactory.get<CurrencyService>("currency");
 
         this.state = {
             isBusy: false,
@@ -77,7 +62,13 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                 isErrored: false
             },
             async () => {
-                const hasData = await this.loadCurrencies();
+                const hasData = await this._currencyService.loadCurrencies((data) => {
+                    this.setState({
+                        baseCurrencyRate: data.baseCurrencyRate || 1,
+                        currencies: data.currencies || [],
+                        fiatCode: data.fiatCode
+                    });
+                });
 
                 this.setState(
                     {
@@ -199,73 +190,6 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
     }
 
     /**
-     * Load the currencies data.
-     * @returns True if loaded successfully.
-     */
-    private async loadCurrencies(): Promise<boolean> {
-        const settings = await this._settingsService.get();
-        let hasData = false;
-
-        // If we already have some data use that to begin with
-        if (settings.baseCurrencyRate &&
-            settings.baseCurrencyRate > 0 &&
-            settings.currencies &&
-            Object.keys(settings.currencies).length > 0) {
-            hasData = true;
-            this.setState({
-                baseCurrencyRate: settings.baseCurrencyRate,
-                currencies: settings.currencies,
-                fiatCode: settings.fiatCode
-            });
-        }
-
-        // If the data is missing then load it inline which can return errors
-        // if the data is out of date try and get some new info in the background
-        // if it fails we don't care about the outcome as we already have data
-        const lastUpdate = settings ? (settings.lastCurrencyUpdate || 0) : 0;
-        if (!hasData) {
-            hasData = await this.loadData();
-        } else if (Date.now() - lastUpdate > 3600000) {
-            setTimeout(async () => this.loadData(), 0);
-        }
-
-        return hasData;
-    }
-
-    /**
-     * Load new data from the endpoint.
-     * @returns True if the load was succesful.
-     */
-    private async loadData(): Promise<boolean> {
-        let hasData = false;
-
-        try {
-            const currencyResponse = await this._apiClient.currencies();
-            if (currencyResponse && currencyResponse.success) {
-                const settings = await this._settingsService.get();
-
-                settings.lastCurrencyUpdate = Date.now();
-                settings.baseCurrencyRate = currencyResponse.baseRate || 0;
-                const cur = currencyResponse.currencies || {};
-                const ids = Object.keys(cur).sort();
-                settings.currencies = ids.map(i => ({ id: i, rate: cur[i] }));
-
-                await this._settingsService.save();
-
-                this.setState({
-                    baseCurrencyRate: settings.baseCurrencyRate,
-                    currencies: settings.currencies,
-                    fiatCode: settings.fiatCode
-                });
-
-                hasData = true;
-            }
-        } catch (err) {
-        }
-        return hasData;
-    }
-
-    /**
      * Perform fiat conversion.
      */
     private fiatConversion(): void {
@@ -292,7 +216,7 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
      * Perform fiat code conversion.
      * @param newFiatCode The new fiat code.
      */
-    private fiatCodeConversion(newFiatCode: string): void {
+    private async fiatCodeConversion(newFiatCode: string): Promise<void> {
         if (newFiatCode !== this.state.fiatCode) {
             const oldFiatToBase = this.state.currencies.find(c => c.id === this.state.fiatCode);
             const newFiatToBase = this.state.currencies.find(c => c.id === newFiatCode);
@@ -303,6 +227,8 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                     const fiat = val / oldFiatToBase.rate * newFiatToBase.rate;
                     this.setState({ fiatCode: newFiatCode, fiat: fiat.toFixed(2) });
                 }
+
+                await this._currencyService.saveFiatCode(newFiatCode);
             }
         }
     }

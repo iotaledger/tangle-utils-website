@@ -1,6 +1,6 @@
 import { addChecksum } from "@iota/checksum";
 import { isHash, isTag, isTrytesOfExactLength } from "@iota/validators";
-import { ClipboardHelper, Form, FormStatus, Heading } from "iota-react-components";
+import { Button, ClipboardHelper, Form, FormStatus, Heading } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
@@ -110,7 +110,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                                     {this.state.checksum}
                                 </span>
                             </div>
-                            <button className="link-button" onClick={() => ClipboardHelper.copy(`${this.state.hash}${this.state.checksum}`)}>Copy</button>
+                            <Button color="secondary" size="small" onClick={() => ClipboardHelper.copy(`${this.state.hash}${this.state.checksum}`)}>Copy</Button>
                         </div>
                         {this.state.hashType === "address" && (
                             <div className="row">
@@ -118,14 +118,16 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                                 <div className="value">{UnitsHelper.formatBest(this.state.balance)}</div>
                             </div>
                         )}
-                        <div className="row">
-                            <div className="label">Number of Transactions</div>
-                            <div className="value">{this.state.transactionHashes.length}</div>
-                        </div>
+                        {this.state.transactionsCount && (
+                            <div className="row">
+                                <div className="label">Number of Transactions</div>
+                                <div className="value">{this.state.transactionsCount}</div>
+                            </div>
+                        )}
                         <hr />
                         <div className="items">
                             {this.state.transactionHashes.map((t, idx) => (
-                                <Link key={idx} to={`/transaction/${t}`}>{t}</Link>
+                                <Link className="nav-link" key={idx} to={`/transaction/${t}`}>{t}</Link>
                             ))}
                         </div>
                     </div>
@@ -179,6 +181,8 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                 let checksum = "";
                 let status = "";
                 let balance = 0;
+                let isErrored = false;
+                let transactionsCount = "";
 
                 if (this.state.hashType === "transaction") {
                     const response = await this._tangleCacheService.getTransactions([this.state.hash], this.state.network);
@@ -188,17 +192,32 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                         status = "Unable to find transaction on the tangle.";
                     }
                 } else {
-                    const response = await this._tangleCacheService.findTransactionHashes(this.state.hashType, this.state.hash, this.state.network);
+                    try {
+                        const response = await this._tangleCacheService.findTransactionHashes(this.state.hashType, this.state.hash, this.state.network);
 
-                    if (response && response.length > 0) {
-                        transactionHashes = response;
+                        if (response && response.length > 0) {
+                            transactionHashes = response;
 
-                        if (this.state.hashType === "address") {
-                            balance = await this._tangleCacheService.getAddressBalance(this.state.hash, this.state.network);
-                            checksum = addChecksum(this.state.hash).substr(-9);
+                            if (this.state.hashType === "address") {
+                                balance = await this._tangleCacheService.getAddressBalance(this.state.hash, this.state.network);
+                                checksum = addChecksum(this.state.hash).substr(-9);
+                            }
+                        } else {
+                            status = `Unable to find any transactions with the specified ${this.state.hashType} on the tangle.`;
                         }
+                    } catch (err) {
+                        status = `An error occured while trying to retrieve the transactions with the specified ${this.state.hashType} on the tangle.\n\n${err.message}`;
+                        isErrored = true;
+                    }
+                }
+
+                if (transactionHashes) {
+                    if (transactionHashes.length > 250) {
+                        const all = transactionHashes.length;
+                        transactionHashes = transactionHashes.slice(0, 250);
+                        transactionsCount = `${transactionHashes.length} of ${all}`;
                     } else {
-                        status = `Unable to find any transactions with the specified ${this.state.hashType} on the tangle.`;
+                        transactionsCount = `${transactionHashes.length}`;
                     }
                 }
 
@@ -207,8 +226,10 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                     status,
                     transactionTrytes,
                     transactionHashes,
+                    transactionsCount,
                     balance,
-                    checksum
+                    checksum,
+                    isErrored
                 });
             } catch (err) {
                 this.setState({ isBusy: false, isErrored: true, status: err.message });

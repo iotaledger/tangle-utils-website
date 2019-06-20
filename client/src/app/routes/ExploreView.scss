@@ -77,24 +77,6 @@
       }
     }
 
-    .link-button {
-      display: flex;
-      align-items: center;
-      background-color: var(--white);
-      border: 1px solid var(--blueberry);
-      border-radius: 5px;
-      color: var(--blueberry);
-      font-weight: bold;
-      outline: none;
-      padding: 2px 16px;
-      min-height: 40px;
-      margin-right: 10px;
-
-      &:hover {
-        background-color: #eeeeee;
-      }
-    }
-
     .hash + button {
       margin-left: 10px;
 

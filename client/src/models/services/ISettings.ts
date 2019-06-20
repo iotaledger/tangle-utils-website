@@ -1,7 +1,8 @@
 import { Unit } from "@iota/unit-converter";
+import { ICurrencySettings } from "./ICurrencySettings";
 import { ValueFilter } from "./valueFilter";
 
-export interface ISettings {
+export interface ISettings extends ICurrencySettings {
     /**
      * Value filter for feeds.
      */
@@ -16,33 +17,4 @@ export interface ISettings {
      * Value limit units for feeds.
      */
     valueLimitUnits?: Unit;
-
-    /**
-     * The fiat code for currency conversion.
-     */
-    fiatCode: string;
-
-    /**
-     * The time the last currency update happened.
-     */
-    lastCurrencyUpdate?: number;
-
-    /**
-     * The base currency for exchange rates.
-     */
-    baseCurrencyRate?: number;
-
-    /**
-     * The currencies used for conversion.
-     */
-    currencies?: {
-        /**
-         * Id of the currency.
-         */
-        id: string;
-        /**
-         * The rate.
-         */
-        rate: number;
-    }[];
 }

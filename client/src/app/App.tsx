@@ -8,6 +8,7 @@ import contentHomePage from "../content/contentHomePage.json";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { IConfiguration } from "../models/config/IConfiguration";
 import { ConfigurationService } from "../services/configurationService";
+import { CurrencyService } from "../services/currencyService";
 import { LocalStorageService } from "../services/localStorageService";
 import { SettingsService } from "../services/settingsService";
 import { TangleCacheService } from "../services/tangleCacheService";
@@ -76,18 +77,19 @@ class App extends Component<RouteComponentProps, AppState> {
 
             const loadBalancerSettingsMainNet: LoadBalancerSettings = {
                 nodeWalkStrategy: new RandomWalkStrategy(config.nodesMainnet),
-                timeoutMs: 30000
+                timeoutMs: 60000
             };
             ServiceFactory.register("load-balancer-mainnet", () => loadBalancerSettingsMainNet);
 
             const loadBalancerSettingsDevNet: LoadBalancerSettings = {
                 nodeWalkStrategy: new RandomWalkStrategy(config.nodesDevnet),
-                timeoutMs: 30000
+                timeoutMs: 60000
             };
             ServiceFactory.register("load-balancer-devnet", () => loadBalancerSettingsDevNet);
 
             this._settingsService = new SettingsService();
             ServiceFactory.register("settings", () => this._settingsService);
+            ServiceFactory.register("currency", () => new CurrencyService(config.apiEndpoint));
 
             this._configuration = config;
 

@@ -53,6 +53,11 @@ export interface ExploreViewState {
     transactionHashes?: ReadonlyArray<string>;
 
     /**
+     * The transaction count from the tangle.
+     */
+    transactionsCount?: string;
+
+    /**
      * The network.
      */
     network: NetworkType;

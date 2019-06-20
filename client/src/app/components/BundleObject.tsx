@@ -1,5 +1,5 @@
 import { Transaction } from "@iota/transaction-converter";
-import { ClipboardHelper, StatusMessage } from "iota-react-components";
+import { Button, ClipboardHelper, StatusMessage } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
@@ -82,7 +82,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
             <div className="transaction-object bundle-object">
                 <div className="row">
                     <div className="value">{this.props.hash}</div>
-                    <button className="link-button" onClick={() => ClipboardHelper.copy(this.props.hash)}>Copy</button>
+                    <Button color="secondary" size="small" onClick={() => ClipboardHelper.copy(this.props.hash)}>Copy</Button>
                 </div>
                 {this.state.isBusy && (
                     <StatusMessage status="Loading bundle data, please wait..." color="info" isBusy={this.state.isBusy} />
@@ -116,7 +116,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                                 <div className="transaction" key={idx2}>
                                     <div className="row top">
                                         <div className="label">Hash</div>
-                                        <div className="value"><Link className="small" to={`/transaction/${t.hash}${network}`}>{t.hash}</Link></div>
+                                        <div className="value"><Link className="nav-link small" to={`/transaction/${t.hash}${network}`}>{t.hash}</Link></div>
                                     </div>
                                     <div className="row top">
                                         <div className="label">Value</div>

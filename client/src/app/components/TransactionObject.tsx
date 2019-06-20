@@ -2,13 +2,14 @@ import isBundle from "@iota/bundle-validator";
 import { addChecksum } from "@iota/checksum";
 import { asTransactionObject, Transaction } from "@iota/transaction-converter";
 import { isEmpty } from "@iota/validators";
-import { ClipboardHelper, Heading } from "iota-react-components";
+import { Button, ClipboardHelper, Heading, Select, Spinner } from "iota-react-components";
 import moment from "moment";
 import React, { Component, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { TrytesHelper } from "../../helpers/trytesHelper";
 import { UnitsHelper } from "../../helpers/unitsHelper";
+import { CurrencyService } from "../../services/currencyService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import Confirmation from "./Confirmation";
 import "./TransactionObject.scss";
@@ -23,6 +24,11 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
      * The tangle cache service.
      */
     private readonly _tangleCacheService: TangleCacheService;
+
+    /**
+     * The network to use for transaction requests.
+     */
+    private readonly _currencyService: CurrencyService;
 
     /**
      * Confirmation state timer.
@@ -43,6 +49,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
         this._mounted = false;
+        this._currencyService = ServiceFactory.get<CurrencyService>("currency");
 
         const transactionObject = asTransactionObject(this.props.trytes);
 
@@ -52,7 +59,9 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             transactionObject,
             confirmationState: "unknown",
             time: moment(transactionObject.timestamp * 1000),
-            value: UnitsHelper.formatBest(transactionObject.value),
+            value: UnitsHelper.formatBest(transactionObject.value, false),
+            valueIota: transactionObject.value,
+            currencies: [],
             isMissing: isEmpty(this.props.trytes),
             message: decoded.message,
             messageType: decoded.messageType,
@@ -70,25 +79,21 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
     public async componentDidMount(): Promise<void> {
         this._mounted = true;
 
+        await this._currencyService.loadCurrencies((data) => {
+            this.setState(
+                {
+                    currencies: data.currencies || [],
+                    fiatCode: data.fiatCode,
+                    baseCurrencyRate: data.baseCurrencyRate || 1
+                },
+                async () => await this.currencyConvert(false));
+        });
+
         if (!this.props.hideInteractive) {
-            await this.checkConfirmation();
-
-            if (this._mounted) {
-                this.setState({
-                    nextTransactionHash: this.state.transactionObject.currentIndex < this.state.transactionObject.lastIndex ?
-                        this.state.transactionObject.trunkTransaction : undefined
-                });
-            }
-
             const thisGroup: ReadonlyArray<Transaction> = await this._tangleCacheService.getTransactionBundleGroup(this.state.transactionObject, this.props.network);
 
             if (thisGroup && this._mounted) {
                 const thisIndex = thisGroup.findIndex(t => t.hash === this.state.transactionObject.hash);
-                if (thisIndex > 0) {
-                    this.setState({
-                        prevTransactionHash: thisGroup[thisIndex - 1].hash
-                    });
-                }
 
                 const pos = thisGroup.filter(t => t.value > 0).length;
                 const neg = thisGroup.filter(t => t.value < 0).length;
@@ -125,15 +130,22 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                 }
 
                 const isValid = isBundle(thisGroup);
+                const tailHash = thisGroup[0].hash;
 
                 if (this._mounted) {
-                    this.setState({
-                        isBundleValid: isValid ? true : false,
-                        bundleResult,
-                        message,
-                        messageType,
-                        messageSpans
-                    });
+                    this.setState(
+                        {
+                            isBundleValid: isValid ? true : false,
+                            bundleResult,
+                            message,
+                            messageType,
+                            messageSpans,
+                            tailHash,
+                            nextTransactionHash: this.state.transactionObject.currentIndex < this.state.transactionObject.lastIndex ?
+                                this.state.transactionObject.trunkTransaction : undefined,
+                            prevTransactionHash: thisIndex > 0 ? thisGroup[thisIndex - 1].hash : undefined
+                        },
+                        () => this.checkConfirmation());
                 }
             }
         }
@@ -165,9 +177,9 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                 <div className="row">
                     <div className="value">{this.props.hash}</div>
                     <div className="action-container">
-                        <button className="link-button" onClick={() => ClipboardHelper.copy(this.props.hash)}>Copy</button>
+                        <Button color="secondary" size="small" onClick={() => ClipboardHelper.copy(this.props.hash)}>Copy</Button>
                         <Link
-                            className="link-button"
+                            className="button button--secondary button--small"
                             to={
                                 `/qr-create/${state.transactionObject.address}${state.addressChecksum}/${state.transactionObject.value}/${state.messageType === "ASCII" ? state.message : ""}`
                             }
@@ -195,31 +207,78 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             <div className="value">
                                 {this.state.time.format("LLLL")} - {moment.duration(moment().diff(this.state.time)).humanize()} ago
                             </div>
-                            <div className="col right">
-                                <Confirmation state={this.state.confirmationState} />
-                            </div>
                         </div>
                         <div className="row">
                             <div className="col">
                                 <div className="label">Value</div>
-                                <div className="value">{this.state.value}</div>
+                                <div className="value">
+                                    <span className="currency">{this.state.value}</span>
+                                    <span className="currency">{this.state.valueIota} i</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col">
+                                <div className="label">Currency</div>
+                                <div className="value">
+                                    {this.state.currencies.length > 0 && (
+                                        <Select
+                                            value={this.state.fiatCode}
+                                            onChange={(e) => this.setState({ fiatCode: e.target.value }, () => this.currencyConvert(true))}
+                                            selectSize="small"
+                                        >
+                                            {this.state.currencies.map(is => (
+                                                <option key={is.id} value={is.id}>{is.id}</option>
+                                            ))}
+                                        </Select>
+                                    )}
+                                    <span className="currency">{this.state.valueConverted}</span>
+                                </div>
                             </div>
                         </div>
                         <div className="row">
                             <div className="col">
                                 <div className="label">Address</div>
                                 <div className="value">
-                                    <Link to={`/address/${this.state.transactionObject.address}${network}`}>{this.state.transactionObject.address}
+                                    <Link className="nav-link" to={`/address/${this.state.transactionObject.address}${network}`}>{this.state.transactionObject.address}
                                         <span className="checksum">{this.state.addressChecksum}</span></Link>
                                 </div>
                             </div>
                         </div>
+                        {!this.props.hideInteractive && (
+                            <div className="row">
+                                <div className="col">
+                                    <div className="label">Status</div>
+                                    <div className="value">
+                                        <Confirmation state={this.state.confirmationState} />
+                                        {/* {this.state.isPromotable && (
+                                            <Button disabled={this.state.isPromoting} color="secondary" size="small" onClick={() => this.promote()}>Promote</Button>
+                                        )}
+                                        {this.state.isPromoting && (
+                                            <Spinner />
+                                        )} */}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <hr />
                         <Heading level={2}>Bundle</Heading>
                         <div className="row">
                             <div className="col">
+                                <div className="label">Is Valid</div>
+                                {this.state.isBundleValid === undefined && (
+                                    <Spinner size="small" />
+                                )}
+
+                                {this.state.isBundleValid !== undefined && (
+                                    <div className={`value ${this.state.isBundleValid ? "yes" : "no"}`}>{this.state.isBundleValid ? "Yes" : "No - This bundle will never confirm"}</div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col">
                                 <div className="label">Bundle Hash</div>
-                                <div className="value"><Link to={`/bundle/${this.state.transactionObject.bundle}${network}`}>{this.state.transactionObject.bundle}</Link></div>
+                                <div className="value"><Link className="nav-link" to={`/bundle/${this.state.transactionObject.bundle}${network}`}>{this.state.transactionObject.bundle}</Link></div>
                             </div>
                         </div>
                         {/* <div className="row">
@@ -234,36 +293,33 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                 <div className="value">
                                     {this.state.prevTransactionHash && (
                                         <React.Fragment>
-                                            <Link className="link-button" to={`/transaction/${this.state.prevTransactionHash}${network}`}>Prev</Link>
+                                            <Link className="button button--secondary button--small" to={`/transaction/${this.state.prevTransactionHash}${network}`}>Prev</Link>
                                             &nbsp;
                                         </React.Fragment>
                                     )}
-                                    {this.state.transactionObject.currentIndex} / {this.state.transactionObject.lastIndex}
+                                    <div className="index">
+                                        {this.state.transactionObject.currentIndex} / {this.state.transactionObject.lastIndex}
+                                    </div>
                                     {this.state.nextTransactionHash && (
                                         <React.Fragment>
                                             &nbsp;
-                                            <Link className="link-button" to={`/transaction/${this.state.nextTransactionHash}${network}`}>Next</Link>
+                                            <Link className="button button--secondary button--small" to={`/transaction/${this.state.nextTransactionHash}${network}`}>Next</Link>
                                         </React.Fragment>
                                     )}
                                 </div>
                             </div>
-                            {this.state.isBundleValid !== undefined && (
-                                <div className="col">
-                                    <div className="label">Is Valid</div>
-                                    <div className={`value ${this.state.isBundleValid ? "yes" : "no"}`}>{this.state.isBundleValid ? "Yes" : "No - This bundle will never confirm"}</div>
-                                </div>
-                            )}
                         </div>
                         <hr />
                         <Heading level={2}>Content</Heading>
                         <div className="row">
                             <div className="col">
                                 <div className="label">Tag</div>
-                                <div className="value"><Link to={`/tag/${this.state.transactionObject.tag}${network}`}>{this.state.transactionObject.tag}</Link></div>
+                                <div className="value"><Link className="nav-link" to={`/tag/${this.state.transactionObject.tag}${network}`}>{this.state.transactionObject.tag}</Link></div>
                             </div>
                             <div className="col">
                                 <div className="label">Obsolete Tag</div>
-                                <div className="value"><Link to={`/tag/${this.state.transactionObject.obsoleteTag}${network}`}>{this.state.transactionObject.obsoleteTag}</Link></div>
+                                <div className="value"><Link className="nav-link" to={`/tag/${this.state.transactionObject.obsoleteTag}${network}`}>
+                                    {this.state.transactionObject.obsoleteTag}</Link></div>
                             </div>
                         </div>
                         {!this.state.messageShowRaw && (
@@ -295,12 +351,13 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                 <div className="col">
                                     <div className="label">&nbsp;</div>
                                     <div className="value">
-                                        <button
-                                            className="link-button"
+                                        <Button
+                                            color="secondary"
+                                            size="small"
                                             onClick={() => this.setState({ messageShowRaw: !this.state.messageShowRaw })}
                                         >
                                             {this.state.messageShowRaw ? "Hide" : "Show"} Raw
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
@@ -310,13 +367,14 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         <div className="row">
                             <div className="col">
                                 <div className="label">Trunk</div>
-                                <div className="value"><Link to={`/transaction/${this.state.transactionObject.trunkTransaction}${network}`}>{this.state.transactionObject.trunkTransaction}</Link></div>
+                                <div className="value"><Link className="nav-link" to={`/transaction/${this.state.transactionObject.trunkTransaction}${network}`}>
+                                    {this.state.transactionObject.trunkTransaction}</Link></div>
                             </div>
                         </div>
                         <div className="row">
                             <div className="col">
                                 <div className="label">Branch</div>
-                                <div className="value"><Link to={`/transaction/${this.state.transactionObject.branchTransaction}${network}`}>
+                                <div className="value"><Link className="nav-link" to={`/transaction/${this.state.transactionObject.branchTransaction}${network}`}>
                                     {this.state.transactionObject.branchTransaction}</Link></div>
                             </div>
                         </div>
@@ -356,7 +414,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                     <div className="col">
                                         <div className="label">&nbsp;</div>
                                         <div className="value">
-                                            <Link className="link-button" to={`/compress/${this.props.trytes}`}>View Compression Statistics</Link>
+                                            <Link className="button button--secondary button--small" to={`/compress/${this.props.trytes}`}>View Compression Statistics</Link>
                                         </div>
                                     </div>
                                 </div>
@@ -378,13 +436,53 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
         }
 
         const confirmationStates = await this._tangleCacheService.getTransactionConfirmationStates([this.props.hash], this.props.network);
+        let isPromotable = false;
+
+        if (confirmationStates[0] !== "confirmed" && this.state.tailHash) {
+            isPromotable = await this._tangleCacheService.isTransactionPromotable(this.state.tailHash, this.props.network);
+        }
 
         this.setState({
-            confirmationState: confirmationStates[0]
+            confirmationState: confirmationStates[0],
+            isPromotable
         });
 
         if (confirmationStates[0] !== "confirmed") {
             this._confirmationTimerId = setTimeout(() => this.checkConfirmation(), 15000);
+        }
+    }
+
+    /**
+     * Promote the transaction
+     */
+    private async promote(): Promise<void> {
+        if (this.state.isPromotable && this.state.tailHash) {
+            this.setState({ isPromoting: true }, async () => {
+                if (this.state.tailHash) {
+                    await this._tangleCacheService.transactionPromote(this.state.tailHash, this.props.network);
+                }
+                this.setState({ isPromoting: false });
+            });
+        }
+    }
+
+    /**
+     * Update the currency
+     * @param saveFiat Save the fiat code.
+     */
+    private async currencyConvert(saveFiat: boolean): Promise<void> {
+        if (this.state.currencies && this.state.fiatCode && this.state.baseCurrencyRate) {
+            const selectedFiatToBase = this.state.currencies.find(c => c.id === this.state.fiatCode);
+
+            if (selectedFiatToBase) {
+                const miota = this.state.valueIota / 1000000;
+                const fiat = miota * (selectedFiatToBase.rate * this.state.baseCurrencyRate);
+                this.setState({ valueConverted: fiat.toFixed(2) });
+
+                if (saveFiat) {
+                    await this._currencyService.saveFiatCode(this.state.fiatCode);
+                }
+            }
         }
     }
 }

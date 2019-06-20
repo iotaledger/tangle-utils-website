@@ -68,7 +68,8 @@ export class TrytesHelper {
 
                 const ascii = trytesToAscii(trimmed);
 
-                if (/^[\x00-\x7F]*$/.test(ascii)) {
+                // Only display as ascii text if the characters are printable
+                if (/^[\n\r\t\x20-\x7F]*$/.test(ascii)) {
                     const decoded = TextHelper.decodeNonASCII(ascii);
 
                     if (decoded) {

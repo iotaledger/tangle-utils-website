@@ -1,19 +1,23 @@
 .confirmation {
-  font-size: 16px;
-  color: var(--white);
-  background-color: var(--warning);
-  padding: 10px 10px;
-  border-radius: 5px;
+  min-height: 40px;
 
-  &.confirmed {
-    background-color: var(--success);
-  }
+  .value {
+    font-size: 16px;
+    color: var(--white);
+    background-color: var(--warning);
+    padding: 10px 10px;
+    border-radius: 5px;
 
-  &.pending {
-    background-color: var(--danger);
-  }
+    &.confirmed {
+      background-color: var(--success);
+    }
 
-  &.reattachment {
-    background-color: var(--info);
+    &.pending {
+      background-color: var(--danger);
+    }
+
+    &.reattachment {
+      background-color: var(--info);
+    }
   }
 }

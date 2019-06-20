@@ -5,6 +5,7 @@ import { ServiceFactory } from "../factories/serviceFactory";
 import { ConfirmationState } from "../models/confirmationState";
 import { HashType } from "../models/hashType";
 import { NetworkType } from "../models/services/networkType";
+import { PowHelper } from "../helpers/powHelper";
 
 /**
  * Cache tangle requests.
@@ -182,20 +183,17 @@ export class TangleCacheService {
         }
 
         if (doLookup) {
-            try {
-                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+            const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
 
-                const response = await api.findTransactions(
-                    hashType === "tag" ? { tags: [hash] } : hashType === "address" ? { addresses: [hash] } : { bundles: [hash] });
+            const response = await api.findTransactions(
+                hashType === "tag" ? { tags: [hash] } : hashType === "address" ? { addresses: [hash] } : { bundles: [hash] });
 
-                if (response && response.length > 0) {
-                    transactionHashes = response;
-                    this._findCache[network][hashType][hash] = {
-                        transactionHashes,
-                        cached: Date.now()
-                    };
-                }
-            } catch (err) {
+            if (response && response.length > 0) {
+                transactionHashes = response;
+                this._findCache[network][hashType][hash] = {
+                    transactionHashes,
+                    cached: Date.now()
+                };
             }
         }
 
@@ -234,7 +232,7 @@ export class TangleCacheService {
             }
         }
 
-        return hashes.map(h => this._transactionCache[network][h].trytes || "9".repeat(2673));
+        return hashes.map(h => (this._transactionCache[network][h] && this._transactionCache[network][h].trytes) || "9".repeat(2673));
     }
 
     /**
@@ -442,5 +440,47 @@ export class TangleCacheService {
             }
         }
         return thisGroup;
+    }
+
+    /**
+     * Check if the transaction promotable.
+     * @param transactionHash The transaction to use as the starting point.
+     * @param network The network to communicate with.
+     * @returns The transactions bundle group.
+     */
+    public async isTransactionPromotable(transactionHash: string, network: NetworkType): Promise<boolean> {
+        let isPromotable = false;
+
+        try {
+            const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+
+            isPromotable = await api.isPromotable(transactionHash);
+        } catch (err) {
+            console.error(err);
+
+        }
+
+        return isPromotable;
+    }
+
+    /**
+     * Promote the transaction on the tangle.
+     * @param transactionHash The transaction to use as the starting point.
+     * @param network The network to communicate with.
+     * @returns The transactions bundle group.
+     */
+    public async transactionPromote(transactionHash: string, network: NetworkType): Promise<void> {
+        const loadBalancerSettings = ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`);
+        PowHelper.attachLocalPow(loadBalancerSettings);
+
+        try {
+            const api = composeAPI(loadBalancerSettings);
+
+            await api.promoteTransaction(transactionHash, 0, 0);
+        } catch (err) {
+            console.error(err);
+        }
+
+        PowHelper.dettachLocalPow(loadBalancerSettings);
     }
 }

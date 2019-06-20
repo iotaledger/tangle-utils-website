@@ -28,6 +28,7 @@
       display: flex;
       flex-direction: row;
       align-items: center;
+      min-height: 40px;
 
       @media (max-width: 767px) {
         flex-direction: column;
@@ -66,7 +67,8 @@
       min-width: 100px;
     }
 
-    .label + .value {
+    .label + .value,
+    .label + .spinner {
       margin-left: 20px;
 
       @media (max-width: 767px) {
@@ -102,6 +104,14 @@
       &.no {
         background-color: var(--danger);
       }
+
+      .button {
+        margin-left: 0px;
+      }
+
+      .confirmation + .button {
+        margin-left: 10px;
+      }
     }
 
     .value + button {
@@ -117,33 +127,13 @@
       font-weight: bold;
     }
 
-    .link-button {
-      display: flex;
-      align-items: center;
-      background-color: var(--white);
-      border: 1px solid var(--blueberry);
-      border-radius: 5px;
-      color: var(--blueberry);
-      font-weight: bold;
-      outline: none;
-      padding: 2px 16px;
-      min-height: 40px;
-      cursor: pointer;
-
-      &:hover {
-        background-color: #eeeeee;
-        text-decoration: none;
-      }
-    }
-
-    a {
+    .nav-link {
       color: var(--blueberry);
       font-weight: normal;
-      line-height: 1;
+      line-height: 1.5;
 
       &.small {
         font-size: 12px;
-        line-height: 1.5;
       }
     }
 
@@ -164,6 +154,33 @@
         max-height: 100px;
       }
     }
+
+    .index {
+      margin-right: 10px;
+    }
+
+    .currency {
+      padding-right: 30px;
+      white-space: nowrap;
+      min-width: 150px;
+      margin-right: 10px;
+    }
+
+    .select-wrapper {
+      width: 150px;
+      border-color: var(--light-grey);
+      margin-right: 10px;
+      height: 40px;
+
+      select {
+          color: var(--black);
+          height: 40px;
+      }
+
+      &::after {
+        color: var(--gunmetal-grey);
+      }
+    }
   }
 
   .action-container {
@@ -174,7 +191,7 @@
       margin-top: 10px;
     }
 
-    .link-button {
+    .button {
       margin-left: 10px;
 
       @media (max-width: 767px) {
