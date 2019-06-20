@@ -95,7 +95,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                                 <div className="transaction" key={idx2}>
                                     <div className="row top">
                                         <div className="label">Hash</div>
-                                        <div className="value"><Link className="small" to={`/transaction/${t.hash}${network}`}>{t.hash}</Link></div>
+                                        <div className="value"><Link className="nav-link small" to={`/transaction/${t.hash}${network}`}>{t.hash}</Link></div>
                                     </div>
                                     <div className="row top">
                                         <div className="label">Value</div>
