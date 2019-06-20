@@ -30,6 +30,11 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
     private _confirmationTimerId?: NodeJS.Timer;
 
     /**
+     * Is the component mounted.
+     */
+    private _mounted: boolean;
+
+    /**
      * Create a new instance of TransactionObject.
      * @param props The props.
      */
@@ -37,6 +42,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
         super(props);
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
+        this._mounted = false;
 
         const transactionObject = asTransactionObject(this.props.trytes);
 
@@ -62,65 +68,86 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
      * The component mounted.
      */
     public async componentDidMount(): Promise<void> {
-        await this.checkConfirmation();
+        this._mounted = true;
 
-        this.setState({
-            nextTransactionHash: this.state.transactionObject.currentIndex < this.state.transactionObject.lastIndex ?
-                this.state.transactionObject.trunkTransaction : undefined
-        });
+        if (!this.props.hideInteractive) {
+            await this.checkConfirmation();
 
-        const thisGroup: ReadonlyArray<Transaction> = await this._tangleCacheService.getTransactionBundleGroup(this.state.transactionObject, this.props.network);
-
-        if (thisGroup) {
-            const thisIndex = thisGroup.findIndex(t => t.hash === this.state.transactionObject.hash);
-            if (thisIndex > 0) {
+            if (this._mounted) {
                 this.setState({
-                    prevTransactionHash: thisGroup[thisIndex - 1].hash
+                    nextTransactionHash: this.state.transactionObject.currentIndex < this.state.transactionObject.lastIndex ?
+                        this.state.transactionObject.trunkTransaction : undefined
                 });
             }
 
-            const pos = thisGroup.filter(t => t.value > 0).length;
-            const neg = thisGroup.filter(t => t.value < 0).length;
-            const zero = thisGroup.filter(t => t.value === 0).length;
+            const thisGroup: ReadonlyArray<Transaction> = await this._tangleCacheService.getTransactionBundleGroup(this.state.transactionObject, this.props.network);
 
-            let bundleResult = "";
+            if (thisGroup && this._mounted) {
+                const thisIndex = thisGroup.findIndex(t => t.hash === this.state.transactionObject.hash);
+                if (thisIndex > 0) {
+                    this.setState({
+                        prevTransactionHash: thisGroup[thisIndex - 1].hash
+                    });
+                }
 
-            if (pos === 1 && neg === 1 && zero === 0) {
-                bundleResult = "Does not transfer any IOTA.";
-            } else if (zero === thisGroup.length) {
-                bundleResult = "Contains data, but does not transfer IOTA.";
-            } else {
-                bundleResult = `Transfers IOTA from ${pos} input address${pos > 1 ? "s" : ""} to ${neg} output address${neg > 1 ? "s" : ""}.`;
-            }
+                const pos = thisGroup.filter(t => t.value > 0).length;
+                const neg = thisGroup.filter(t => t.value < 0).length;
+                const zero = thisGroup.filter(t => t.value === 0).length;
 
-            // If we are viewing the first index in the bundle see if we can
-            // create a longer message using all of the transactions in this group
-            let message = this.state.message;
-            let messageType = this.state.messageType;
-            let messageSpans = this.state.messageSpans;
+                let bundleResult = "";
 
-            if (this.state.transactionObject.currentIndex === 0) {
-                const wholeMessage = thisGroup.map(t => t.signatureMessageFragment).join("");
+                if (pos === 1 && neg === 1 && zero === 0) {
+                    bundleResult = "Does not transfer any IOTA.";
+                } else if (zero === thisGroup.length) {
+                    bundleResult = "Contains data, but does not transfer IOTA.";
+                } else {
+                    bundleResult = `Transfers IOTA from ${pos} input address${pos > 1 ? "s" : ""} to ${neg} output address${neg > 1 ? "s" : ""}.`;
+                }
 
-                const wholeDecoded = TrytesHelper.decodeMessage(wholeMessage);
+                // If we are viewing the first index in the bundle see if we can
+                // create a longer message using all of the transactions in this group
+                let message = this.state.message;
+                let messageType = this.state.messageType;
+                let messageSpans = this.state.messageSpans;
 
-                if ((wholeDecoded.messageType === "ASCII" ||
-                    wholeDecoded.messageType === "JSON") &&
-                    wholeDecoded.message !== this.state.message) {
-                    message = wholeDecoded.message;
-                    messageType = wholeDecoded.messageType;
-                    messageSpans = true;
+                if (this.state.transactionObject.currentIndex === 0) {
+                    const wholeMessage = thisGroup.map(t => t.signatureMessageFragment).join("");
+
+                    const wholeDecoded = TrytesHelper.decodeMessage(wholeMessage);
+
+                    if ((wholeDecoded.messageType === "ASCII" ||
+                        wholeDecoded.messageType === "JSON") &&
+                        wholeDecoded.message !== this.state.message) {
+                        message = wholeDecoded.message;
+                        messageType = wholeDecoded.messageType;
+                        messageSpans = true;
+                    }
+                }
+
+                const isValid = isBundle(thisGroup);
+
+                if (this._mounted) {
+                    this.setState({
+                        isBundleValid: isValid ? true : false,
+                        bundleResult,
+                        message,
+                        messageType,
+                        messageSpans
+                    });
                 }
             }
+        }
+    }
 
-            const isValid = isBundle(thisGroup);
-            this.setState({
-                isBundleValid: isValid ? true : false,
-                bundleResult,
-                message,
-                messageType,
-                messageSpans
-            });
+    /**
+     * The component will unmount from the dom.
+     */
+    public async componentWillUnmount(): Promise<void> {
+        this._mounted = false;
+
+        if (this._confirmationTimerId) {
+            clearTimeout(this._confirmationTimerId);
+            this._confirmationTimerId = undefined;
         }
     }
 
@@ -236,7 +263,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             </div>
                             <div className="col">
                                 <div className="label">Obsolete Tag</div>
-                                <div className="value">{this.state.transactionObject.obsoleteTag}</div>
+                                <div className="value"><Link to={`/tag/${this.state.transactionObject.obsoleteTag}${network}`}>{this.state.transactionObject.obsoleteTag}</Link></div>
                             </div>
                         </div>
                         {!this.state.messageShowRaw && (
@@ -315,7 +342,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                 <div className="value">{this.state.transactionObject.attachmentTimestampUpperBound}</div>
                             </div>
                         </div>
-                        {!this.props.hideRaw && (
+                        {!this.props.hideInteractive && (
                             <React.Fragment>
                                 <hr />
                                 <Heading level={2}>Raw</Heading>

@@ -56,6 +56,10 @@
                 {
                     "href": "/qr-scan",
                     "text": "QR Scan"
+                },
+                {
+                    "href": "/simple-transaction",
+                    "text": "Simple Transaction"
                 }
             ]
         },

@@ -12,7 +12,7 @@ export class UnitsHelper {
      */
     public static formatBest(value: number, includeI: boolean = true): string {
         let bestUnits: Unit = Unit.i;
-        const checkLength = value.toString().length;
+        const checkLength = Math.abs(value).toString().length;
         if (checkLength > 15) {
             bestUnits = Unit.Pi;
         } else if (checkLength > 12) {

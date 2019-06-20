@@ -1,0 +1,20 @@
+.simple-transaction {
+  width: 100%;
+
+  .row-success {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .success-wrapper {
+        width: auto;
+    }
+  }
+
+  a {
+    color: var(--blueberry);
+    font-weight: normal;
+    line-height: 1;
+    word-break: break-all;
+  }
+}

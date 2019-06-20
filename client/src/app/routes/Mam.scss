@@ -49,5 +49,16 @@
         }
       }
     }
+
+    .busy-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+
+        .spinner {
+            margin-right: 20px;
+        }
+    }
   }
 }

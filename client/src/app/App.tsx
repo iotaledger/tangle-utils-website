@@ -25,6 +25,7 @@ import { MamProps } from "./routes/MamProps";
 import QRCreate from "./routes/QRCreate";
 import { QRCreateProps } from "./routes/QRCreateProps";
 import QRScan from "./routes/QRScan";
+import SimpleTransaction from "./routes/SimpleTransaction";
 import TextConversion from "./routes/TextConversion";
 import { TextConversionProps } from "./routes/TextConversionProps";
 import TransactionDecoder from "./routes/TransactionDecoder";
@@ -128,6 +129,7 @@ class App extends Component<RouteComponentProps, AppState> {
                     <Link className="link" to="/compress">Compress</Link>
                     <Link className="link" to="/qr-create">QR Create</Link>
                     <Link className="link" to="/qr-scan">QR Scan</Link>
+                    <Link className="link" to="/simple-transaction">Simple Transaction</Link>
                 </nav>
                 <SideMenu
                     isMenuOpen={this.state.isSideMenuOpen}
@@ -171,6 +173,10 @@ class App extends Component<RouteComponentProps, AppState> {
                                         {
                                             name: "QR Scan",
                                             link: "/qr-scan"
+                                        },
+                                        {
+                                            name: "Simple Transaction",
+                                            link: "/simple-transaction"
                                         }
                                     ]
                                 }
@@ -234,8 +240,10 @@ class App extends Component<RouteComponentProps, AppState> {
                                 <Route
                                     exact={true}
                                     path="/qr-create/:address?/:amount?/:message?"
-                                    component={(props: QRCreateProps) => (<QRCreate {...props} bust={Date.now()} />)} />
+                                    component={(props: QRCreateProps) => (<QRCreate {...props} bust={Date.now()} />)}
+                                />
                                 <Route exact={true} path="/qr-scan" component={() => (<QRScan bust={Date.now()} />)} />
+                                <Route exact={true} path="/simple-transaction" component={() => (<SimpleTransaction bust={Date.now()} />)} />
                             </Switch>
                         )}
                     </LayoutAppSingle>

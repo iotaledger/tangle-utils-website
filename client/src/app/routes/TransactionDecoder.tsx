@@ -75,7 +75,7 @@ class TransactionDecoder extends Component<TransactionDecoderProps, TransactionD
                         <React.Fragment>
                             <hr />
                             <Heading level={1}>Transaction</Heading>
-                            <TransactionObject hash={this.state.hash} trytes={this.state.trytes} network={this.state.network} hideRaw={true} />
+                            <TransactionObject hash={this.state.hash} trytes={this.state.trytes} network={this.state.network} hideInteractive={true} />
                         </React.Fragment>
                     )}
                 </Form>

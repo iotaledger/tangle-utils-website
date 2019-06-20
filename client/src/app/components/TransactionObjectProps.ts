@@ -12,9 +12,9 @@ export interface TransactionObjectProps {
     hash: string;
 
     /**
-     * Hide the trytes for the object.
+     * Hide the interactive parts for the object.
      */
-    hideRaw?: boolean;
+    hideInteractive?: boolean;
 
     /**
      * The network to use.

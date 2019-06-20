@@ -53,7 +53,10 @@
     }
 
     .col + .col {
+      margin-left: 10px;
+
       @media (max-width: 767px) {
+        margin-left: 0px;
         margin-top: 10px;
       }
     }
@@ -146,7 +149,8 @@
 
     pre {
       margin: 0;
-      width: 100%;
+      white-space: pre-wrap;
+      overflow: auto;
 
       &.ascii,
       &.json,
@@ -157,10 +161,7 @@
       }
 
       &.trytes {
-        white-space: pre-line;
         max-height: 100px;
-        overflow-x: hidden;
-        overflow-y: auto;
       }
     }
   }

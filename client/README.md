@@ -22,4 +22,4 @@ See [./DEPLOYMENT.md](./DEPLOYMENT.md) for more details.
 
 ## Demonstration
 
-There is a demonstration available to view at <https://tangle-utils-client.dag.sh>
+There is a demonstration available to view at <https://utils.iota.org>

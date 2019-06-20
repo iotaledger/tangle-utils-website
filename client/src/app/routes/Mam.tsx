@@ -183,7 +183,10 @@ class Mam extends Component<MamProps, MamState> {
                             </div>
                         ))}
                         {this.state.isBusy && (
-                            <Spinner />
+                            <div className="busy-row">
+                                <Spinner />
+                                <div>Waiting for new messages in the channel.</div>
+                            </div>
                         )}
                     </div>
                 )}
