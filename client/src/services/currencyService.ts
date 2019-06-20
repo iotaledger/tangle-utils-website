@@ -75,6 +75,31 @@ export class CurrencyService {
     }
 
     /**
+     * Convert the iota to fiat.
+     * @param valueIota The value in iota.
+     * @param currencyData The currency data.
+     * @param saveFiat Save the fiat code.
+     * @returns The converted fiat.
+     */
+    public async currencyConvert(valueIota: number, currencyData: ICurrencySettings, saveFiat: boolean): Promise<string> {
+        let converted = "";
+        if (currencyData.currencies && currencyData.fiatCode && currencyData.baseCurrencyRate) {
+            const selectedFiatToBase = currencyData.currencies.find(c => c.id === currencyData.fiatCode);
+
+            if (selectedFiatToBase) {
+                const miota = valueIota / 1000000;
+                const fiat = miota * (selectedFiatToBase.rate * currencyData.baseCurrencyRate);
+                converted = fiat.toFixed(2);
+
+                if (saveFiat) {
+                    await this.saveFiatCode(currencyData.fiatCode);
+                }
+            }
+        }
+        return converted;
+    }
+
+    /**
      * Load new data from the endpoint.
      * @param callback Called when currencies are loaded.
      * @returns True if the load was succesful.

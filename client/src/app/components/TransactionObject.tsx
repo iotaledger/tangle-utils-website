@@ -48,8 +48,8 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
         super(props);
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
-        this._mounted = false;
         this._currencyService = ServiceFactory.get<CurrencyService>("currency");
+        this._mounted = false;
 
         const transactionObject = asTransactionObject(this.props.trytes);
 
@@ -86,7 +86,16 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                     fiatCode: data.fiatCode,
                     baseCurrencyRate: data.baseCurrencyRate || 1
                 },
-                async () => await this.currencyConvert(false));
+                async () => this.setState({
+                    valueConverted: await this._currencyService.currencyConvert(
+                        this.state.valueIota,
+                        {
+                            fiatCode: this.state.fiatCode || "EUR",
+                            currencies: this.state.currencies,
+                            baseCurrencyRate: this.state.baseCurrencyRate
+                        },
+                        false)
+                }));
         });
 
         if (!this.props.hideInteractive) {
@@ -224,7 +233,18 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                     {this.state.currencies.length > 0 && (
                                         <Select
                                             value={this.state.fiatCode}
-                                            onChange={(e) => this.setState({ fiatCode: e.target.value }, () => this.currencyConvert(true))}
+                                            onChange={(e) => this.setState({ fiatCode: e.target.value }, async () => this.setState(
+                                                {
+                                                    valueConverted: await this._currencyService.currencyConvert(
+                                                        this.state.valueIota,
+                                                        {
+                                                            fiatCode: this.state.fiatCode || "EUR",
+                                                            currencies: this.state.currencies,
+                                                            baseCurrencyRate: this.state.baseCurrencyRate
+                                                        },
+                                                        true)
+                                                })
+                                            )}
                                             selectSize="small"
                                         >
                                             {this.state.currencies.map(is => (
@@ -463,26 +483,6 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                 }
                 this.setState({ isPromoting: false });
             });
-        }
-    }
-
-    /**
-     * Update the currency
-     * @param saveFiat Save the fiat code.
-     */
-    private async currencyConvert(saveFiat: boolean): Promise<void> {
-        if (this.state.currencies && this.state.fiatCode && this.state.baseCurrencyRate) {
-            const selectedFiatToBase = this.state.currencies.find(c => c.id === this.state.fiatCode);
-
-            if (selectedFiatToBase) {
-                const miota = this.state.valueIota / 1000000;
-                const fiat = miota * (selectedFiatToBase.rate * this.state.baseCurrencyRate);
-                this.setState({ valueConverted: fiat.toFixed(2) });
-
-                if (saveFiat) {
-                    await this._currencyService.saveFiatCode(this.state.fiatCode);
-                }
-            }
         }
     }
 }

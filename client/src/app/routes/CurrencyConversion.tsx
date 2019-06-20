@@ -221,14 +221,21 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
             const oldFiatToBase = this.state.currencies.find(c => c.id === this.state.fiatCode);
             const newFiatToBase = this.state.currencies.find(c => c.id === newFiatCode);
 
-            if (oldFiatToBase && newFiatToBase) {
-                const val = parseFloat(this.state.fiat);
-                if (!isNaN(val)) {
-                    const fiat = val / oldFiatToBase.rate * newFiatToBase.rate;
-                    this.setState({ fiatCode: newFiatCode, fiat: fiat.toFixed(2) });
-                }
+            if (oldFiatToBase && newFiatToBase && oldFiatToBase !== newFiatToBase) {
+                this.setState(
+                    {
+                        fiatCode: newFiatCode
+                    },
+                    async () => {
+                        await this._currencyService.saveFiatCode(newFiatCode);
 
-                await this._currencyService.saveFiatCode(newFiatCode);
+                        const val = parseFloat(this.state.fiat);
+                        if (!isNaN(val)) {
+                            const fiat = val / oldFiatToBase.rate * newFiatToBase.rate;
+                            this.setState({ fiat: fiat.toFixed(2) });
+                        }
+                    }
+                );
             }
         }
     }
