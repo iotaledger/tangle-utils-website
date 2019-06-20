@@ -123,7 +123,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                 {this.state.bundleGroups.map((group, idx) => (
                     <div className="group" key={idx}>
                         <div className="inputs">
-                            <div className="caption">Inputs</div>
+                            <div className="caption">Inputs [{group.transactions.filter(f => f.tx.value < 0).length}]</div>
                             {group.transactions.filter(f => f.tx.value < 0).map((t, idx2) => (
                                 <div className="transaction" key={idx2}>
                                     <div className="row top">
@@ -148,7 +148,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                         </div>
                         <div className="outputs">
                             <div className="caption-wrapper">
-                                <div className="caption">Outputs</div>
+                                <div className="caption">Outputs [{group.transactions.filter(f => f.tx.value >= 0).length}]</div>
                                 <Confirmation state={group.confirmationState} />
                             </div>
                             {group.transactions.filter(f => f.tx.value >= 0).map((t, idx2) => (
