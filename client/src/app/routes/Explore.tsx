@@ -47,9 +47,11 @@ class Explore extends Component<ExploreProps, ExploreState> {
                             onChange={(e) => this.setState({ hash: e.target.value }, () => this.validate())}
                         />
                     </Fieldset>
-                    <Fieldrow>
-                        <div className="danger">{this.state.validMessage}</div>
-                    </Fieldrow>
+                    {this.state.validMessage && (
+                        <Fieldrow>
+                            <div className="danger">{this.state.validMessage}</div>
+                        </Fieldrow>
+                    )}
                     <Fieldset>
                         <label>Hash Type</label>
                         <Select

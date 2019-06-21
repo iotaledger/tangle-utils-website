@@ -62,7 +62,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             value: UnitsHelper.formatBest(transactionObject.value, false),
             valueIota: transactionObject.value,
             currencies: [],
-            isMissing: isEmpty(this.props.trytes),
+            isMissing: this.props.hideInteractive ? false : isEmpty(this.props.trytes),
             message: decoded.message,
             messageType: decoded.messageType,
             messageShowRaw: false,
@@ -283,18 +283,20 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         )}
                         <hr />
                         <Heading level={2}>Bundle</Heading>
-                        <div className="row">
-                            <div className="col">
-                                <div className="label">Is Valid</div>
-                                {this.state.isBundleValid === undefined && (
-                                    <Spinner size="small" />
-                                )}
+                        {!this.props.hideInteractive && (
+                            <div className="row">
+                                <div className="col">
+                                    <div className="label">Is Valid</div>
+                                    {this.state.isBundleValid === undefined && (
+                                        <Spinner size="small" />
+                                    )}
 
-                                {this.state.isBundleValid !== undefined && (
-                                    <div className={`value ${this.state.isBundleValid ? "yes" : "no"}`}>{this.state.isBundleValid ? "Yes" : "No - This bundle will never confirm"}</div>
-                                )}
+                                    {this.state.isBundleValid !== undefined && (
+                                        <div className={`value ${this.state.isBundleValid ? "yes" : "no"}`}>{this.state.isBundleValid ? "Yes" : "No - This bundle will never confirm"}</div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )}
                         <div className="row">
                             <div className="col">
                                 <div className="label">Bundle Hash</div>

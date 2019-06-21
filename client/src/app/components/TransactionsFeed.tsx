@@ -128,7 +128,7 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                 <div className="feed-wrapper">
                     <div className="feed">
                         <Heading level={2}>MainNet</Heading>
-                        {this.state.mainnetTransactions.length === 0 && ("There are no transactions")}
+                        {this.state.mainnetTransactions.length === 0 && ("There are no transactions with the current filters.")}
                         {this.state.mainnetTransactions.map((tx, idx) => (
                             <div className="row" key={idx}>
                                 <Link className="small" to={`/transaction/${tx.hash}`}>{tx.hash}</Link>
@@ -138,7 +138,7 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                     </div>
                     <div className="feed">
                         <Heading level={2}>DevNet</Heading>
-                        {this.state.devnetTransactions.length === 0 && ("There are no transactions")}
+                        {this.state.devnetTransactions.length === 0 && ("There are no transactions with the current filters.")}
                         {this.state.devnetTransactions.map((tx, idx) => (
                             <div className="row" key={idx}>
                                 <Link className="small" to={`/transaction/${tx.hash}/devnet`}>{tx.hash}</Link>
