@@ -24,9 +24,9 @@ export interface TransactionObjectState {
     isMissing: boolean;
 
     /**
-     * Value in iota.
+     * The mwm for the transaction.
      */
-    value: number;
+    mwm?: number;
 
     /**
      * Formatted value.

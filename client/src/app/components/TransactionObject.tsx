@@ -1,5 +1,6 @@
 import isBundle from "@iota/bundle-validator";
 import { addChecksum } from "@iota/checksum";
+import { trytesToTrits } from "@iota/converter";
 import { asTransactionObject, Transaction } from "@iota/transaction-converter";
 import { isEmpty } from "@iota/validators";
 import { Button, ClipboardHelper, Heading, Select, Spinner } from "iota-react-components";
@@ -55,15 +56,25 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
 
         const decoded = TrytesHelper.decodeMessage(transactionObject.signatureMessageFragment);
 
+        const trits = trytesToTrits(transactionObject.hash);
+
+        let mwm = 0;
+        for (let i = trits.length - 1; i >= 0; i--) {
+            if (trits[i] !== 0) {
+                break;
+            }
+            mwm++;
+        }
+
         this.state = {
             transactionObject,
             confirmationState: "unknown",
             time: moment(transactionObject.timestamp * 1000),
-            value: transactionObject.value,
             valueFormatted: UnitsHelper.formatBest(transactionObject.value, false),
             valueIota: `${transactionObject.value} i`,
             currencies: [],
             isMissing: this.props.hideInteractive ? false : isEmpty(this.props.trytes),
+            mwm,
             message: decoded.message,
             messageType: decoded.messageType,
             messageShowRaw: false,
@@ -92,7 +103,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         if (this._mounted) {
                             this.setState({
                                 valueConverted: await this._currencyService.currencyConvert(
-                                    this.state.value,
+                                    this.state.transactionObject.value,
                                     {
                                         fiatCode: this.state.fiatCode || "EUR",
                                         currencies: this.state.currencies,
@@ -248,7 +259,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                                     this.setState(
                                                         {
                                                             valueConverted: await this._currencyService.currencyConvert(
-                                                                this.state.value,
+                                                                this.state.transactionObject.value,
                                                                 {
                                                                     fiatCode: this.state.fiatCode || "EUR",
                                                                     currencies: this.state.currencies,
@@ -369,7 +380,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         {this.state.messageShowRaw && (
                             <div className="row top">
                                 <div className="col top fill">
-                                    <div className="label">Message<br />{this.state.messageType}</div>
+                                    <div className="label">Message<br />Trytes</div>
                                     <div className="value fill"><pre className="trytes">{this.state.transactionObject.signatureMessageFragment}</pre></div>
                                 </div>
                             </div>
@@ -393,6 +404,14 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                             onClick={() => this.setState({ messageShowRaw: !this.state.messageShowRaw })}
                                         >
                                             {this.state.messageShowRaw ? "Hide" : "Show"} Raw
+                                        </Button>
+                                        <Button
+                                            color="secondary"
+                                            size="small"
+                                            onClick={() => ClipboardHelper.copy(
+                                                this.state.messageShowRaw ? this.state.transactionObject.signatureMessageFragment : this.state.message)}
+                                        >
+                                            Copy
                                         </Button>
                                     </div>
                                 </div>
@@ -420,6 +439,12 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             <div className="col">
                                 <div className="label">Timestamp</div>
                                 <div className="value">{this.state.attachmentTime.format("LLLL")} - {moment.duration(moment().diff(this.state.attachmentTime)).humanize()} ago</div>
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col">
+                                <div className="label">Weight</div>
+                                <div className="value">{this.state.mwm}</div>
                             </div>
                             <div className="col">
                                 <div className="label">Nonce</div>
