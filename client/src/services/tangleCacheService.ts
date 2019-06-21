@@ -2,15 +2,20 @@ import { composeAPI, LoadBalancerSettings, Mam } from "@iota/client-load-balance
 import { MamMode } from "@iota/mam";
 import { asTransactionObject, asTransactionObjects, Transaction } from "@iota/transaction-converter";
 import { ServiceFactory } from "../factories/serviceFactory";
+import { PowHelper } from "../helpers/powHelper";
 import { ConfirmationState } from "../models/confirmationState";
 import { HashType } from "../models/hashType";
 import { NetworkType } from "../models/services/networkType";
-import { PowHelper } from "../helpers/powHelper";
 
 /**
  * Cache tangle requests.
  */
 export class TangleCacheService {
+    /**
+     * Timeout for stale cached items (10 mins).
+     */
+    private readonly STALE_TIME: number = 600000;
+
     /**
      * The cache for the transactions.
      */
@@ -113,6 +118,10 @@ export class TangleCacheService {
                  * The next root.
                  */
                 nextRoot: string;
+                /**
+                 * The time of cache.
+                 */
+                cached: number;
             }
         }
     };
@@ -126,6 +135,11 @@ export class TangleCacheService {
      * Used for inclusion states.
      */
     private _lastestSolidSubtangleMilestone: string;
+
+    /**
+     * Timer if for clearing stale items.
+     */
+    private _staleTimer?: NodeJS.Timer;
 
     /**
      * Create a new instance of TangleCacheService.
@@ -161,6 +175,7 @@ export class TangleCacheService {
 
         this._lastestSolidSubtangleMilestoneCached = Date.now();
         this._lastestSolidSubtangleMilestone = "";
+        this._staleTimer = setInterval(() => this.staleCheck(), 60000); // 1 min
     }
 
     /**
@@ -391,7 +406,8 @@ export class TangleCacheService {
                     if (result && result.payload) {
                         this._mam[network][root] = {
                             payload: result.payload,
-                            nextRoot: result.nextRoot
+                            nextRoot: result.nextRoot,
+                            cached: Date.now()
                         };
                     }
                 }
@@ -482,5 +498,46 @@ export class TangleCacheService {
         }
 
         PowHelper.dettachLocalPow(loadBalancerSettings);
+    }
+
+    /**
+     * Check all the cached items and remove any stale items.
+     */
+    private staleCheck(): void {
+        const now = Date.now();
+
+        for (const net in this._transactionCache) {
+            for (const tx in this._transactionCache[net]) {
+                if (now - this._transactionCache[net][tx].cached >= this.STALE_TIME)  {
+                    delete this._transactionCache[net][tx];
+                }
+            }
+        }
+
+        for (const net in this._findCache) {
+            for (const hashType in this._findCache[net]) {
+                for (const hash in this._findCache[net][hashType]) {
+                    if (now - this._findCache[net][hashType][hash].cached >= this.STALE_TIME)  {
+                        delete this._findCache[net][hashType][hash];
+                    }
+                }
+            }
+        }
+
+        for (const net in this._addressBalances) {
+            for (const address in this._addressBalances[net]) {
+                if (now - this._addressBalances[net][address].cached >= this.STALE_TIME)  {
+                    delete this._addressBalances[net][address];
+                }
+            }
+        }
+
+        for (const net in this._mam) {
+            for (const root in this._mam[net]) {
+                if (now - this._mam[net][root].cached >= this.STALE_TIME)  {
+                    delete this._mam[net][root];
+                }
+            }
+        }
     }
 }

@@ -80,22 +80,29 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
         this._mounted = true;
 
         await this._currencyService.loadCurrencies((data) => {
-            this.setState(
-                {
-                    currencies: data.currencies || [],
-                    fiatCode: data.fiatCode,
-                    baseCurrencyRate: data.baseCurrencyRate || 1
-                },
-                async () => this.setState({
-                    valueConverted: await this._currencyService.currencyConvert(
-                        this.state.valueIota,
-                        {
-                            fiatCode: this.state.fiatCode || "EUR",
-                            currencies: this.state.currencies,
-                            baseCurrencyRate: this.state.baseCurrencyRate
-                        },
-                        false)
-                }));
+            if (this._mounted) {
+                this.setState(
+                    {
+                        currencies: data.currencies || [],
+                        fiatCode: data.fiatCode,
+                        baseCurrencyRate: data.baseCurrencyRate || 1
+                    },
+                    async () => {
+                        if (this._mounted) {
+                            this.setState({
+                                valueConverted: await this._currencyService.currencyConvert(
+                                    this.state.valueIota,
+                                    {
+                                        fiatCode: this.state.fiatCode || "EUR",
+                                        currencies: this.state.currencies,
+                                        baseCurrencyRate: this.state.baseCurrencyRate
+                                    },
+                                    false)
+                            }
+                            );
+                        }
+                    });
+            }
         });
 
         if (!this.props.hideInteractive) {
@@ -233,17 +240,21 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                     {this.state.currencies.length > 0 && (
                                         <Select
                                             value={this.state.fiatCode}
-                                            onChange={(e) => this.setState({ fiatCode: e.target.value }, async () => this.setState(
-                                                {
-                                                    valueConverted: await this._currencyService.currencyConvert(
-                                                        this.state.valueIota,
+                                            onChange={(e) => this.setState({ fiatCode: e.target.value }, async () => {
+                                                if (this._mounted) {
+                                                    this.setState(
                                                         {
-                                                            fiatCode: this.state.fiatCode || "EUR",
-                                                            currencies: this.state.currencies,
-                                                            baseCurrencyRate: this.state.baseCurrencyRate
-                                                        },
-                                                        true)
-                                                })
+                                                            valueConverted: await this._currencyService.currencyConvert(
+                                                                this.state.valueIota,
+                                                                {
+                                                                    fiatCode: this.state.fiatCode || "EUR",
+                                                                    currencies: this.state.currencies,
+                                                                    baseCurrencyRate: this.state.baseCurrencyRate
+                                                                },
+                                                                true)
+                                                        });
+                                                }
+                                            }
                                             )}
                                             selectSize="small"
                                         >
@@ -464,10 +475,12 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             isPromotable = await this._tangleCacheService.isTransactionPromotable(this.state.tailHash, this.props.network);
         }
 
-        this.setState({
-            confirmationState: confirmationStates[0],
-            isPromotable
-        });
+        if (this._mounted) {
+            this.setState({
+                confirmationState: confirmationStates[0],
+                isPromotable
+            });
+        }
 
         if (confirmationStates[0] !== "confirmed") {
             this._confirmationTimerId = setTimeout(() => this.checkConfirmation(), 15000);
@@ -478,12 +491,14 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
      * Promote the transaction
      */
     private async promote(): Promise<void> {
-        if (this.state.isPromotable && this.state.tailHash) {
+        if (this.state.isPromotable && this.state.tailHash && this._mounted) {
             this.setState({ isPromoting: true }, async () => {
                 if (this.state.tailHash) {
                     await this._tangleCacheService.transactionPromote(this.state.tailHash, this.props.network);
                 }
-                this.setState({ isPromoting: false });
+                if (this._mounted) {
+                    this.setState({ isPromoting: false });
+                }
             });
         }
     }

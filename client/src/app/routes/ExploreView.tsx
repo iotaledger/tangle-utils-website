@@ -24,6 +24,11 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
     private readonly _tangleCacheService: TangleCacheService;
 
     /**
+     * Is the component mounted.
+     */
+    private _mounted: boolean;
+
+    /**
      * Create a new instance of ExploreView.
      * @param props The props.
      */
@@ -31,6 +36,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
         super(props);
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
+        this._mounted = false;
 
         let paramHash = "";
         let paramHashChecksum = "";
@@ -72,6 +78,8 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
      * The component mounted.
      */
     public async componentDidMount(): Promise<void> {
+        this._mounted = true;
+
         if (this.state.hash && this.state.hash.length > 0) {
             const isValid = this.validate();
             if (isValid) {
@@ -83,10 +91,19 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
     }
 
     /**
+     * The component will unmount from the dom.
+     */
+    public async componentWillUnmount(): Promise<void> {
+        this._mounted = false;
+    }
+
+    /**
      * Render the component.
      * @returns The node to render.
      */
     public render(): ReactNode {
+        const network = this.state.network === "mainnet" ? "" : `/${this.state.network}`;
+
         return (
             <div className="explore">
                 {!this.state.transactionTrytes && !this.state.transactionHashes && (
@@ -127,7 +144,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                         <hr />
                         <div className="items">
                             {this.state.transactionHashes.map((t, idx) => (
-                                <Link className="nav-link" key={idx} to={`/transaction/${t}`}>{t}</Link>
+                                <Link className="nav-link" key={idx} to={`/transaction/${t}${network}`}>{t}</Link>
                             ))}
                         </div>
                     </div>
@@ -166,7 +183,9 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
             }
         }
 
-        this.setState({ validMessage, isValid: validMessage.length === 0 });
+        if (this._mounted) {
+            this.setState({ validMessage, isValid: validMessage.length === 0 });
+        }
         return validMessage.length === 0;
     }
 
@@ -174,67 +193,74 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
      * Load the data from the tangle.
      */
     private async loadData(): Promise<void> {
-        this.setState({ isBusy: true, isErrored: false, status: `Loading from ${this.state.network} tangle, please wait...` }, async () => {
-            try {
-                let transactionTrytes;
-                let transactionHashes;
-                let checksum = "";
-                let status = "";
-                let balance = 0;
-                let isErrored = false;
-                let transactionsCount = "";
+        if (this._mounted) {
 
-                if (this.state.hashType === "transaction") {
-                    const response = await this._tangleCacheService.getTransactions([this.state.hash], this.state.network);
-                    if (response && response.length > 0) {
-                        transactionTrytes = response[0];
-                    } else {
-                        status = "Unable to find transaction on the tangle.";
-                    }
-                } else {
-                    try {
-                        const response = await this._tangleCacheService.findTransactionHashes(this.state.hashType, this.state.hash, this.state.network);
+            this.setState({ isBusy: true, isErrored: false, status: `Loading from ${this.state.network} tangle, please wait...` }, async () => {
+                try {
+                    let transactionTrytes;
+                    let transactionHashes;
+                    let checksum = "";
+                    let status = "";
+                    let balance = 0;
+                    let isErrored = false;
+                    let transactionsCount = "";
 
+                    if (this.state.hashType === "transaction") {
+                        const response = await this._tangleCacheService.getTransactions([this.state.hash], this.state.network);
                         if (response && response.length > 0) {
-                            transactionHashes = response;
-
-                            if (this.state.hashType === "address") {
-                                balance = await this._tangleCacheService.getAddressBalance(this.state.hash, this.state.network);
-                                checksum = addChecksum(this.state.hash).substr(-9);
-                            }
+                            transactionTrytes = response[0];
                         } else {
-                            status = `Unable to find any transactions with the specified ${this.state.hashType} on the tangle.`;
+                            status = "Unable to find transaction on the tangle.";
                         }
-                    } catch (err) {
-                        status = `An error occured while trying to retrieve the transactions with the specified ${this.state.hashType} on the tangle.\n\n${err.message}`;
-                        isErrored = true;
-                    }
-                }
-
-                if (transactionHashes) {
-                    if (transactionHashes.length > 250) {
-                        const all = transactionHashes.length;
-                        transactionHashes = transactionHashes.slice(0, 250);
-                        transactionsCount = `${transactionHashes.length} of ${all}`;
                     } else {
-                        transactionsCount = `${transactionHashes.length}`;
+                        try {
+                            const response = await this._tangleCacheService.findTransactionHashes(this.state.hashType, this.state.hash, this.state.network);
+
+                            if (response && response.length > 0) {
+                                transactionHashes = response;
+
+                                if (this.state.hashType === "address") {
+                                    balance = await this._tangleCacheService.getAddressBalance(this.state.hash, this.state.network);
+                                    checksum = addChecksum(this.state.hash).substr(-9);
+                                }
+                            } else {
+                                status = `Unable to find any transactions with the specified ${this.state.hashType} on the tangle, or the number of items was too large to return.`;
+                            }
+                        } catch (err) {
+                            status = `An error occured while trying to retrieve the transactions with the specified ${this.state.hashType} on the tangle.\n\n${err.message}`;
+                            isErrored = true;
+                        }
+                    }
+
+                    if (transactionHashes) {
+                        if (transactionHashes.length > 250) {
+                            const all = transactionHashes.length;
+                            transactionHashes = transactionHashes.slice(0, 250);
+                            transactionsCount = `${transactionHashes.length} of ${all}`;
+                        } else {
+                            transactionsCount = `${transactionHashes.length}`;
+                        }
+                    }
+
+                    if (this._mounted) {
+                        this.setState({
+                            isBusy: false,
+                            status,
+                            transactionTrytes,
+                            transactionHashes,
+                            transactionsCount,
+                            balance,
+                            checksum,
+                            isErrored
+                        });
+                    }
+                } catch (err) {
+                    if (this._mounted) {
+                        this.setState({ isBusy: false, isErrored: true, status: err.message });
                     }
                 }
-
-                this.setState({
-                    isBusy: false,
-                    status,
-                    transactionTrytes,
-                    transactionHashes,
-                    transactionsCount,
-                    balance,
-                    checksum,
-                    isErrored
-                });
-            } catch (err) {
-                this.setState({ isBusy: false, isErrored: true, status: err.message });
-            }
-        });
+            });
+        }
     }
 }
 

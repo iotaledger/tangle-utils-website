@@ -30,6 +30,11 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
     private _subscriptionId?: string;
 
     /**
+     * Is the component mounted.
+     */
+    private _mounted: boolean;
+
+    /**
      * Create a new instance of TransactionsFeed.
      * @param props The props.
      */
@@ -38,6 +43,7 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
 
         this._transactionsClient = ServiceFactory.get<TransactionsClient>("transactions");
         this._settingsService = ServiceFactory.get<SettingsService>("settings");
+        this._mounted = false;
 
         this.state = {
             mainnetTransactions: [],
@@ -52,30 +58,36 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
      * The component mounted.
      */
     public async componentDidMount(): Promise<void> {
+        this._mounted = true;
+
         const settings = await this._settingsService.get();
         if (settings) {
-            this.setState({
-                valueLimit: settings.valueLimit || 1,
-                valueLimitUnits: settings.valueLimitUnits || Unit.Ti,
-                valueFilter: settings.valueFilter || "both"
-            });
+            if (this._mounted) {
+                this.setState({
+                    valueLimit: settings.valueLimit || 1,
+                    valueLimitUnits: settings.valueLimitUnits || Unit.Ti,
+                    valueFilter: settings.valueFilter || "both"
+                });
+            }
         }
 
         const response = await this._transactionsClient.subscribe(() => {
-            this.updateFeeds();
+            this.updateFeeds(false);
         });
 
         if (response && response.success) {
             this._subscriptionId = response.subscriptionId;
         }
 
-        this.updateFeeds();
+        await this.updateFeeds(false);
     }
 
     /**
      * The component will unmount from the dom.
      */
     public async componentWillUnmount(): Promise<void> {
+        this._mounted = false;
+
         if (this._subscriptionId) {
             await this._transactionsClient.unsubscribe({ subscriptionId: this._subscriptionId });
         }
@@ -93,7 +105,7 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                         <label>Value Filter</label>
                         <Select
                             value={this.state.valueFilter}
-                            onChange={(e) => this.setState({ valueFilter: e.target.value as ValueFilter }, () => this.updateFeeds())}
+                            onChange={(e) => this.setState({ valueFilter: e.target.value as ValueFilter }, () => this.updateFeeds(true))}
                             selectSize="small"
                         >
                             <option value="both">Both</option>
@@ -109,11 +121,11 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                             placeholder="Enter limit for the values"
                             restrict="float"
                             inputSize="small"
-                            onChange={(e) => this.setState({ valueLimit: parseFloat(e.target.value) }, () => this.updateFeeds())}
+                            onChange={(e) => this.setState({ valueLimit: parseFloat(e.target.value) }, () => this.updateFeeds(true))}
                         />
                         <Select
                             value={this.state.valueLimitUnits}
-                            onChange={(e) => this.setState({ valueLimitUnits: e.target.value as Unit }, () => this.updateFeeds())}
+                            onChange={(e) => this.setState({ valueLimitUnits: e.target.value as Unit }, () => this.updateFeeds(true))}
                             selectSize="small"
                         >
                             <option value="i">i</option>
@@ -153,36 +165,39 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
 
     /**
      * Update the transaction feeds.
+     * @param save Save the settings.
      */
-    private async updateFeeds(): Promise<void> {
-        const limit = convertUnits(this.state.valueLimit, this.state.valueLimitUnits, Unit.i);
+    private async updateFeeds(save: boolean): Promise<void> {
+        if (this._mounted) {
+            const limit = convertUnits(this.state.valueLimit, this.state.valueLimitUnits, Unit.i);
 
-        this.setState({
-            mainnetTransactions: this._transactionsClient.getMainNetTransactions()
-                .filter(t => this.state.mainnetTransactions.findIndex(t2 => t2.hash === t.hash) < 0)
-                .concat(this.state.mainnetTransactions)
-                .filter(t => t.value >= -limit && t.value <= limit)
-                .filter(t => this.state.valueFilter === "both" ? true :
-                    this.state.valueFilter === "zeroOnly" ? t.value === 0 :
-                        t.value !== 0)
-                .slice(0, 10),
-            devnetTransactions: this._transactionsClient.getDevNetTransactions()
-                .filter(t => this.state.devnetTransactions.findIndex(t2 => t2.hash === t.hash) < 0)
-                .concat(this.state.devnetTransactions)
-                .filter(t => t.value >= -limit && t.value <= limit)
-                .filter(t => this.state.valueFilter === "both" ? true :
-                    this.state.valueFilter === "zeroOnly" ? t.value === 0 :
-                        t.value !== 0)
-                .slice(0, 10)
-        });
+            this.setState({
+                mainnetTransactions: this._transactionsClient.getMainNetTransactions()
+                    .filter(t => this.state.mainnetTransactions.findIndex(t2 => t2.hash === t.hash) < 0)
+                    .concat(this.state.mainnetTransactions)
+                    .filter(t => t.value >= -limit && t.value <= limit)
+                    .filter(t => this.state.valueFilter === "both" ? true :
+                        this.state.valueFilter === "zeroOnly" ? t.value === 0 :
+                            t.value !== 0)
+                    .slice(0, 10),
+                devnetTransactions: this._transactionsClient.getDevNetTransactions()
+                    .filter(t => this.state.devnetTransactions.findIndex(t2 => t2.hash === t.hash) < 0)
+                    .concat(this.state.devnetTransactions)
+                    .filter(t => t.value >= -limit && t.value <= limit)
+                    .filter(t => this.state.valueFilter === "both" ? true :
+                        this.state.valueFilter === "zeroOnly" ? t.value === 0 :
+                            t.value !== 0)
+                    .slice(0, 10)
+            });
 
-        const settings = await this._settingsService.get();
-        if (settings) {
-            settings.valueFilter = this.state.valueFilter;
-            settings.valueLimit = this.state.valueLimit;
-            settings.valueLimitUnits = this.state.valueLimitUnits;
+            const settings = await this._settingsService.get();
+            if (settings) {
+                settings.valueFilter = this.state.valueFilter;
+                settings.valueLimit = this.state.valueLimit;
+                settings.valueLimitUnits = this.state.valueLimitUnits;
 
-            await this._settingsService.save();
+                await this._settingsService.save();
+            }
         }
     }
 }
