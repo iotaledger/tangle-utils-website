@@ -9,6 +9,7 @@
     },
     "license": "MIT",
     "dependencies": {
+        "@iota/area-codes": "^0.1.0",
         "@iota/checksum": "^1.0.0-beta.16",
         "@iota/client-load-balancer": "github:iotaledger/client-load-balancer",
         "@iota/core": "^1.0.0-beta.16",
@@ -20,6 +21,7 @@
         "bluebird": "^3.5.5",
         "classnames": "^2.2.6",
         "curl.lib.js": "github:iotaledger/curl.lib.js",
+        "google-map-react": "^1.1.4",
         "iota-css-theme": "github:iotaledger/iota-css-theme",
         "iota-react-components": "github:iotaledger/iota-react-components",
         "moment": "^2.24.0",
@@ -49,6 +51,7 @@
     "devDependencies": {
         "@types/bluebird": "^3.5.27",
         "@types/classnames": "^2.2.8",
+        "@types/google-map-react": "^0.23.12",
         "@types/jest": "^24.0.15",
         "@types/node": "^12.0.8",
         "@types/react": "^16.8.22",

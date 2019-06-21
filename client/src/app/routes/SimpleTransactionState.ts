@@ -65,4 +65,9 @@ export interface SimpleTransactionState {
      * Is the component valid.
      */
     isValid: boolean;
+
+    /**
+     * Show the map.
+     */
+    showLocation: boolean;
 }

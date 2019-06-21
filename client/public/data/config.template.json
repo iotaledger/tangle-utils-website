@@ -24,5 +24,6 @@
             "mwm": 9
         }
     ],
+    "googleMapsKey": "GOOGLE-MAPS-KEY",
     "googleAnalyticsId": ""
 }

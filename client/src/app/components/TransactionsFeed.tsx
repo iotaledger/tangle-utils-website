@@ -190,13 +190,15 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                     .slice(0, 10)
             });
 
-            const settings = await this._settingsService.get();
-            if (settings) {
-                settings.valueFilter = this.state.valueFilter;
-                settings.valueLimit = this.state.valueLimit;
-                settings.valueLimitUnits = this.state.valueLimitUnits;
+            if (save) {
+                const settings = await this._settingsService.get();
+                if (settings) {
+                    settings.valueFilter = this.state.valueFilter;
+                    settings.valueLimit = this.state.valueLimit;
+                    settings.valueLimitUnits = this.state.valueLimitUnits;
 
-                await this._settingsService.save();
+                    await this._settingsService.save();
+                }
             }
         }
     }

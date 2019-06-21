@@ -9,6 +9,7 @@ import { PowHelper } from "../../helpers/powHelper";
 import { TextHelper } from "../../helpers/textHelper";
 import { NetworkType } from "../../models/services/networkType";
 import { TangleCacheService } from "../../services/tangleCacheService";
+import AreaCodeMap from "../components/AreaCodeMap";
 import "./SimpleTransaction.scss";
 import { SimpleTransactionState } from "./SimpleTransactionState";
 
@@ -43,7 +44,8 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
             status: "",
             isBusy: false,
             isErrored: false,
-            isValid: false
+            isValid: false,
+            showLocation: false
         };
     }
 
@@ -52,7 +54,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
      * @returns The node to render.
      */
     public render(): ReactNode {
-        const network = this.props.network === "mainnet" ? "" : `/${this.props.network}`;
+        const network = this.state.network === "mainnet" ? "" : `/${this.state.network}`;
 
         return (
             <div className="simple-transaction">
@@ -100,12 +102,22 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                             restrict="trytes"
                             disabled={this.state.isBusy}
                             maxLength={27}
-                            placeholder="Optional tag in trytes"
+                            placeholder="Optional tag in trytes, click Show Location to use Area Code"
                         />
+                        <Button disabled={this.state.isBusy} color="secondary" onClick={(e) => this.setState({ showLocation: !this.state.showLocation })}>
+                            {this.state.showLocation ? "Hide" : "Show"} Location
+                        </Button>
                     </Fieldset>
                     {this.state.tagValidation && (
                         <Fieldrow>
                             <div className="danger">{this.state.tagValidation}</div>
+                        </Fieldrow>
+                    )}
+                    {this.state.showLocation && (
+                        <Fieldrow>
+                            <div>Click on the map to populate the tag with an IOTA Area Code.</div>
+                            <br/>
+                            <AreaCodeMap iac={this.state.tag} onChanged={(iac) => this.setState({ tag: iac })} />
                         </Fieldrow>
                     )}
                     <Fieldset>

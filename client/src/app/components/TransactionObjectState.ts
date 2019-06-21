@@ -131,4 +131,9 @@ export interface TransactionObjectState {
      * Is the bundle being promoted.
      */
     isPromoting?: boolean;
+
+    /**
+     * Does the tag contain an area code.
+     */
+    iac?: string;
 }

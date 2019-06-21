@@ -14,6 +14,8 @@ import { SettingsService } from "../services/settingsService";
 import { TangleCacheService } from "../services/tangleCacheService";
 import { TransactionsClient } from "../services/transactionsClient";
 import { AppState } from "./AppState";
+import AreaCodes from "./routes/AreaCodes";
+import { AreaCodesProps } from "./routes/AreaCodesProps";
 import Compress from "./routes/Compress";
 import { CompressProps } from "./routes/CompressProps";
 import CurrencyConversion from "./routes/CurrencyConversion";
@@ -69,6 +71,8 @@ class App extends Component<RouteComponentProps, AppState> {
             const configService = new ConfigurationService<IConfiguration>();
             const configId = process.env.REACT_APP_CONFIG_ID || "local";
             const config = await configService.load(`/data/config.${configId}.json`);
+
+            config.googleMapsKey = config.googleMapsKey || "***REMOVED***";
 
             ServiceFactory.register("configuration", () => configService);
             ServiceFactory.register("local-storage", () => new LocalStorageService());
@@ -132,6 +136,7 @@ class App extends Component<RouteComponentProps, AppState> {
                     <Link className="link" to="/qr-create">QR Create</Link>
                     <Link className="link" to="/qr-scan">QR Scan</Link>
                     <Link className="link" to="/simple-transaction">Simple Transaction</Link>
+                    <Link className="link" to="/area-codes">Area Codes</Link>
                 </nav>
                 <SideMenu
                     isMenuOpen={this.state.isSideMenuOpen}
@@ -179,6 +184,10 @@ class App extends Component<RouteComponentProps, AppState> {
                                         {
                                             name: "Simple Transaction",
                                             link: "/simple-transaction"
+                                        },
+                                        {
+                                            name: "Area Codes",
+                                            link: "/area-codes"
                                         }
                                     ]
                                 }
@@ -246,6 +255,11 @@ class App extends Component<RouteComponentProps, AppState> {
                                 />
                                 <Route exact={true} path="/qr-scan" component={() => (<QRScan bust={Date.now()} />)} />
                                 <Route exact={true} path="/simple-transaction" component={() => (<SimpleTransaction bust={Date.now()} />)} />
+                                <Route
+                                    exact={true}
+                                    path="/area-codes/:iac?"
+                                    component={(props: AreaCodesProps) => (<AreaCodes {...props} bust={Date.now()} />)}
+                                />
                             </Switch>
                         )}
                     </LayoutAppSingle>

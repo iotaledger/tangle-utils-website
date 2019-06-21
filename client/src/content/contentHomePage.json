@@ -60,6 +60,10 @@
                 {
                     "href": "/simple-transaction",
                     "text": "Simple Transaction"
+                },
+                {
+                    "href": "/area-codes",
+                    "text": "Area Codes"
                 }
             ]
         },

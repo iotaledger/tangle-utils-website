@@ -1,3 +1,4 @@
+import * as IotaAreaCodes from "@iota/area-codes";
 import isBundle from "@iota/bundle-validator";
 import { addChecksum } from "@iota/checksum";
 import { trytesToTrits } from "@iota/converter";
@@ -66,6 +67,8 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             mwm++;
         }
 
+        const iac = transactionObject.tag.replace(/\9+$/, "");
+
         this.state = {
             transactionObject,
             confirmationState: "unknown",
@@ -81,7 +84,8 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             messageSpans: false,
             attachmentTime: moment(transactionObject.attachmentTimestamp),
             addressChecksum: addChecksum(transactionObject.address).substr(-9),
-            bundleResult: ""
+            bundleResult: "",
+            iac: IotaAreaCodes.isValid(iac) ? iac : ""
         };
     }
 
@@ -366,6 +370,17 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                     {this.state.transactionObject.obsoleteTag}</Link></div>
                             </div>
                         </div>
+                        {this.state.iac && (
+                            <div className="row">
+                                <div className="col">
+                                    <div className="label">Area Code</div>
+                                    <div className="value">
+                                        <Link className="button button--secondary button--small" to={`/area-codes/${this.state.iac}`}>View Map</Link>
+                                        The Tag contains an IOTA Area Code which can be viewed.
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         {!this.state.messageShowRaw && (
                             <div className="row top">
                                 <div className="col top fill">

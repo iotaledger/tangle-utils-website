@@ -21,6 +21,7 @@ You should copy `./public/data/config.template.json` to `./public/data/config.lo
             "mwm": 9                                /* MWM to use for attaches */
         }
     ],
+    "googleMapsKey": "GOOGLE-MAPS-KEY",             /* Key for using with Google maps API */
     "googleAnalyticsId": "GOOGLE-ANALYTICS-ID"      /* Optional, google analytics id */
 }
 ```

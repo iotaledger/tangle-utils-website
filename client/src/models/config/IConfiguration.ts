@@ -17,6 +17,11 @@ export interface IConfiguration {
     nodesDevnet: INodeConfiguration[];
 
     /**
+     * The google maps key.
+     */
+    googleMapsKey: string;
+
+    /**
      * The google analytics id.
      */
     googleAnalyticsId: string;

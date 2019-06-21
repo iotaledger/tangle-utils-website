@@ -12,9 +12,9 @@ import { NetworkType } from "../models/services/networkType";
  */
 export class TangleCacheService {
     /**
-     * Timeout for stale cached items (10 mins).
+     * Timeout for stale cached items (5 mins).
      */
-    private readonly STALE_TIME: number = 600000;
+    private readonly STALE_TIME: number = 300000;
 
     /**
      * The cache for the transactions.
@@ -40,6 +40,10 @@ export class TangleCacheService {
                  * The time of cache.
                  */
                 cached: number;
+                /**
+                 * Did we manualy add this transaction.
+                 */
+                manual: boolean;
             }
         }
     };
@@ -137,11 +141,6 @@ export class TangleCacheService {
     private _lastestSolidSubtangleMilestone: string;
 
     /**
-     * Timer if for clearing stale items.
-     */
-    private _staleTimer?: NodeJS.Timer;
-
-    /**
      * Create a new instance of TangleCacheService.
      */
     constructor() {
@@ -175,7 +174,9 @@ export class TangleCacheService {
 
         this._lastestSolidSubtangleMilestoneCached = Date.now();
         this._lastestSolidSubtangleMilestone = "";
-        this._staleTimer = setInterval(() => this.staleCheck(), 60000); // 1 min
+
+        // Check for stale cache items every minute
+        setInterval(() => this.staleCheck(), 60000);
     }
 
     /**
@@ -190,7 +191,7 @@ export class TangleCacheService {
         let doLookup = true;
 
         if (this._findCache[network][hashType][hash]) {
-            // If the cache item was added less than use it.
+            // If the cache item was added less than a minute ago then use it.
             if (Date.now() - this._findCache[network][hashType][hash].cached < 60000) {
                 doLookup = false;
                 transactionHashes = this._findCache[network][hashType][hash].transactionHashes;
@@ -238,12 +239,18 @@ export class TangleCacheService {
                         this._transactionCache[network][unknownHashes[i]] =
                             this._transactionCache[network][unknownHashes[i]] || {};
                         this._transactionCache[network][unknownHashes[i]].trytes = response[i];
-                        this._transactionCache[network][unknownHashes[i]].cached = Date.now();
                         this._transactionCache[network][unknownHashes[i]].confirmedState =
                             this._transactionCache[network][unknownHashes[i]].confirmedState || "unknown";
                     }
                 }
             } catch (err) {
+            }
+        }
+
+        for (let i = 0; i < hashes.length; i++) {
+            if (this._transactionCache[network][hashes[i]]) {
+                this._transactionCache[network][hashes[i]].cached = now;
+                this._transactionCache[network][hashes[i]].manual = false;
             }
         }
 
@@ -263,8 +270,22 @@ export class TangleCacheService {
             this._transactionCache[network][hashes[i]] = {
                 trytes: trytes[i],
                 cached: now,
-                confirmedState: "unknown"
+                confirmedState: "unknown",
+                manual: true
             };
+        }
+    }
+
+    /**
+     * Manually remove transactions from the cache
+     * @param hashes The hashes of the transactions to cache.
+     * @param network Which network are we getting the transactions for.
+     */
+    public removeTransactions(hashes: ReadonlyArray<string>, network: NetworkType): void {
+        for (let i = 0; i < hashes.length; i++) {
+            if (this._transactionCache[network][hashes[i]] && this._transactionCache[network][hashes[i]].manual) {
+                delete this._transactionCache[network][hashes[i]];
+            }
         }
     }
 
@@ -526,7 +547,7 @@ export class TangleCacheService {
 
         for (const net in this._transactionCache) {
             for (const tx in this._transactionCache[net]) {
-                if (now - this._transactionCache[net][tx].cached >= this.STALE_TIME)  {
+                if (now - this._transactionCache[net][tx].cached >= this.STALE_TIME) {
                     delete this._transactionCache[net][tx];
                 }
             }
@@ -535,7 +556,7 @@ export class TangleCacheService {
         for (const net in this._findCache) {
             for (const hashType in this._findCache[net]) {
                 for (const hash in this._findCache[net][hashType]) {
-                    if (now - this._findCache[net][hashType][hash].cached >= this.STALE_TIME)  {
+                    if (now - this._findCache[net][hashType][hash].cached >= this.STALE_TIME) {
                         delete this._findCache[net][hashType][hash];
                     }
                 }
@@ -544,7 +565,7 @@ export class TangleCacheService {
 
         for (const net in this._addressBalances) {
             for (const address in this._addressBalances[net]) {
-                if (now - this._addressBalances[net][address].cached >= this.STALE_TIME)  {
+                if (now - this._addressBalances[net][address].cached >= this.STALE_TIME) {
                     delete this._addressBalances[net][address];
                 }
             }
@@ -552,7 +573,7 @@ export class TangleCacheService {
 
         for (const net in this._mam) {
             for (const root in this._mam[net]) {
-                if (now - this._mam[net][root].cached >= this.STALE_TIME)  {
+                if (now - this._mam[net][root].cached >= this.STALE_TIME) {
                     delete this._mam[net][root];
                 }
             }
