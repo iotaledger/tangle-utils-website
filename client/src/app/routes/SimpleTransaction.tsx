@@ -1,4 +1,5 @@
 import { composeAPI, LoadBalancerSettings } from "@iota/client-load-balancer";
+import { asTransactionTrytes } from "@iota/transaction-converter";
 import { isTrytesOfExactLength, isTrytesOfMaxLength } from "@iota/validators";
 import { Button, Fieldrow, Fieldset, Form, FormActions, FormStatus, Heading, Input, Select, Success, TextArea } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
@@ -7,6 +8,7 @@ import { ServiceFactory } from "../../factories/serviceFactory";
 import { PowHelper } from "../../helpers/powHelper";
 import { TextHelper } from "../../helpers/textHelper";
 import { NetworkType } from "../../models/services/networkType";
+import { TangleCacheService } from "../../services/tangleCacheService";
 import "./SimpleTransaction.scss";
 import { SimpleTransactionState } from "./SimpleTransactionState";
 
@@ -15,16 +17,24 @@ import { SimpleTransactionState } from "./SimpleTransactionState";
  */
 class SimpleTransaction extends Component<any, SimpleTransactionState> {
     /**
+     * The tangle cache service.
+     */
+    private readonly _tangleCacheService: TangleCacheService;
+
+    /**
      * Create a new instance of SimpleTransaction.
      * @param props The props.
      */
     constructor(props: any) {
         super(props);
 
+        this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
+
         this.state = {
             tag: "",
             tagValidation: "",
             message: "",
+            transactionCount: 1,
             address: "",
             addressValidation: "",
             network: "mainnet",
@@ -69,12 +79,18 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                         <label>Message</label>
                         <TextArea
                             value={this.state.message}
-                            onChange={(e) => this.setState({ message: e.target.value })}
+                            onChange={(e) => this.setState({ message: e.target.value }, () => {
+                                const trytes = TextHelper.toTrytes(this.state.message);
+                                this.setState({ transactionCount: Math.ceil(trytes.length / 2187) });
+                            })}
                             disabled={this.state.isBusy}
                             rows={10}
                             placeholder="Message in plain text"
                         />
                     </Fieldset>
+                    <Fieldrow>
+                        <div>This message will occupy {this.state.transactionCount} transaction{this.state.transactionCount > 1 ? "s" : ""} on the tangle.</div>
+                    </Fieldrow>
                     <Fieldset>
                         <label>Tag</label>
                         <Input
@@ -175,6 +191,8 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
 
                     // Use 0 for depth and mwm, the load balancer will replace with sensible values
                     const txs = await api.sendTrytes(preparedTrytes, 0, 0);
+
+                    this._tangleCacheService.addTransactions(txs.map(t => t.hash), asTransactionTrytes(txs), this.state.network);
 
                     this.setState(
                         {

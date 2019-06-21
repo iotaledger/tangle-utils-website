@@ -137,24 +137,21 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                     bundleResult = `Transfers IOTA from ${pos} input address${pos > 1 ? "s" : ""} to ${neg} output address${neg > 1 ? "s" : ""}.`;
                 }
 
-                // If we are viewing the first index in the bundle see if we can
-                // create a longer message using all of the transactions in this group
+                // See if we can create a longer message using all of the transactions in this group
                 let message = this.state.message;
                 let messageType = this.state.messageType;
                 let messageSpans = this.state.messageSpans;
 
-                if (this.state.transactionObject.currentIndex === 0) {
-                    const wholeMessage = thisGroup.map(t => t.signatureMessageFragment).join("");
+                const wholeMessage = thisGroup.map(t => t.signatureMessageFragment).join("");
 
-                    const wholeDecoded = TrytesHelper.decodeMessage(wholeMessage);
+                const wholeDecoded = TrytesHelper.decodeMessage(wholeMessage);
 
-                    if ((wholeDecoded.messageType === "ASCII" ||
-                        wholeDecoded.messageType === "JSON") &&
-                        wholeDecoded.message !== this.state.message) {
-                        message = wholeDecoded.message;
-                        messageType = wholeDecoded.messageType;
-                        messageSpans = true;
-                    }
+                if ((wholeDecoded.messageType === "ASCII" ||
+                    wholeDecoded.messageType === "JSON") &&
+                    wholeDecoded.message !== this.state.message) {
+                    message = wholeDecoded.message;
+                    messageType = wholeDecoded.messageType;
+                    messageSpans = true;
                 }
 
                 const isValid = isBundle(thisGroup);
@@ -385,11 +382,11 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                 </div>
                             </div>
                         )}
-                        {this.state.messageSpans && (
+                        {this.state.messageSpans && !this.state.messageShowRaw && (
                             <div className="row">
                                 <div className="col">
                                     <div className="label">&nbsp;</div>
-                                    <div className="value fill">This message was constructed using all of the fragments in the bundle.</div>
+                                    <div className="value fill strong info">This message spans multiple transactions in the bundle.</div>
                                 </div>
                             </div>
                         )}
@@ -403,7 +400,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                             size="small"
                                             onClick={() => this.setState({ messageShowRaw: !this.state.messageShowRaw })}
                                         >
-                                            {this.state.messageShowRaw ? "Hide" : "Show"} Raw
+                                            {this.state.messageShowRaw ? `Show ${this.state.messageType}` : "Show Trytes"}
                                         </Button>
                                         <Button
                                             color="secondary"
@@ -475,6 +472,13 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                     <div className="col">
                                         <div className="label">&nbsp;</div>
                                         <div className="value">
+                                            <Button
+                                                color="secondary"
+                                                size="small"
+                                                onClick={() => ClipboardHelper.copy(this.props.trytes)}
+                                            >
+                                                Copy
+                                            </Button>
                                             <Link className="button button--secondary button--small" to={`/compress/${this.props.trytes}`}>View Compression Statistics</Link>
                                         </div>
                                     </div>

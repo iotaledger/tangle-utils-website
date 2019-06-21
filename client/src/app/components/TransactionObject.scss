@@ -105,6 +105,10 @@
         background-color: var(--danger);
       }
 
+      &.strong {
+          font-weight: 600;
+      }
+
       .button {
         margin-left: 0px;
       }
@@ -141,6 +145,7 @@
       margin: 0;
       white-space: pre-wrap;
       overflow: auto;
+      max-height: 200px;
 
       &.ascii,
       &.json,

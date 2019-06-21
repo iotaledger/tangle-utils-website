@@ -77,13 +77,13 @@ class App extends Component<RouteComponentProps, AppState> {
 
             const loadBalancerSettingsMainNet: LoadBalancerSettings = {
                 nodeWalkStrategy: new RandomWalkStrategy(config.nodesMainnet),
-                timeoutMs: 60000
+                timeoutMs: 20000
             };
             ServiceFactory.register("load-balancer-mainnet", () => loadBalancerSettingsMainNet);
 
             const loadBalancerSettingsDevNet: LoadBalancerSettings = {
                 nodeWalkStrategy: new RandomWalkStrategy(config.nodesDevnet),
-                timeoutMs: 60000
+                timeoutMs: 20000
             };
             ServiceFactory.register("load-balancer-devnet", () => loadBalancerSettingsDevNet);
 

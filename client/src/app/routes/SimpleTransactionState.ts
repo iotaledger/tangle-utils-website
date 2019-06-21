@@ -17,6 +17,11 @@ export interface SimpleTransactionState {
     message: string;
 
     /**
+     * Number of transaction required.
+     */
+    transactionCount: number;
+
+    /**
      * Address.
      */
     address: string;

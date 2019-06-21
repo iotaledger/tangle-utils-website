@@ -12,6 +12,7 @@ export class PowHelper {
      */
     public static attachLocalPow(loadBalancerSettings: LoadBalancerSettings): void {
         loadBalancerSettings.attachToTangle = PowHelper.localPow as any;
+        loadBalancerSettings.timeoutMs = 300000; // 5 Mins
     }
 
     /**
@@ -20,6 +21,7 @@ export class PowHelper {
      */
     public static dettachLocalPow(loadBalancerSettings: LoadBalancerSettings): void {
         loadBalancerSettings.attachToTangle = undefined;
+        loadBalancerSettings.timeoutMs = 20000; // Default 20s
     }
 
     /**

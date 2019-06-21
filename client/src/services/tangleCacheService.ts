@@ -251,6 +251,24 @@ export class TangleCacheService {
     }
 
     /**
+     * Manually add transactions to the cache
+     * @param hashes The hashes of the transactions to cache.
+     * @param trytes The trytes of the transactions to cache.
+     * @param network Which network are we getting the transactions for.
+     */
+    public addTransactions(hashes: ReadonlyArray<string>, trytes: ReadonlyArray<string>, network: NetworkType): void {
+        const now = Date.now();
+
+        for (let i = 0; i < hashes.length; i++) {
+            this._transactionCache[network][hashes[i]] = {
+                trytes: trytes[i],
+                cached: now,
+                confirmedState: "unknown"
+            };
+        }
+    }
+
+    /**
      * Get the include state for the transaction.
      * @param hashes The hashes to get the inclusion state.
      * @param network Which network are we getting the transactions for.
