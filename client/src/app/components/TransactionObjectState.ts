@@ -24,14 +24,19 @@ export interface TransactionObjectState {
     isMissing: boolean;
 
     /**
-     * Formatted value.
+     * Value in iota.
      */
-    value: string;
+    value: number;
 
     /**
      * Formatted value.
      */
-    valueIota: number;
+    valueFormatted: string;
+
+    /**
+     * Formatted value.
+     */
+    valueIota: string;
 
     /**
      * Formatted value in currency.

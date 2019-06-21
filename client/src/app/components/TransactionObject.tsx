@@ -59,8 +59,9 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             transactionObject,
             confirmationState: "unknown",
             time: moment(transactionObject.timestamp * 1000),
-            value: UnitsHelper.formatBest(transactionObject.value, false),
-            valueIota: transactionObject.value,
+            value: transactionObject.value,
+            valueFormatted: UnitsHelper.formatBest(transactionObject.value, false),
+            valueIota: `${transactionObject.value} i`,
             currencies: [],
             isMissing: this.props.hideInteractive ? false : isEmpty(this.props.trytes),
             message: decoded.message,
@@ -91,7 +92,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         if (this._mounted) {
                             this.setState({
                                 valueConverted: await this._currencyService.currencyConvert(
-                                    this.state.valueIota,
+                                    this.state.value,
                                     {
                                         fiatCode: this.state.fiatCode || "EUR",
                                         currencies: this.state.currencies,
@@ -228,8 +229,10 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             <div className="col">
                                 <div className="label">Value</div>
                                 <div className="value">
-                                    <span className="currency">{this.state.value}</span>
-                                    <span className="currency">{this.state.valueIota} i</span>
+                                    <span className="currency">{this.state.valueFormatted}</span>
+                                    {this.state.valueFormatted !== this.state.valueIota && (
+                                        <span className="currency">{this.state.valueIota}</span>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -245,7 +248,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                                     this.setState(
                                                         {
                                                             valueConverted: await this._currencyService.currencyConvert(
-                                                                this.state.valueIota,
+                                                                this.state.value,
                                                                 {
                                                                     fiatCode: this.state.fiatCode || "EUR",
                                                                     currencies: this.state.currencies,
