@@ -140,6 +140,9 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                     {!this.state.apiLoaded && (
                         <Spinner />
                     )}
+                    {this.props.disabled && (
+                        <div className="area-code-map--disabled-overlay" />
+                    )}
                     <GoogleMapReact
                         bootstrapURLKeys={{ key: this._configuration.googleMapsKey }}
                         defaultCenter={{
@@ -160,6 +163,7 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                 </div>
                 <div className="area-code-map--actions">
                     <Button
+                        disabled={this.props.disabled}
                         onClick={
                             () => this.setState(
                                 { zoom: this.DEFAULT_ZOOM },
@@ -174,7 +178,12 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                     >
                         Reset
                     </Button>
-                    <Button onClick={() => this.getLocation()}>My Location</Button>
+                    <Button
+                        disabled={this.props.disabled}
+                        onClick={() => this.getLocation()}
+                    >
+                        My Location
+                    </Button>
                     {this.state.findingLocation && (
                         <Spinner size="small" />
                     )}

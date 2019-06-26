@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.1
+
+* Added IOTA Area Codes
+* Added Location to Simple Transaction
+* Added tag detection for area codes
+* Added WebGL Detection in Simple Transaction
+
 ## v0.2.0
 
 * Added Simple Transactions

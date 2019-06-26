@@ -148,7 +148,11 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                 <Fieldrow>
                                     <div>Click on the map to populate the tag with an IOTA Area Code.</div>
                                     <br />
-                                    <AreaCodeMap iac={this.state.tag} onChanged={(iac) => this.setState({ tag: iac })} />
+                                    <AreaCodeMap
+                                        disabled={this.state.isBusy}
+                                        iac={this.state.tag}
+                                        onChanged={(iac) => this.setState({ tag: iac })}
+                                    />
                                 </Fieldrow>
                             )}
                             <Fieldset>

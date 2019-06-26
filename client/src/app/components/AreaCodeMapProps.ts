@@ -5,6 +5,11 @@ export interface AreaCodeMapProps {
     iac: string;
 
     /**
+     * The component is disabled.
+     */
+    disabled?: boolean;
+
+    /**
      * The location has changed.
      */
     onChanged(iac: string): void;
