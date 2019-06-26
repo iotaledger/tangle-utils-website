@@ -33,4 +33,9 @@ export interface AreaCodeMapState {
      * Has the api loaded
      */
     apiLoaded: boolean;
+
+    /**
+     * Are we finding the location.
+     */
+    findingLocation: boolean;
 }

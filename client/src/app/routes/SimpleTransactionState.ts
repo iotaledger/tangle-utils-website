@@ -70,4 +70,9 @@ export interface SimpleTransactionState {
      * Show the map.
      */
     showLocation: boolean;
+
+    /**
+     * Is PoW available in the browser.
+     */
+    isPowAvailable: boolean;
 }

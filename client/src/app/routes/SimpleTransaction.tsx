@@ -8,6 +8,7 @@ import { ServiceFactory } from "../../factories/serviceFactory";
 import { PowHelper } from "../../helpers/powHelper";
 import { TextHelper } from "../../helpers/textHelper";
 import { NetworkType } from "../../models/services/networkType";
+import { SettingsService } from "../../services/settingsService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import AreaCodeMap from "../components/AreaCodeMap";
 import "./SimpleTransaction.scss";
@@ -23,6 +24,11 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
     private readonly _tangleCacheService: TangleCacheService;
 
     /**
+     * The service to store settings.
+     */
+    private readonly _settingsService: SettingsService;
+
+    /**
      * Create a new instance of SimpleTransaction.
      * @param props The props.
      */
@@ -30,6 +36,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
         super(props);
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
+        this._settingsService = ServiceFactory.get<SettingsService>("settings");
 
         this.state = {
             tag: "",
@@ -45,8 +52,23 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
             isBusy: false,
             isErrored: false,
             isValid: false,
-            showLocation: false
+            showLocation: false,
+            isPowAvailable: false
         };
+    }
+
+    /**
+     * The component mounted.
+     */
+    public async componentDidMount(): Promise<void> {
+        const settings = await this._settingsService.get();
+
+        if (settings.isMapExpanded) {
+            this.setState({ showLocation: settings.isMapExpanded });
+        }
+
+        const isPowAvailable = PowHelper.isAvailable();
+        this.setState({ isPowAvailable });
     }
 
     /**
@@ -59,97 +81,108 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
         return (
             <div className="simple-transaction">
                 <Heading level={1}>Simple Transaction</Heading>
-                <p>Attach a simple zero value message transaction to the tangle, using Proof Of Work in your browser.</p>
-                <Form>
-                    <Fieldset>
-                        <label>Address</label>
-                        <Input
-                            type="text"
-                            value={this.state.address}
-                            onChange={(e) => this.setState({ address: e.target.value }, () => this.validate())}
-                            restrict="trytes"
-                            disabled={this.state.isBusy}
-                            placeholder="Address to attach the message"
-                        />
-                    </Fieldset>
-                    {this.state.addressValidation && (
-                        <Fieldrow>
-                            <div className="danger">{this.state.addressValidation}</div>
-                        </Fieldrow>
-                    )}
-                    <Fieldset>
-                        <label>Message</label>
-                        <TextArea
-                            value={this.state.message}
-                            onChange={(e) => this.setState({ message: e.target.value }, () => {
-                                const trytes = TextHelper.toTrytes(this.state.message);
-                                this.setState({ transactionCount: Math.ceil(trytes.length / 2187) });
-                            })}
-                            disabled={this.state.isBusy}
-                            rows={10}
-                            placeholder="Message in plain text"
-                        />
-                    </Fieldset>
-                    <Fieldrow>
-                        <div>This message will occupy {this.state.transactionCount} transaction{this.state.transactionCount > 1 ? "s" : ""} on the tangle.</div>
-                    </Fieldrow>
-                    <Fieldset>
-                        <label>Tag</label>
-                        <Input
-                            type="text"
-                            value={this.state.tag}
-                            onChange={(e) => this.setState({ tag: e.target.value }, () => this.validate())}
-                            restrict="trytes"
-                            disabled={this.state.isBusy}
-                            maxLength={27}
-                            placeholder="Optional tag in trytes, click Show Location to use Area Code"
-                        />
-                        <Button disabled={this.state.isBusy} color="secondary" onClick={(e) => this.setState({ showLocation: !this.state.showLocation })}>
-                            {this.state.showLocation ? "Hide" : "Show"} Location
-                        </Button>
-                    </Fieldset>
-                    {this.state.tagValidation && (
-                        <Fieldrow>
-                            <div className="danger">{this.state.tagValidation}</div>
-                        </Fieldrow>
-                    )}
-                    {this.state.showLocation && (
-                        <Fieldrow>
-                            <div>Click on the map to populate the tag with an IOTA Area Code.</div>
-                            <br/>
-                            <AreaCodeMap iac={this.state.tag} onChanged={(iac) => this.setState({ tag: iac })} />
-                        </Fieldrow>
-                    )}
-                    <Fieldset>
-                        <label>Network</label>
-                        <Select
-                            value={this.state.network}
-                            onChange={(e) => this.setState({ network: e.target.value as NetworkType })}
-                            selectSize="small"
-                            disabled={this.state.isBusy}
-                        >
-                            <option value="mainnet">MainNet</option>
-                            <option value="devnet">DevNet</option>
-                        </Select>
-                    </Fieldset>
-                    <FormActions>
-                        <Button disabled={this.state.isBusy || !this.state.isValid} onClick={() => this.attachMessage()}>Attach Message</Button>
-                    </FormActions>
-                    <FormStatus message={this.state.status} isBusy={this.state.isBusy} isError={this.state.isErrored} />
-                    {this.state.transactionHash && (
-                        <React.Fragment>
+                {!this.state.isPowAvailable && (
+                    <p>Sorry, WebGL is not available in your browser, you can not send a simple transaction using local PoW.</p>
+                )}
+                {this.state.isPowAvailable && (
+                    <React.Fragment>
+                        <p>Attach a simple zero value message transaction to the tangle, using Proof Of Work in your browser.</p>
+                        <Form>
+                            <Fieldset>
+                                <label>Address</label>
+                                <Input
+                                    type="text"
+                                    value={this.state.address}
+                                    onChange={(e) => this.setState({ address: e.target.value }, () => this.validate())}
+                                    restrict="trytes"
+                                    disabled={this.state.isBusy}
+                                    placeholder="Address to attach the message"
+                                />
+                            </Fieldset>
+                            {this.state.addressValidation && (
+                                <Fieldrow>
+                                    <div className="danger">{this.state.addressValidation}</div>
+                                </Fieldrow>
+                            )}
+                            <Fieldset>
+                                <label>Message</label>
+                                <TextArea
+                                    value={this.state.message}
+                                    onChange={(e) => this.setState({ message: e.target.value }, () => {
+                                        const trytes = TextHelper.toTrytes(this.state.message);
+                                        this.setState({ transactionCount: Math.ceil(trytes.length / 2187) });
+                                    })}
+                                    disabled={this.state.isBusy}
+                                    rows={10}
+                                    placeholder="Message in plain text"
+                                />
+                            </Fieldset>
                             <Fieldrow>
-                                <div className="row-success">
-                                    <Success />
-                                    <div>The transaction was successfully created.</div>
-                                </div>
+                                <div>This message will occupy {this.state.transactionCount} transaction{this.state.transactionCount > 1 ? "s" : ""} on the tangle.</div>
                             </Fieldrow>
-                            <Fieldrow>
-                                <Link to={`/transaction/${this.state.transactionHash}${network}`}>{this.state.transactionHash}</Link>
-                            </Fieldrow>
-                        </React.Fragment>
-                    )}
-                </Form>
+                            <Fieldset>
+                                <label>Tag</label>
+                                <Input
+                                    type="text"
+                                    value={this.state.tag}
+                                    onChange={(e) => this.setState({ tag: e.target.value }, () => this.validate())}
+                                    restrict="trytes"
+                                    disabled={this.state.isBusy}
+                                    maxLength={27}
+                                    placeholder="Optional tag in trytes, click Show Location to use Area Code"
+                                />
+                                <Button
+                                    disabled={this.state.isBusy}
+                                    color="secondary"
+                                    onClick={(e) => this.setState({ showLocation: !this.state.showLocation }, () => this.saveSettings())}
+                                >
+                                    {this.state.showLocation ? "Hide" : "Show"} Location
+                                </Button>
+                            </Fieldset>
+                            {this.state.tagValidation && (
+                                <Fieldrow>
+                                    <div className="danger">{this.state.tagValidation}</div>
+                                </Fieldrow>
+                            )}
+                            {this.state.showLocation && (
+                                <Fieldrow>
+                                    <div>Click on the map to populate the tag with an IOTA Area Code.</div>
+                                    <br />
+                                    <AreaCodeMap iac={this.state.tag} onChanged={(iac) => this.setState({ tag: iac })} />
+                                </Fieldrow>
+                            )}
+                            <Fieldset>
+                                <label>Network</label>
+                                <Select
+                                    value={this.state.network}
+                                    onChange={(e) => this.setState({ network: e.target.value as NetworkType })}
+                                    selectSize="small"
+                                    disabled={this.state.isBusy}
+                                >
+                                    <option value="mainnet">MainNet</option>
+                                    <option value="devnet">DevNet</option>
+                                </Select>
+                            </Fieldset>
+                            <FormActions>
+                                <Button disabled={this.state.isBusy || !this.state.isValid} onClick={() => this.attachMessage()}>Attach Message</Button>
+                            </FormActions>
+                            <FormStatus message={this.state.status} isBusy={this.state.isBusy} isError={this.state.isErrored} />
+                            {this.state.transactionHash && (
+                                <React.Fragment>
+                                    <Fieldrow>
+                                        <div className="row-success">
+                                            <Success />
+                                            <div>The transaction was successfully created.</div>
+                                        </div>
+                                    </Fieldrow>
+                                    <Fieldrow>
+                                        <Link to={`/transaction/${this.state.transactionHash}${network}`}>{this.state.transactionHash}</Link>
+                                    </Fieldrow>
+                                </React.Fragment>
+                            )}
+                        </Form>
+                    </React.Fragment>
+                )}
             </div>
         );
     }
@@ -227,6 +260,15 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
 
                 PowHelper.dettachLocalPow(loadBalancerSettings);
             });
+    }
+
+    /**
+     * Save the map settings.
+     */
+    private async saveSettings(): Promise<void> {
+        const settings = await this._settingsService.get();
+        settings.isMapExpanded = this.state.showLocation;
+        await this._settingsService.save();
     }
 }
 

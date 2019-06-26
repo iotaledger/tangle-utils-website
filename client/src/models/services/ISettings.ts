@@ -1,8 +1,9 @@
 import { Unit } from "@iota/unit-converter";
 import { ICurrencySettings } from "./ICurrencySettings";
+import { IMapSettings } from "./IMapSettings";
 import { ValueFilter } from "./valueFilter";
 
-export interface ISettings extends ICurrencySettings {
+export interface ISettings extends ICurrencySettings, IMapSettings {
     /**
      * Value filter for feeds.
      */
@@ -17,4 +18,9 @@ export interface ISettings extends ICurrencySettings {
      * Value limit units for feeds.
      */
     valueLimitUnits?: Unit;
+
+    /**
+     * Map expanded.
+     */
+    isMapExpanded?: boolean;
 }

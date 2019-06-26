@@ -1,10 +1,11 @@
 import * as IotaAreaCodes from "@iota/area-codes";
 import GoogleMapReact, { ClickEventValue } from "google-map-react";
-import { Spinner } from "iota-react-components";
+import { Button, Spinner } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { IConfiguration } from "../../models/config/IConfiguration";
 import { ConfigurationService } from "../../services/configurationService";
+import { SettingsService } from "../../services/settingsService";
 import "./AreaCodeMap.scss";
 import { AreaCodeMapProps } from "./AreaCodeMapProps";
 import { AreaCodeMapState } from "./AreaCodeMapState";
@@ -13,6 +14,26 @@ import { AreaCodeMapState } from "./AreaCodeMapState";
  * Component which will show simple area codes.
  */
 class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
+    /**
+     * The default longitude for map.
+     */
+    private readonly DEFAULT_LONGITUDE: number = 13.413047;
+
+    /**
+     * The default latitude for map.
+     */
+    private readonly DEFAULT_LATITUDE: number = 52.529562;
+
+    /**
+     * The default zoom for map.
+     */
+    private readonly DEFAULT_ZOOM: number = 17;
+
+    /**
+     * The service to store settings.
+     */
+    private readonly _settingsService: SettingsService;
+
     /**
      * The configuration.
      */
@@ -34,6 +55,11 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
     private _highlight: any;
 
     /**
+     * Is the component mounted.
+     */
+    private _mounted: boolean;
+
+    /**
      * Create a new instance of AreaCodeMap.
      * @param props The props.
      */
@@ -41,26 +67,63 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
         super(props);
 
         this._configuration = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration").get();
+        this._settingsService = ServiceFactory.get<SettingsService>("settings");
+        this._mounted = false;
 
         this.state = {
             areaCode: this.props.iac,
-            apiLoaded: false
+            apiLoaded: false,
+            findingLocation: false
         };
+    }
+
+    /**
+     * The component mounted.
+     */
+    public async componentDidMount(): Promise<void> {
+        this._mounted = true;
+
+        const settings = await this._settingsService.get();
+
+        if (settings.longitude && settings.latitude && this._mounted) {
+            const iac = IotaAreaCodes.encode(
+                settings.latitude,
+                settings.longitude,
+                IotaAreaCodes.CodePrecision.NORMAL
+            );
+            this.setState(
+                {
+                    areaCode: iac,
+                    zoom: settings.zoom || this.DEFAULT_ZOOM
+                },
+                async () => {
+                    if (this.state.apiLoaded) {
+                        await this.updateIac(this.state.areaCode, false);
+                    }
+                });
+        }
+    }
+
+    /**
+     * The component will unmount from the dom.
+     */
+    public async componentWillUnmount(): Promise<void> {
+        this._mounted = false;
     }
 
     /**
      * The component performed an update.
      * @param prevProps The previous properties.
      */
-    public componentDidUpdate(prevProps: AreaCodeMapProps): void {
-        if (prevProps.iac !== this.props.iac) {
+    public async componentDidUpdate(prevProps: AreaCodeMapProps): Promise<void> {
+        if (prevProps.iac !== this.props.iac && this.props.iac) {
             this.setState(
                 {
                     areaCode: this.props.iac
                 },
-                () => {
+                async () => {
                     if (this.state.apiLoaded) {
-                        this.updateIac(this.state.areaCode);
+                        await this.updateIac(this.state.areaCode, false);
                     }
                 });
         }
@@ -73,27 +136,50 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
     public render(): ReactNode {
         return (
             <div className="area-code-map">
-                {!this.state.apiLoaded && (
-                    <Spinner />
-                )}
-                <GoogleMapReact
-                    bootstrapURLKeys={{ key: this._configuration.googleMapsKey }}
-                    defaultCenter={{
-                        lat: 52.529562,
-                        lng: 13.413047
-                    }}
-                    center={{
-                        lat: this.state.latitude || 52.529562,
-                        lng: this.state.longitude || 13.413047
-                    }}
-                    defaultZoom={19}
-                    zoom={this.state.zoom || 19}
-                    onClick={(e) => this.mapClicked(e)}
-                    onGoogleApiLoaded={(e) => this.apiLoaded(e.map, e.maps)}
-                    yesIWantToUseGoogleMapApiInternals={true}
-                    onChange={(e) => this.setState({ zoom: e.zoom })}
-                />
-            </div>
+                <div className="area-code-map--map-container">
+                    {!this.state.apiLoaded && (
+                        <Spinner />
+                    )}
+                    <GoogleMapReact
+                        bootstrapURLKeys={{ key: this._configuration.googleMapsKey }}
+                        defaultCenter={{
+                            lat: this.DEFAULT_LATITUDE,
+                            lng: this.DEFAULT_LONGITUDE
+                        }}
+                        center={{
+                            lat: this.state.latitude || this.DEFAULT_LATITUDE,
+                            lng: this.state.longitude || this.DEFAULT_LONGITUDE
+                        }}
+                        defaultZoom={this.DEFAULT_ZOOM}
+                        zoom={this.state.zoom || this.DEFAULT_ZOOM}
+                        onClick={(e) => this.mapClicked(e)}
+                        onGoogleApiLoaded={(e) => this.apiLoaded(e.map, e.maps)}
+                        yesIWantToUseGoogleMapApiInternals={true}
+                        onChange={(e) => this.setState({ zoom: e.zoom }, () => this.saveSettings())}
+                    />
+                </div>
+                <div className="area-code-map--actions">
+                    <Button
+                        onClick={
+                            () => this.setState(
+                                { zoom: this.DEFAULT_ZOOM },
+                                () => this.updateIac(
+                                    IotaAreaCodes.encode(
+                                        this.DEFAULT_LATITUDE,
+                                        this.DEFAULT_LONGITUDE,
+                                        IotaAreaCodes.CodePrecision.NORMAL
+                                    ),
+                                    false)
+                            )}
+                    >
+                        Reset
+                    </Button>
+                    <Button onClick={() => this.getLocation()}>My Location</Button>
+                    {this.state.findingLocation && (
+                        <Spinner size="small" />
+                    )}
+                </div>
+            </div >
         );
     }
 
@@ -102,28 +188,34 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
      * @param map The map object.
      * @param maps The maps object.
      */
-    private apiLoaded(map: any, maps: any): void {
+    private async apiLoaded(map: any, maps: any): Promise<void> {
         this._map = map;
         this._maps = maps;
 
-        this.setState({ apiLoaded: true });
-
-        this.updateIac(this.state.areaCode);
+        this.setState({ apiLoaded: true }, async () => {
+            await this.updateIac(this.state.areaCode, false);
+        });
     }
 
     /**
      * The map was clicked.
      * @param event The click event.
      */
-    private mapClicked(event: ClickEventValue): void {
+    private async mapClicked(event: ClickEventValue): Promise<void> {
         this.setState(
             {
                 clickedLat: event.lat,
                 clickedLng: event.lng
             },
-            () => {
+            async () => {
                 if (this.state.clickedLat && this.state.clickedLng) {
-                    this.updateIac(IotaAreaCodes.encode(this.state.clickedLat, this.state.clickedLng, IotaAreaCodes.CodePrecision.NORMAL));
+                    await this.updateIac(
+                        IotaAreaCodes.encode(
+                            this.state.clickedLat,
+                            this.state.clickedLng,
+                            IotaAreaCodes.CodePrecision.NORMAL
+                        ),
+                        true);
                 }
             }
         );
@@ -132,26 +224,35 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
     /**
      * Update based on iota area code.
      * @param iac The area code.
+     * @param calcZoom Calculate the zoom level.
      */
-    private updateIac(iac: string): void {
-        if (IotaAreaCodes.isValid(iac)) {
-            const area = IotaAreaCodes.decode(iac);
+    private async updateIac(iac: string, calcZoom: boolean): Promise<void> {
+        if (this._mounted) {
+            if (IotaAreaCodes.isValid(iac)) {
+                const area = IotaAreaCodes.decode(iac);
 
-            this.setState({
-                latitude: area.latitude,
-                longitude: area.longitude,
-                clickedLat: this.state.clickedLat || area.latitude,
-                clickedLng: this.state.clickedLng || area.longitude,
-                areaCode: iac,
-                zoom: area.codePrecision === 2 ? 1 : area.codePrecision * 2
-            });
+                this.setState(
+                    {
+                        latitude: area.latitude,
+                        longitude: area.longitude,
+                        clickedLat: this.state.clickedLat || area.latitude,
+                        clickedLng: this.state.clickedLng || area.longitude,
+                        areaCode: iac,
+                        // zoom: calcZoom ? (area.codePrecision === 2 ? 1 : area.codePrecision * 2) : this.state.zoom,
+                        findingLocation: false
+                    },
+                    async () => this.saveSettings());
 
-            this.updateHighlight(area);
+                this.updateHighlight(area);
 
-            this.props.onChanged(iac);
-        } else {
-            if (this._highlight) {
-                this._highlight.setMap(undefined);
+                if (this._mounted) {
+                    this.props.onChanged(iac);
+                }
+            } else {
+                if (this._highlight) {
+                    this._highlight.setMap(undefined);
+                    this._highlight = undefined;
+                }
             }
         }
     }
@@ -179,6 +280,40 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                 east: area.longitudeHigh
             }
         });
+    }
+
+    /**
+     * Get the current location.
+     */
+    private getLocation(): void {
+        if (navigator.geolocation) {
+            this.setState({ findingLocation: true, zoom: 17 }, () => {
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        await this.updateIac(
+                            IotaAreaCodes.encode(
+                                pos.coords.latitude,
+                                pos.coords.longitude,
+                                IotaAreaCodes.CodePrecision.NORMAL
+                            ),
+                            false);
+                    },
+                    () => {
+                        this.setState({ findingLocation: false });
+                    });
+            });
+        }
+    }
+
+    /**
+     * Save the map settings.
+     */
+    private async saveSettings(): Promise<void> {
+        const settings = await this._settingsService.get();
+        settings.longitude = this.state.longitude;
+        settings.latitude = this.state.latitude;
+        settings.zoom = this.state.zoom;
+        await this._settingsService.save();
     }
 }
 

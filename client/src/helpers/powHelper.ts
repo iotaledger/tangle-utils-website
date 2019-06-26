@@ -81,4 +81,26 @@ export class PowHelper {
 
         return finalTrytes.reverse();
     }
+
+    /**
+     * Is the pow available in a browser.
+     * @returns True if pow is available.
+     */
+    public static isAvailable(): boolean {
+        try {
+            if (window && window.document) {
+                const canvas = document.createElement("canvas");
+                if (canvas) {
+                    const gl = canvas.getContext("webgl2");
+
+                    if (gl) {
+                        return true;
+                    }
+                }
+            }
+        } catch (err) {
+            // any errors pow is not available
+        }
+        return false;
+    }
 }

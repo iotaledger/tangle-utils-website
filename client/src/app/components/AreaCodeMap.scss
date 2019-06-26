@@ -1,6 +1,15 @@
 .area-code-map {
-  height: 640px;
-  width: 100%;
-  border: 1px solid var(--jade);
-  margin-bottom: 20px;
+  .area-code-map--map-container {
+    height: 640px;
+    width: 100%;
+    border: 1px solid var(--jade);
+    margin-bottom: 20px;
+  }
+
+  .area-code-map--actions {
+    button {
+      margin-left: 0px;
+      margin-right: 20px;
+    }
+  }
 }
