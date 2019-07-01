@@ -72,10 +72,6 @@ class App extends Component<RouteComponentProps, AppState> {
             const configId = process.env.REACT_APP_CONFIG_ID || "local";
             const config = await configService.load(`/data/config.${configId}.json`);
 
-            if (config.googleMapsKey === "GOOGLE-MAPS-KEY") {
-                config.googleMapsKey = "***REMOVED***";
-            }
-
             ServiceFactory.register("configuration", () => configService);
             ServiceFactory.register("local-storage", () => new LocalStorageService());
             ServiceFactory.register("tangle-cache", () => new TangleCacheService());
