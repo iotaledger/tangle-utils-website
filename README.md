@@ -6,7 +6,7 @@ The Tangle Utils is composed of 2 packages `api` and `client`.
 
 ## API
 
-The API facilitates all the services required by `client` web UI.
+The API facilitates all the services required by `client` web UI, like currency conversion.
 
 See [./api/README.md](./api/README.md) for more details.
 
