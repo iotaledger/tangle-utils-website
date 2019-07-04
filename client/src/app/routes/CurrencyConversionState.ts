@@ -18,12 +18,12 @@ export interface CurrencyConversionState {
     /**
      * The base currency rate.
      */
-    baseCurrencyRate: number;
+    baseCurrencyRate?: number;
 
     /**
      * The loaded currencies.
      */
-    currencies: {
+    currencies?: {
         /**
          * Id of the currency.
          */
@@ -37,7 +37,7 @@ export interface CurrencyConversionState {
     /**
      * The fiat code.
      */
-    fiatCode: string;
+    fiatCode?: string;
 
     /**
      * The currency value input.

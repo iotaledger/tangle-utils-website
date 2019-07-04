@@ -31,18 +31,24 @@ AppHelper.build(
             socket.on("unsubscribe", (data) => socket.emit("unsubscribe", transactionsUnsubscribe(config, socket, data)));
         });
 
-        const schedules: ISchedule[] = [
-            {
-                name: "Update Currencies",
-                schedule: "* 0 */3 * * *", // Every hour on 0 minute
-                func: async () => {
-                    const stateService = new StateService(config.dynamoDbConnection);
+        // Only perform currency lookups if api keys have been supplied
+        if (config.dynamoDbConnection &&
+            (config.cmcApiKey || "CMC_API_KEY") !== "CMC_API_KEY" &&
+            (config.fixerApiKey || "FIXER_API_KEY") !== "FIXER_API_KEY") {
 
-                    await stateService.updateCurrencies(config);
+            const schedules: ISchedule[] = [
+                {
+                    name: "Update Currencies",
+                    schedule: "* 0 */3 * * *", // Every hour on 0 minute
+                    func: async () => {
+                        const stateService = new StateService(config.dynamoDbConnection);
+
+                        await stateService.updateCurrencies(config);
+                    }
                 }
-            }
-        ];
+            ];
 
-        await ScheduleHelper.build(schedules);
+            await ScheduleHelper.build(schedules);
+        }
     },
     true);

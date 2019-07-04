@@ -38,9 +38,9 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
             isBusy: false,
             isErrored: false,
             status: "",
-            baseCurrencyRate: 0,
-            currencies: [],
-            fiatCode: "EUR",
+            baseCurrencyRate: undefined,
+            currencies: undefined,
+            fiatCode: undefined,
             fiat: "",
             currencyIota: "",
             currencyKiota: "",
@@ -62,20 +62,16 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                 isErrored: false
             },
             async () => {
-                const hasData = await this._currencyService.loadCurrencies((data) => {
+                await this._currencyService.loadCurrencies((isAvailable, data, err) => {
                     this.setState({
-                        baseCurrencyRate: data.baseCurrencyRate || 1,
-                        currencies: data.currencies || [],
-                        fiatCode: data.fiatCode
+                        isBusy: false,
+                        status: err ? "Loading currency data failed, please try again later." : (isAvailable ? "" : "Currency data is not enabled"),
+                        isErrored: !!err,
+                        baseCurrencyRate: data ? data.baseCurrencyRate || 1 : undefined,
+                        currencies: data ? data.currencies || [] : undefined,
+                        fiatCode: data ? data.fiatCode : undefined
                     });
                 });
-
-                this.setState(
-                    {
-                        isBusy: false,
-                        status: hasData ? "" : "Loading currency data failed, please try again later.",
-                        isErrored: !hasData
-                    });
             });
     }
 
@@ -86,11 +82,15 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
     public render(): ReactNode {
         return (
             <React.Fragment>
-                {this.state.baseCurrencyRate === 0 && (
+                {this.state.baseCurrencyRate === undefined && this.state.isBusy && (
                     <StatusMessage status={this.state.status} isBusy={this.state.isBusy} color={this.state.isErrored ? "danger" : "info"} />
                 )}
 
-                {this.state.baseCurrencyRate > 0 && (
+                {this.state.baseCurrencyRate === undefined && !this.state.isBusy && (
+                    <p>Currency conversion is not available.</p>
+                )}
+
+                {this.state.baseCurrencyRate !== undefined && (
                     <React.Fragment>
                         <Heading level={1}>Currency Conversion</Heading>
                         <p>Fill in any of the fields to get automatic conversions at the current currency exchange rate.</p>
@@ -102,7 +102,7 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                                     onChange={(e) => this.fiatCodeConversion(e.target.value)}
                                     selectSize="small"
                                 >
-                                    {this.state.currencies.map(is => (
+                                    {this.state.currencies && this.state.currencies.map(is => (
                                         <option key={is.id} value={is.id}>{is.id}</option>
                                     ))}
                                 </Select>
@@ -194,7 +194,7 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
      */
     private fiatConversion(): void {
         const val = parseFloat(this.state.fiat);
-        if (!isNaN(val)) {
+        if (!isNaN(val) && this.state.currencies && this.state.baseCurrencyRate) {
             const selectedFiatToBase = this.state.currencies.find(c => c.id === this.state.fiatCode);
 
             if (selectedFiatToBase) {
@@ -217,7 +217,7 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
      * @param newFiatCode The new fiat code.
      */
     private async fiatCodeConversion(newFiatCode: string): Promise<void> {
-        if (newFiatCode !== this.state.fiatCode) {
+        if (newFiatCode !== this.state.fiatCode && this.state.currencies) {
             const oldFiatToBase = this.state.currencies.find(c => c.id === this.state.fiatCode);
             const newFiatToBase = this.state.currencies.find(c => c.id === newFiatCode);
 
@@ -247,7 +247,7 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
      */
     private iotaConversion(unit: string, value: string): void {
         const val = parseFloat(value);
-        if (!isNaN(val)) {
+        if (!isNaN(val) && this.state.currencies && this.state.baseCurrencyRate) {
             const selectedFiatToBase = this.state.currencies.find(c => c.id === this.state.fiatCode);
 
             if (selectedFiatToBase) {

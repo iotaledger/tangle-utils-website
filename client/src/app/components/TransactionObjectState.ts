@@ -56,7 +56,7 @@ export interface TransactionObjectState {
     /**
      * The loaded currencies.
      */
-    currencies: {
+    currencies?: {
         /**
          * Id of the currency.
          */

@@ -37,7 +37,7 @@ export class TransactionsClient {
     private readonly _tangleCacheService: TangleCacheService;
 
     /**
-     * Create a new instance of ApiClient.
+     * Create a new instance of TransactionsClient.
      * @param endpoint The endpoint for the api.
      */
     constructor(endpoint: string) {

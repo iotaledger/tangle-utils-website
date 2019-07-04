@@ -10,20 +10,30 @@ import { StateService } from "../../services/stateService";
  */
 export async function get(config: IConfiguration, request: any): Promise<ICurrenciesResponse> {
     try {
-        const stateService = new StateService(config.dynamoDbConnection);
+        // Only perform currency lookups if api keys have been supplied
+        if (config.dynamoDbConnection &&
+            (config.cmcApiKey || "CMC_API_KEY") !== "CMC_API_KEY" &&
+            (config.fixerApiKey || "FIXER_API_KEY") !== "FIXER_API_KEY") {
+            const stateService = new StateService(config.dynamoDbConnection);
 
-        const state = await stateService.get("default");
+            const state = await stateService.get("default");
 
-        if (!state) {
-            throw new Error("Unable to get currency data.");
+            if (!state) {
+                throw new Error("Unable to get currency data.");
+            }
+
+            return {
+                success: true,
+                message: "OK",
+                baseRate: state.coinMarketCapRateEUR,
+                currencies: state.exchangeRatesEUR
+            };
+        } else {
+            return {
+                success: true,
+                message: "Currency conversion not configured"
+            };
         }
-
-        return {
-            success: true,
-            message: "OK",
-            baseRate: state.coinMarketCapRateEUR,
-            currencies: state.exchangeRatesEUR
-        };
     } catch (err) {
         return {
             success: false,

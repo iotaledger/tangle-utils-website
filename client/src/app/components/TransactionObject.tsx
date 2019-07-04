@@ -95,13 +95,13 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
     public async componentDidMount(): Promise<void> {
         this._mounted = true;
 
-        await this._currencyService.loadCurrencies((data) => {
+        await this._currencyService.loadCurrencies((isAvailable, data) => {
             if (this._mounted) {
                 this.setState(
                     {
-                        currencies: data.currencies || [],
-                        fiatCode: data.fiatCode,
-                        baseCurrencyRate: data.baseCurrencyRate || 1
+                        currencies: isAvailable && data ? data.currencies : undefined,
+                        fiatCode: isAvailable && data ? data.fiatCode : "EUR",
+                        baseCurrencyRate: isAvailable && data ? data.baseCurrencyRate : 1
                     },
                     async () => {
                         if (this._mounted) {
@@ -248,40 +248,42 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                 </div>
                             </div>
                         </div>
-                        <div className="row">
-                            <div className="col">
-                                <div className="label">Currency</div>
-                                <div className="value">
-                                    {this.state.currencies.length > 0 && (
-                                        <Select
-                                            value={this.state.fiatCode}
-                                            onChange={(e) => this.setState({ fiatCode: e.target.value }, async () => {
-                                                if (this._mounted) {
-                                                    this.setState(
-                                                        {
-                                                            valueConverted: await this._currencyService.currencyConvert(
-                                                                this.state.transactionObject.value,
-                                                                {
-                                                                    fiatCode: this.state.fiatCode || "EUR",
-                                                                    currencies: this.state.currencies,
-                                                                    baseCurrencyRate: this.state.baseCurrencyRate
-                                                                },
-                                                                true)
-                                                        });
+                        {this.state.currencies && (
+                            <div className="row">
+                                <div className="col">
+                                    <div className="label">Currency</div>
+                                    <div className="value">
+                                        {this.state.currencies.length > 0 && (
+                                            <Select
+                                                value={this.state.fiatCode}
+                                                onChange={(e) => this.setState({ fiatCode: e.target.value }, async () => {
+                                                    if (this._mounted) {
+                                                        this.setState(
+                                                            {
+                                                                valueConverted: await this._currencyService.currencyConvert(
+                                                                    this.state.transactionObject.value,
+                                                                    {
+                                                                        fiatCode: this.state.fiatCode || "EUR",
+                                                                        currencies: this.state.currencies,
+                                                                        baseCurrencyRate: this.state.baseCurrencyRate
+                                                                    },
+                                                                    true)
+                                                            });
+                                                    }
                                                 }
-                                            }
-                                            )}
-                                            selectSize="small"
-                                        >
-                                            {this.state.currencies.map(is => (
-                                                <option key={is.id} value={is.id}>{is.id}</option>
-                                            ))}
-                                        </Select>
-                                    )}
-                                    <span className="currency">{this.state.valueConverted}</span>
+                                                )}
+                                                selectSize="small"
+                                            >
+                                                {this.state.currencies.map(is => (
+                                                    <option key={is.id} value={is.id}>{is.id}</option>
+                                                ))}
+                                            </Select>
+                                        )}
+                                        <span className="currency">{this.state.valueConverted}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                         <div className="row">
                             <div className="col">
                                 <div className="label">Address</div>

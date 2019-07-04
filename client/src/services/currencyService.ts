@@ -28,9 +28,8 @@ export class CurrencyService {
     /**
      * Load the currencies data.
      * @param callback Called when currencies are loaded.
-     * @returns True if loaded successfully.
      */
-    public async loadCurrencies(callback: (data: ICurrencySettings) => void): Promise<boolean> {
+    public async loadCurrencies(callback: (available: boolean, data?: ICurrencySettings, err?: Error) => void): Promise<void> {
         const settings = await this._settingsService.get();
         let hasData = false;
 
@@ -39,11 +38,13 @@ export class CurrencyService {
             settings.baseCurrencyRate > 0 &&
             settings.currencies &&
             Object.keys(settings.currencies).length > 0) {
-            callback({
-                baseCurrencyRate: settings.baseCurrencyRate,
-                currencies: settings.currencies,
-                fiatCode: settings.fiatCode
-            });
+            callback(
+                true,
+                {
+                    baseCurrencyRate: settings.baseCurrencyRate,
+                    currencies: settings.currencies,
+                    fiatCode: settings.fiatCode
+                });
             hasData = true;
         }
 
@@ -52,12 +53,10 @@ export class CurrencyService {
         // if it fails we don't care about the outcome as we already have data
         const lastUpdate = settings ? (settings.lastCurrencyUpdate || 0) : 0;
         if (!hasData) {
-            hasData = await this.loadData(callback);
+            await this.loadData(callback);
         } else if (Date.now() - lastUpdate > 3600000) {
             setTimeout(async () => this.loadData(callback), 0);
         }
-
-        return hasData;
     }
 
     /**
@@ -104,32 +103,39 @@ export class CurrencyService {
      * @param callback Called when currencies are loaded.
      * @returns True if the load was succesful.
      */
-    private async loadData(callback: (data: ICurrencySettings) => void): Promise<boolean> {
-        let hasData = false;
-
+    private async loadData(callback: (available: boolean, data?: ICurrencySettings, err?: Error) => void): Promise<void> {
         try {
             const currencyResponse = await this._apiClient.currencies();
             if (currencyResponse && currencyResponse.success) {
-                const settings = await this._settingsService.get();
+                if (!currencyResponse.baseRate || !currencyResponse.currencies) {
+                    callback(false);
+                } else {
+                    const settings = await this._settingsService.get();
 
-                settings.lastCurrencyUpdate = Date.now();
-                settings.baseCurrencyRate = currencyResponse.baseRate || 0;
-                const cur = currencyResponse.currencies || {};
-                const ids = Object.keys(cur).sort();
-                settings.currencies = ids.map(i => ({ id: i, rate: cur[i] }));
+                    settings.lastCurrencyUpdate = Date.now();
+                    settings.baseCurrencyRate = currencyResponse.baseRate || 0;
+                    const cur = currencyResponse.currencies || {};
+                    const ids = Object.keys(cur).sort();
+                    settings.currencies = ids.map(i => ({ id: i, rate: cur[i] }));
 
-                await this._settingsService.save();
+                    await this._settingsService.save();
 
-                callback({
-                    baseCurrencyRate: settings.baseCurrencyRate,
-                    currencies: settings.currencies,
-                    fiatCode: settings.fiatCode
-                });
-
-                hasData = true;
+                    callback(
+                        true,
+                        {
+                            baseCurrencyRate: settings.baseCurrencyRate,
+                            currencies: settings.currencies,
+                            fiatCode: settings.fiatCode
+                        });
+                }
+            } else {
+                callback(false);
             }
         } catch (err) {
+            callback(
+                false,
+                undefined,
+                err);
         }
-        return hasData;
     }
 }

@@ -88,19 +88,21 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
         }
         this.setState({ bundleGroups, isBusy: false });
 
-        await this._currencyService.loadCurrencies((currencyData) => {
-            this.setState({ currencyData }, async () => {
-                for (let i = 0; i < bundleGroups.length; i++) {
-                    for (let k = 0; k < bundleGroups[i].transactions.length; k++) {
-                        const converted = await this._currencyService.currencyConvert(
-                            bundleGroups[i].transactions[k].tx.value,
-                            currencyData,
-                            false);
-                        bundleGroups[i].transactions[k].currencyConverted = `${currencyData.fiatCode} ${converted}`;
+        await this._currencyService.loadCurrencies((isAvailable, currencyData, err) => {
+            if (isAvailable && currencyData) {
+                this.setState({ currencyData }, async () => {
+                    for (let i = 0; i < bundleGroups.length; i++) {
+                        for (let k = 0; k < bundleGroups[i].transactions.length; k++) {
+                            const converted = await this._currencyService.currencyConvert(
+                                bundleGroups[i].transactions[k].tx.value,
+                                currencyData,
+                                false);
+                            bundleGroups[i].transactions[k].currencyConverted = `${currencyData.fiatCode} ${converted}`;
+                        }
                     }
-                }
-                this.setState({ bundleGroups });
-            });
+                    this.setState({ bundleGroups });
+                });
+            }
         });
     }
 

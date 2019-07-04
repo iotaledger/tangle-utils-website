@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.2
+
+* Currency conversion and lookup can be disabled by omitting api keys from config
+
 ## v1.2.1
 
 * File size limit 0.5Mb
