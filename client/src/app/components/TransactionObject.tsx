@@ -121,10 +121,10 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             }
         });
 
-        if (!this.props.hideInteractive) {
+        if (!this.props.hideInteractive && this._mounted) {
             const thisGroup: ReadonlyArray<Transaction> = await this._tangleCacheService.getTransactionBundleGroup(this.state.transactionObject, this.props.network);
 
-            if (thisGroup && this._mounted) {
+            if (thisGroup && thisGroup.length > 0) {
                 const thisIndex = thisGroup.findIndex(t => t.hash === this.state.transactionObject.hash);
 
                 const pos = thisGroup.filter(t => t.value > 0).length;
