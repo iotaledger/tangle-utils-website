@@ -78,13 +78,7 @@ class AreaCodes extends Component<AreaCodesProps, AreaCodesState> {
      * @param iac The iac to update to.
      */
     private updateIac(iac: string): void {
-        let localIac = iac;
-        if (localIac.length < 8) {
-            localIac = localIac + "A".repeat(8 - localIac.length);
-        }
-        if (localIac.length < 9) {
-            localIac = `${localIac}9`;
-        }
+        const localIac = IotaAreaCodes.padPartial(iac);
         const areaCodeValidation = IotaAreaCodes.isValidPartial(localIac) ?
             "" : `The IOTA Area Code is not valid`;
 

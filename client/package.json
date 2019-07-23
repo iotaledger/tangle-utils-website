@@ -9,7 +9,7 @@
     },
     "license": "MIT",
     "dependencies": {
-        "@iota/area-codes": "^0.1.0",
+        "@iota/area-codes": "github:iotaledger/iota-area-codes",
         "@iota/checksum": "^1.0.0-beta.16",
         "@iota/client-load-balancer": "github:iotaledger/client-load-balancer",
         "@iota/core": "^1.0.0-beta.16",
