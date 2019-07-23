@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.3
+
+* Auto pad area code
+
 ## v1.2.2
 
 * Currency conversion not shown if disabled in API

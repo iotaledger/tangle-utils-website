@@ -98,7 +98,7 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                 },
                 async () => {
                     if (this.state.apiLoaded) {
-                        await this.updateIac(this.state.areaCode, false);
+                        await this.updateIac(this.state.areaCode);
                     }
                 });
         }
@@ -123,7 +123,7 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                 },
                 async () => {
                     if (this.state.apiLoaded) {
-                        await this.updateIac(this.state.areaCode, false);
+                        await this.updateIac(this.state.areaCode, true);
                     }
                 });
         }
@@ -172,8 +172,7 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                                         this.DEFAULT_LATITUDE,
                                         this.DEFAULT_LONGITUDE,
                                         IotaAreaCodes.CodePrecision.NORMAL
-                                    ),
-                                    false)
+                                    ))
                             )}
                     >
                         Reset
@@ -202,7 +201,7 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
         this._maps = maps;
 
         this.setState({ apiLoaded: true }, async () => {
-            await this.updateIac(this.state.areaCode, false);
+            await this.updateIac(this.state.areaCode);
         });
     }
 
@@ -223,8 +222,7 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                             this.state.clickedLat,
                             this.state.clickedLng,
                             IotaAreaCodes.CodePrecision.NORMAL
-                        ),
-                        true);
+                        ));
                 }
             }
         );
@@ -233,9 +231,9 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
     /**
      * Update based on iota area code.
      * @param iac The area code.
-     * @param calcZoom Calculate the zoom level.
+     * @param skipChanged Skip the changed event.
      */
-    private async updateIac(iac: string, calcZoom: boolean): Promise<void> {
+    private async updateIac(iac: string, skipChanged?: boolean): Promise<void> {
         if (this._mounted) {
             if (IotaAreaCodes.isValid(iac)) {
                 const area = IotaAreaCodes.decode(iac);
@@ -247,14 +245,13 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                         clickedLat: this.state.clickedLat || area.latitude,
                         clickedLng: this.state.clickedLng || area.longitude,
                         areaCode: iac,
-                        // zoom: calcZoom ? (area.codePrecision === 2 ? 1 : area.codePrecision * 2) : this.state.zoom,
                         findingLocation: false
                     },
                     async () => this.saveSettings());
 
                 this.updateHighlight(area);
 
-                if (this._mounted) {
+                if (this._mounted && !skipChanged) {
                     this.props.onChanged(iac);
                 }
             } else {
@@ -304,8 +301,7 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                                 pos.coords.latitude,
                                 pos.coords.longitude,
                                 IotaAreaCodes.CodePrecision.NORMAL
-                            ),
-                            false);
+                            ));
                     },
                     () => {
                         this.setState({ findingLocation: false });
