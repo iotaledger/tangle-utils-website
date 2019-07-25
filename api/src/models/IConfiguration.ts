@@ -29,4 +29,9 @@ export interface IConfiguration {
      * The configuration for devnet zmq endpoint.
      */
     zmqDevNet: IZmqConfiguration;
+
+    /**
+     * A list of domains allowed to access the api.
+     */
+    allowedDomains: string[];
 }

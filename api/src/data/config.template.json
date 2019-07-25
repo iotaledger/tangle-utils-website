@@ -12,5 +12,9 @@
     },
     "zmqDevNet": {
         "endpoint": "ZMQ_ENDPOINT"
-    }
+    },
+    "allowedDomains": [
+        "https://utils.iota.works",
+        "https://utils.iota.org"
+    ]
 }
