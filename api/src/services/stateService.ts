@@ -32,7 +32,7 @@ export class StateService extends AmazonDynamoDbService<IState> {
             currentState = (await stateService.get("default")) || { id: "default" };
             if (!currentState ||
                 currentState.lastCurrencyUpdate === undefined ||
-                now - currentState.lastCurrencyUpdate > 3600000) { // every hour
+                now - currentState.lastCurrencyUpdate > (3600000 * 2)) { // every 2 hours
                 let updated = false;
 
                 log += `Updating fixer\n`;
