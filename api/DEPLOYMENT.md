@@ -20,7 +20,7 @@ To configure the `api` you should copy `./src/data/config.template.json` to `./s
     "zmqDevNet": {                                   /* ZMQ Configuration for devnet */
         "endpoint": "ZMQ-ENDPOINT"                   /* IRI Node ZMQ Endpoint */
     },
-    "allowedDomains": [                              /* A list of domains for the api allow-origin */
+    "allowedDomains": [                              /* A list of domains for the cors allow-origin */
         "www.mydomain.com"
     ]
 }
