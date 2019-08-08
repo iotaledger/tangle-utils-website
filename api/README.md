@@ -1,4 +1,4 @@
-# Tangle Utils API 
+# Tangle Utils API
 
 This package facilitates all the services required by the `client` web UIs.
 
