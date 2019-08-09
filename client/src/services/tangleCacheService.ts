@@ -186,7 +186,8 @@ export class TangleCacheService {
      * @param network Which network are we getting the transactions for.
      * @returns The transactions hashes returned from the looked up type.
      */
-    public async findTransactionHashes(hashType: HashType, hash: string, network: NetworkType): Promise<ReadonlyArray<string>> {
+    public async findTransactionHashes(
+        hashType: HashType, hash: string, network: NetworkType): Promise<ReadonlyArray<string>> {
         let transactionHashes: ReadonlyArray<string> = [];
         let doLookup = true;
 
@@ -202,7 +203,8 @@ export class TangleCacheService {
             const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
 
             const response = await api.findTransactions(
-                hashType === "tag" ? { tags: [hash] } : hashType === "address" ? { addresses: [hash] } : { bundles: [hash] });
+                hashType === "tag" ? { tags: [hash] } :
+                    hashType === "address" ? { addresses: [hash] } : { bundles: [hash] });
 
             if (response && response.length > 0) {
                 transactionHashes = response;
@@ -254,7 +256,8 @@ export class TangleCacheService {
             }
         }
 
-        return hashes.map(h => (this._transactionCache[network][h] && this._transactionCache[network][h].trytes) || "9".repeat(2673));
+        return hashes.map(h => (
+            this._transactionCache[network][h] && this._transactionCache[network][h].trytes) || "9".repeat(2673));
     }
 
     /**
@@ -295,7 +298,8 @@ export class TangleCacheService {
      * @param network Which network are we getting the transactions for.
      * @returns The confirmation states for the transactions.
      */
-    public async getTransactionConfirmationStates(hashes: ReadonlyArray<string>, network: NetworkType): Promise<ReadonlyArray<ConfirmationState>> {
+    public async getTransactionConfirmationStates(
+        hashes: ReadonlyArray<string>, network: NetworkType): Promise<ReadonlyArray<ConfirmationState>> {
         const now = Date.now();
         const unknownStates = hashes.filter(h =>
             !this._transactionCache[network][h] ||
@@ -350,7 +354,9 @@ export class TangleCacheService {
      * @param network Which network are we getting the transactions for.
      * @returns The grouped transactions in the bundle.
      */
-    public async getBundleGroups(transactionHashes: ReadonlyArray<string>, network: NetworkType): Promise<ReadonlyArray<ReadonlyArray<Transaction>>> {
+    public async getBundleGroups(
+        transactionHashes: ReadonlyArray<string>,
+        network: NetworkType): Promise<ReadonlyArray<ReadonlyArray<Transaction>>> {
         const transactions = await this.getTransactions(transactionHashes, network);
 
         const transactionObjects = asTransactionObjects(transactionHashes)(transactions);
@@ -464,7 +470,8 @@ export class TangleCacheService {
      * @param network The network to communicate with.
      * @returns The transactions bundle group.
      */
-    public async getTransactionBundleGroup(transaction: Transaction, network: NetworkType): Promise<ReadonlyArray<Transaction>> {
+    public async getTransactionBundleGroup(
+        transaction: Transaction, network: NetworkType): Promise<ReadonlyArray<Transaction>> {
         let thisGroup: Transaction[] = [];
         if (transaction.lastIndex === 0) {
             thisGroup = [transaction];

@@ -29,7 +29,8 @@ export class CurrencyService {
      * Load the currencies data.
      * @param callback Called when currencies are loaded.
      */
-    public async loadCurrencies(callback: (available: boolean, data?: ICurrencySettings, err?: Error) => void): Promise<void> {
+    public async loadCurrencies(
+        callback: (available: boolean, data?: ICurrencySettings, err?: Error) => void): Promise<void> {
         const settings = await this._settingsService.get();
         let hasData = false;
 
@@ -80,7 +81,8 @@ export class CurrencyService {
      * @param saveFiat Save the fiat code.
      * @returns The converted fiat.
      */
-    public async currencyConvert(valueIota: number, currencyData: ICurrencySettings, saveFiat: boolean): Promise<string> {
+    public async currencyConvert(
+        valueIota: number, currencyData: ICurrencySettings, saveFiat: boolean): Promise<string> {
         let converted = "";
         if (currencyData.currencies && currencyData.fiatCode && currencyData.baseCurrencyRate) {
             const selectedFiatToBase = currencyData.currencies.find(c => c.id === currencyData.fiatCode);
@@ -103,7 +105,8 @@ export class CurrencyService {
      * @param callback Called when currencies are loaded.
      * @returns True if the load was succesful.
      */
-    private async loadData(callback: (available: boolean, data?: ICurrencySettings, err?: Error) => void): Promise<void> {
+    private async loadData(
+        callback: (available: boolean, data?: ICurrencySettings, err?: Error) => void): Promise<void> {
         try {
             const currencyResponse = await this._apiClient.currencies();
             if (currencyResponse && currencyResponse.success) {

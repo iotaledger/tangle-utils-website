@@ -82,18 +82,20 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
             <div className="simple-transaction">
                 <Heading level={1}>Simple Transaction</Heading>
                 {!this.state.isPowAvailable && (
-                    <p>Sorry, WebGL is not available in your browser, you can not send a simple transaction using local PoW.</p>
+                    <p>Sorry, WebGL is not available in your browser,
+                        you can not send a simple transaction using local PoW.</p>
                 )}
                 {this.state.isPowAvailable && (
                     <React.Fragment>
-                        <p>Attach a simple zero value message transaction to the tangle, using Proof Of Work in your browser.</p>
+                        <p>Attach a simple zero value message transaction to the tangle,
+                            using Proof Of Work in your browser.</p>
                         <Form>
                             <Fieldset>
                                 <label>Address</label>
                                 <Input
                                     type="text"
                                     value={this.state.address}
-                                    onChange={(e) => this.setState({ address: e.target.value }, () => this.validate())}
+                                    onChange={e => this.setState({ address: e.target.value }, () => this.validate())}
                                     restrict="trytes"
                                     disabled={this.state.isBusy}
                                     placeholder="Address to attach the message"
@@ -108,7 +110,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                 <label>Message</label>
                                 <TextArea
                                     value={this.state.message}
-                                    onChange={(e) => this.setState({ message: e.target.value }, () => {
+                                    onChange={e => this.setState({ message: e.target.value }, () => {
                                         const trytes = TextHelper.toTrytes(this.state.message);
                                         this.setState({ transactionCount: Math.ceil(trytes.length / 2187) });
                                     })}
@@ -118,14 +120,15 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                 />
                             </Fieldset>
                             <Fieldrow>
-                                <div>This message will occupy {this.state.transactionCount} transaction{this.state.transactionCount > 1 ? "s" : ""} on the tangle.</div>
+                                <div>This message will occupy {this.state.transactionCount} transaction{
+                                    this.state.transactionCount > 1 ? "s" : ""} on the tangle.</div>
                             </Fieldrow>
                             <Fieldset>
                                 <label>Tag</label>
                                 <Input
                                     type="text"
                                     value={this.state.tag}
-                                    onChange={(e) => this.setState({ tag: e.target.value }, () => this.validate())}
+                                    onChange={e => this.setState({ tag: e.target.value }, () => this.validate())}
                                     restrict="trytes"
                                     disabled={this.state.isBusy}
                                     maxLength={27}
@@ -134,7 +137,8 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                 <Button
                                     disabled={this.state.isBusy}
                                     color="secondary"
-                                    onClick={(e) => this.setState({ showLocation: !this.state.showLocation }, () => this.saveSettings())}
+                                    onClick={e => this.setState(
+                                        { showLocation: !this.state.showLocation }, () => this.saveSettings())}
                                 >
                                     {this.state.showLocation ? "Hide" : "Show"} Location
                                 </Button>
@@ -151,7 +155,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                     <AreaCodeMap
                                         disabled={this.state.isBusy}
                                         iac={this.state.tag}
-                                        onChanged={(iac) => this.setState({ tag: iac })}
+                                        onChanged={iac => this.setState({ tag: iac })}
                                     />
                                 </Fieldrow>
                             )}
@@ -159,7 +163,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                 <label>Network</label>
                                 <Select
                                     value={this.state.network}
-                                    onChange={(e) => this.setState({ network: e.target.value as NetworkType })}
+                                    onChange={e => this.setState({ network: e.target.value as NetworkType })}
                                     selectSize="small"
                                     disabled={this.state.isBusy}
                                 >
@@ -168,9 +172,18 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                 </Select>
                             </Fieldset>
                             <FormActions>
-                                <Button disabled={this.state.isBusy || !this.state.isValid} onClick={() => this.attachMessage()}>Attach Message</Button>
+                                <Button
+                                    disabled={this.state.isBusy || !this.state.isValid}
+                                    onClick={() => this.attachMessage()}
+                                >
+                                    Attach Message
+                                </Button>
                             </FormActions>
-                            <FormStatus message={this.state.status} isBusy={this.state.isBusy} isError={this.state.isErrored} />
+                            <FormStatus
+                                message={this.state.status}
+                                isBusy={this.state.isBusy}
+                                isError={this.state.isErrored}
+                            />
                             {this.state.transactionHash && (
                                 <React.Fragment>
                                     <Fieldrow>
@@ -180,7 +193,11 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                         </div>
                                     </Fieldrow>
                                     <Fieldrow>
-                                        <Link to={`/transaction/${this.state.transactionHash}${network}`}>{this.state.transactionHash}</Link>
+                                        <Link
+                                            to={`/transaction/${this.state.transactionHash}${network}`}
+                                        >
+                                            {this.state.transactionHash}
+                                        </Link>
                                     </Fieldrow>
                                 </React.Fragment>
                             )}
@@ -195,11 +212,14 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
      * Validate the data
      */
     private validate(): void {
-        const addressValidation = isTrytesOfExactLength(this.state.address.toUpperCase(), 81) || isTrytesOfExactLength(this.state.address.toUpperCase(), 90) ?
-            "" : `The address hash must contain A-Z or 9 and be 81 or 90 trytes in length, it is length ${this.state.address.length}`;
+        const addressValidation = isTrytesOfExactLength(this.state.address.toUpperCase(), 81)
+            || isTrytesOfExactLength(this.state.address.toUpperCase(), 90) ?
+            "" : `The address hash must contain A-Z or 9 and be 81 or 90 trytes in length, it is length ${
+            this.state.address.length}`;
 
         const tagValidation = this.state.tag.length === 0 || isTrytesOfMaxLength(this.state.tag.toUpperCase(), 27) ?
-            "" : `The tag hash must contain A-Z or 9 and be a maximum 27 trytes in length, it is length ${this.state.tag.length}`;
+            "" : `The tag hash must contain A-Z or 9 and be a maximum 27 trytes in length, it is length ${
+            this.state.tag.length}`;
 
         this.setState({
             addressValidation,
@@ -220,7 +240,8 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                 transactionHash: ""
             },
             async () => {
-                const loadBalancerSettings = ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${this.state.network}`);
+                const loadBalancerSettings = ServiceFactory.get<LoadBalancerSettings>(
+                    `load-balancer-${this.state.network}`);
                 PowHelper.attachLocalPow(loadBalancerSettings);
 
                 try {
@@ -241,7 +262,8 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                     // Use 0 for depth and mwm, the load balancer will replace with sensible values
                     const txs = await api.sendTrytes(preparedTrytes, 0, 0);
 
-                    this._tangleCacheService.addTransactions(txs.map(t => t.hash), asTransactionTrytes(txs), this.state.network);
+                    this._tangleCacheService.addTransactions(
+                        txs.map(t => t.hash), asTransactionTrytes(txs), this.state.network);
 
                     this.setState(
                         {

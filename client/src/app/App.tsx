@@ -197,7 +197,11 @@ class App extends Component<RouteComponentProps, AppState> {
                 />
                 <section className="content">
                     <LayoutAppSingle>
-                        <StatusMessage status={this.state.status} color={this.state.statusColor} isBusy={this.state.isBusy} />
+                        <StatusMessage
+                            status={this.state.status}
+                            color={this.state.statusColor}
+                            isBusy={this.state.isBusy}
+                        />
                         {!this.state.status && (
                             <Switch>
                                 <Route
@@ -208,38 +212,48 @@ class App extends Component<RouteComponentProps, AppState> {
                                 <Route
                                     exact={true}
                                     path="/transaction/:hash?/:network?"
-                                    component={(props: ExploreViewProps) => (<ExploreView {...props} hashType="transaction" bust={Date.now()} />)}
+                                    component={(props: ExploreViewProps) =>
+                                        (<ExploreView {...props} hashType="transaction" bust={Date.now()} />)}
                                 />
                                 <Route
                                     exact={true}
                                     path="/bundle/:hash?/:network?"
-                                    component={(props: ExploreViewProps) => (<ExploreView {...props} hashType="bundle" bust={Date.now()} />)}
+                                    component={(props: ExploreViewProps) =>
+                                        (<ExploreView {...props} hashType="bundle" bust={Date.now()} />)}
                                 />
                                 <Route
                                     exact={true}
                                     path="/address/:hash?/:network?"
-                                    component={(props: ExploreViewProps) => (<ExploreView {...props} hashType="address" bust={Date.now()} />)}
+                                    component={(props: ExploreViewProps) =>
+                                        (<ExploreView {...props} hashType="address" bust={Date.now()} />)}
                                 />
                                 <Route
                                     exact={true}
                                     path="/tag/:hash?/:network?"
-                                    component={(props: ExploreViewProps) => (<ExploreView {...props} hashType="tag" bust={Date.now()} />)}
+                                    component={(props: ExploreViewProps) =>
+                                        (<ExploreView {...props} hashType="tag" bust={Date.now()} />)}
                                 />
                                 <Route
                                     exact={true}
                                     path="/mam/:root?/:mode?/:key?/:network?"
                                     component={(props: MamProps) => (<Mam {...props} bust={Date.now()} />)}
                                 />
-                                <Route exact={true} path="/currency-conversion" component={() => (<CurrencyConversion bust={Date.now()} />)} />
+                                <Route
+                                    exact={true}
+                                    path="/currency-conversion"
+                                    component={() => (<CurrencyConversion bust={Date.now()} />)}
+                                />
                                 <Route
                                     exact={true}
                                     path="/text-conversion/:plainTextOrTrytes?"
-                                    component={(props: TextConversionProps) => (<TextConversion {...props} bust={Date.now()} />)}
+                                    component={(props: TextConversionProps) =>
+                                        (<TextConversion {...props} bust={Date.now()} />)}
                                 />
                                 <Route
                                     exact={true}
                                     path="/transaction-decoder/:trytes?/:network?"
-                                    component={(props: TransactionDecoderProps) => (<TransactionDecoder {...props} bust={Date.now()} />)}
+                                    component={(props: TransactionDecoderProps) =>
+                                        (<TransactionDecoder {...props} bust={Date.now()} />)}
                                 />
                                 <Route
                                     exact={true}
@@ -252,7 +266,11 @@ class App extends Component<RouteComponentProps, AppState> {
                                     component={(props: QRCreateProps) => (<QRCreate {...props} bust={Date.now()} />)}
                                 />
                                 <Route exact={true} path="/qr-scan" component={() => (<QRScan bust={Date.now()} />)} />
-                                <Route exact={true} path="/simple-transaction" component={() => (<SimpleTransaction bust={Date.now()} />)} />
+                                <Route
+                                    exact={true}
+                                    path="/simple-transaction"
+                                    component={() => (<SimpleTransaction bust={Date.now()} />)}
+                                />
                                 <Route
                                     exact={true}
                                     path="/area-codes/:iac?"
@@ -262,7 +280,11 @@ class App extends Component<RouteComponentProps, AppState> {
                         )}
                     </LayoutAppSingle>
                 </section>
-                <Footer history={this.props.history} sections={contentHomePage.footerSections} staticContent={contentHomePage.footerStaticContent} />
+                <Footer
+                    history={this.props.history}
+                    sections={contentHomePage.footerSections}
+                    staticContent={contentHomePage.footerStaticContent}
+                />
                 <GoogleAnalytics id={this._configuration && this._configuration.googleAnalyticsId} />
             </React.Fragment>
         );

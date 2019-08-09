@@ -7,7 +7,7 @@
     align-items: center;
 
     .success-wrapper {
-        width: auto;
+      width: auto;
     }
   }
 
@@ -19,9 +19,9 @@
   }
 
   .map-container {
-    height: 640px;
     width: 100%;
-    border: 1px solid var(--jade);
+    height: 640px;
     margin-bottom: 20px;
+    border: 1px solid var(--jade);
   }
 }

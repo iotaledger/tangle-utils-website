@@ -26,9 +26,9 @@ AppHelper.build(
         const server = new Server(app);
         const socketServer = SocketIO(server);
         server.listen(port);
-        socketServer.on("connection", (socket) => {
-            socket.on("subscribe", (data) => socket.emit("subscribe", transactionsSubscribe(config, socket)));
-            socket.on("unsubscribe", (data) => socket.emit("unsubscribe", transactionsUnsubscribe(config, socket, data)));
+        socketServer.on("connection", socket => {
+            socket.on("subscribe", data => socket.emit("subscribe", transactionsSubscribe(config, socket)));
+            socket.on("unsubscribe", data => socket.emit("unsubscribe", transactionsUnsubscribe(config, socket, data)));
         });
 
         // Only perform currency lookups if api keys have been supplied

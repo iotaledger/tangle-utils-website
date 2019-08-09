@@ -16,31 +16,35 @@
       }
 
       .label {
-        font-weight: bold;
-        margin-top: 4px;
         min-width: 200px;
+        margin-top: 4px;
+        font-weight: bold;
       }
 
       .label + .value {
         margin-left: 20px;
 
         @media (max-width: 767px) {
-          margin-left: 0px;
           margin-top: 20px;
+          margin-left: 0px;
         }
       }
 
       .value {
+        margin-top: 4px;
         font-weight: normal;
+
+        // sass-lint:disable no-duplicate-properties
         word-break: break-all;
         word-break: break-word;
-        margin-top: 4px;
       }
     }
 
     .hash {
-      font-size: 16px;
       margin-top: 4px;
+      font-size: 16px;
+
+      // sass-lint:disable no-duplicate-properties
       word-break: break-all;
       word-break: break-word;
 
@@ -64,12 +68,14 @@
       flex-direction: column;
 
       a {
+        margin-bottom: 20px;
         color: var(--blueberry);
         font-weight: normal;
         line-height: 1;
+
+        // sass-lint:disable no-duplicate-properties
         word-break: break-all;
         word-break: break-word;
-        margin-bottom: 20px;
       }
 
       .item {
@@ -81,8 +87,8 @@
       margin-left: 10px;
 
       @media (max-width: 767px) {
-        margin-left: 0px;
         margin-top: 10px;
+        margin-left: 0px;
       }
     }
   }

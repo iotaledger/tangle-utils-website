@@ -52,26 +52,29 @@ class TextConversion extends Component<TextConversionProps, TextConversionState>
         return (
             <React.Fragment>
                 <Heading level={1}>Text Conversion</Heading>
-                <p>Please enter the text to convert to trytes, or the trytes to convert to text.<br />Characters outside the ASCII range (0-127) are escaped as Unicode characters</p>
+                <p>Please enter the text to convert to trytes, or the trytes to convert to text.
+                    <br />
+                    Characters outside the ASCII range (0-127) are escaped as Unicode characters</p>
                 <Form>
                     <Fieldset>
                         <label>Plain Text</label>
                         <TextArea
                             value={this.state.plain}
-                            onChange={(e) => this.setState({ plain: e.target.value }, () => this.plainToTrytes())}
+                            onChange={e => this.setState({ plain: e.target.value }, () => this.plainToTrytes())}
                             rows={10}
                         />
                     </Fieldset>
                     <Fieldrow>
                         <div className={this.state.errorMessage ? "danger" : ""}>
-                            {this.state.errorMessage ? this.state.errorMessage : `${this.state.plain.length} characters`}
+                            {this.state.errorMessage ?
+                                this.state.errorMessage : `${this.state.plain.length} characters`}
                         </div>
                     </Fieldrow>
                     <Fieldset>
                         <label>Trytes</label>
                         <TextArea
                             value={this.state.trytes}
-                            onChange={(e) => this.setState({ trytes: e.target.value }, () => this.trytesToPlain())}
+                            onChange={e => this.setState({ trytes: e.target.value }, () => this.trytesToPlain())}
                             rows={10}
                             restrict="trytes"
                         />

@@ -36,7 +36,8 @@ export class CoinMarketCapClient {
         let response;
 
         try {
-            const axiosResponse = await ax.get<IQuotesLatestResponse>(`cryptocurrency/quotes/latest?id=${id}&convert=${convert}`);
+            const axiosResponse = await ax.get<IQuotesLatestResponse>(
+                `cryptocurrency/quotes/latest?id=${id}&convert=${convert}`);
 
             if (axiosResponse.data && axiosResponse.data.status && axiosResponse.data.status.error_code === 0) {
                 response = axiosResponse.data.data[id];

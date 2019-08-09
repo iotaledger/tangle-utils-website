@@ -71,8 +71,8 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
             }
         }
 
-        const response = await this._transactionsClient.subscribe(() => {
-            this.updateFeeds(false);
+        const response = await this._transactionsClient.subscribe(async () => {
+            await this.updateFeeds(false);
         });
 
         if (response && response.success) {
@@ -105,7 +105,8 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                         <label>Value Filter</label>
                         <Select
                             value={this.state.valueFilter}
-                            onChange={(e) => this.setState({ valueFilter: e.target.value as ValueFilter }, () => this.updateFeeds(true))}
+                            onChange={e => this.setState(
+                                { valueFilter: e.target.value as ValueFilter }, () => this.updateFeeds(true))}
                             selectSize="small"
                         >
                             <option value="both">Both</option>
@@ -121,11 +122,13 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                             placeholder="Enter limit for the values"
                             restrict="float"
                             inputSize="small"
-                            onChange={(e) => this.setState({ valueLimit: parseFloat(e.target.value) }, () => this.updateFeeds(true))}
+                            onChange={e => this.setState(
+                                { valueLimit: parseFloat(e.target.value) }, () => this.updateFeeds(true))}
                         />
                         <Select
                             value={this.state.valueLimitUnits}
-                            onChange={(e) => this.setState({ valueLimitUnits: e.target.value as Unit }, () => this.updateFeeds(true))}
+                            onChange={e => this.setState(
+                                { valueLimitUnits: e.target.value as Unit }, () => this.updateFeeds(true))}
                             selectSize="small"
                         >
                             <option value="i">i</option>
@@ -140,7 +143,8 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                 <div className="feed-wrapper">
                     <div className="feed">
                         <Heading level={2}>MainNet</Heading>
-                        {this.state.mainnetTransactions.length === 0 && ("There are no transactions with the current filters.")}
+                        {this.state.mainnetTransactions.length === 0 &&
+                            ("There are no transactions with the current filters.")}
                         {this.state.mainnetTransactions.map((tx, idx) => (
                             <div className="row" key={idx}>
                                 <Link className="small" to={`/transaction/${tx.hash}`}>{tx.hash}</Link>
@@ -150,7 +154,8 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                     </div>
                     <div className="feed">
                         <Heading level={2}>DevNet</Heading>
-                        {this.state.devnetTransactions.length === 0 && ("There are no transactions with the current filters.")}
+                        {this.state.devnetTransactions.length === 0 &&
+                            ("There are no transactions with the current filters.")}
                         {this.state.devnetTransactions.map((tx, idx) => (
                             <div className="row" key={idx}>
                                 <Link className="small" to={`/transaction/${tx.hash}/devnet`}>{tx.hash}</Link>

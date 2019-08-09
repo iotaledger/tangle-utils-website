@@ -67,6 +67,7 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
      */
     public render(): ReactNode {
         // tslint:disable:react-no-dangerous-html
+        // tslint:disable:react-a11y-input-elements
         return (
             <React.Fragment>
                 <Heading level={1}>QR Create</Heading>
@@ -79,12 +80,17 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
                             type="text"
                             placeholder="The address for the payment (90 Trytes)"
                             value={this.state.address}
-                            onChange={(e) => this.setState({ address: e.target.value }, () => this.qrCode())}
+                            onChange={e => this.setState({ address: e.target.value }, () => this.qrCode())}
                             maxLength={90}
                             readOnly={this.state.isBusy}
                             restrict="trytes"
                         />
-                        <Link className={`button no-min ${this.state.addressIsValid ? "" : "disabled"}`} to={`/address/${this.state.address}`}>Explore</Link>
+                        <Link
+                            className={`button no-min ${this.state.addressIsValid ? "" : "disabled"}`}
+                            to={`/address/${this.state.address}`}
+                        >
+                            Explore
+                        </Link>
                     </Fieldset>
                     <Fieldset>
                         <label>Amount</label>
@@ -92,7 +98,8 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
                             type="text"
                             placeholder="Enter an amount in IOTAs"
                             value={this.state.amount}
-                            onChange={(e) => this.setState({ amount: e.target.value.replace(/[^0-9]/g, "") }, () => this.qrCode())}
+                            onChange={e => this.setState(
+                                { amount: e.target.value.replace(/[^0-9]/g, "") }, () => this.qrCode())}
                             readOnly={this.state.isBusy}
                             restrict="integer"
                         />
@@ -103,7 +110,7 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
                             type="text"
                             placeholder="Enter a message to include"
                             value={this.state.message}
-                            onChange={(e) => this.setState({ message: e.target.value }, () => this.qrCode())}
+                            onChange={e => this.setState({ message: e.target.value }, () => this.qrCode())}
                             readOnly={this.state.isBusy}
                         />
                     </Fieldset>
@@ -183,7 +190,8 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
                                 cssClass: "qr"
                             });
 
-                        qrDataPng = Buffer.from((await AddressQR.renderRaw(this.state.address.toUpperCase(), "png", 5, 0)) as Uint8Array);
+                        qrDataPng = Buffer.from((await AddressQR.renderRaw(
+                            this.state.address.toUpperCase(), "png", 5, 0)) as Uint8Array);
                     } else {
                         const paymentData = TrinityPaymentQR.generatePaymentData(
                             this.state.address.toUpperCase(),
@@ -205,7 +213,8 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
                                 cssClass: "qr"
                             });
 
-                        qrDataPng = Buffer.from((await TrinityPaymentQR.renderRaw(paymentData, "png", 0, 5, 0)) as Uint8Array);
+                        qrDataPng = Buffer.from((await TrinityPaymentQR.renderRaw(
+                            paymentData, "png", 0, 5, 0)) as Uint8Array);
                     }
 
                     this.setState({

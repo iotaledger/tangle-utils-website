@@ -63,11 +63,15 @@ export class TransactionsClient {
                     resolve(subscribeResponse);
                 });
                 this._socket.on("transactions", (transactionsResponse: ITransactionsSubscriptionMessage) => {
-                    let newMainNet = transactionsResponse.mainnetTransactions.map(trytes => asTransactionObject(trytes, undefined));
-                    let newDevNet = transactionsResponse.devnetTransactions.map(trytes => asTransactionObject(trytes, undefined));
+                    let newMainNet = transactionsResponse.mainnetTransactions.map(
+                        trytes => asTransactionObject(trytes, undefined));
+                    let newDevNet = transactionsResponse.devnetTransactions.map(
+                        trytes => asTransactionObject(trytes, undefined));
 
-                    newMainNet = newMainNet.filter(tx => this._mainnetTransactions.findIndex(tx2 => tx2.hash === tx.hash) === -1);
-                    newDevNet = newDevNet.filter(tx => this._devnetTransactions.findIndex(tx2 => tx2.hash === tx.hash) === -1);
+                    newMainNet = newMainNet.filter(tx =>
+                        this._mainnetTransactions.findIndex(tx2 => tx2.hash === tx.hash) === -1);
+                    newDevNet = newDevNet.filter(tx =>
+                        this._devnetTransactions.findIndex(tx2 => tx2.hash === tx.hash) === -1);
 
                     this._tangleCacheService.addTransactions(
                         newMainNet.map(tx => tx.hash), transactionsResponse.mainnetTransactions, "mainnet");

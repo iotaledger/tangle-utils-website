@@ -32,7 +32,11 @@ export class PowHelper {
      * @param trytes The trytes to perform the pow on.
      * @returns The trytes produced by the proof of work.
      */
-    public static async localPow(trunkTransaction: string, branchTransaction: string, minWeightMagnitude: number, trytes: ReadonlyArray<string>): Promise<ReadonlyArray<string>> {
+    public static async localPow(
+        trunkTransaction: string,
+        branchTransaction: string,
+        minWeightMagnitude: number,
+        trytes: ReadonlyArray<string>): Promise<ReadonlyArray<string>> {
         const finalTrytes: string[] = [];
 
         init();
@@ -57,7 +61,9 @@ export class PowHelper {
             if (!previousTransactionHash) {
                 // Check if last transaction in the bundle
                 if (tx.lastIndex !== tx.currentIndex) {
-                    throw new Error("Wrong bundle order. The bundle should be ordered in descending order from currentIndex");
+                    throw new Error(
+                        "Wrong bundle order. The bundle should be ordered in descending order from currentIndex"
+                    );
                 }
                 tx.trunkTransaction = trunkTransaction;
                 tx.branchTransaction = branchTransaction;

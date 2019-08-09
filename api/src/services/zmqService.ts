@@ -234,7 +234,7 @@ export class ZmqService {
                 this._socket = zmq.socket("sub");
                 this._socket.connect(this._config.endpoint);
 
-                this._socket.on("message", (msg) => this.handleMessage(msg));
+                this._socket.on("message", msg => this.handleMessage(msg));
 
                 const keys = Object.keys(this._subscriptions);
                 for (let i = 0; i < keys.length; i++) {

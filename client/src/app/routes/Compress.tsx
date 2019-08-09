@@ -47,6 +47,7 @@ class Compress extends Component<CompressProps, CompressState> {
      * @returns The node to render.
      */
     public render(): ReactNode {
+        // tslint:disable:react-a11y-input-elements
         return (
             <React.Fragment>
                 <Heading level={1}>Trytes Compress</Heading>
@@ -55,7 +56,7 @@ class Compress extends Component<CompressProps, CompressState> {
                         <label>Trytes</label>
                         <TextArea
                             value={this.state.trytes}
-                            onChange={(e) => this.setState({ trytes: e.target.value }, () => this.compress())}
+                            onChange={e => this.setState({ trytes: e.target.value }, () => this.compress())}
                             rows={10}
                             placeholder="Enter trytes to compress"
                             restrict="trytes"
@@ -108,7 +109,7 @@ class Compress extends Component<CompressProps, CompressState> {
         if (isValid) {
             try {
                 compressionResult = compress(Buffer.from(this.state.trytes.toUpperCase()));
-            } catch (err) {}
+            } catch (err) { }
 
             if (compressionResult) {
                 for (let i = 0; i < compressionResult.length; i++) {
@@ -124,7 +125,9 @@ class Compress extends Component<CompressProps, CompressState> {
             compressed,
             originalLength: this.state.trytes.length,
             compressedLength: compressionResult ? compressionResult.length : 0,
-            savings: 100 - (compressionResult && compressionResult.length > 0 ? compressionResult.length / this.state.trytes.length * 100 : 0)
+            savings: 100 -
+                (compressionResult && compressionResult.length > 0
+                    ? compressionResult.length / this.state.trytes.length * 100 : 0)
         });
     }
 

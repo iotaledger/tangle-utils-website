@@ -65,7 +65,9 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                 await this._currencyService.loadCurrencies((isAvailable, data, err) => {
                     this.setState({
                         isBusy: false,
-                        status: err ? "Loading currency data failed, please try again later." : (isAvailable ? "" : "Currency data is not enabled"),
+                        status: err ?
+                            "Loading currency data failed, please try again later." :
+                            (isAvailable ? "" : "Currency data is not enabled"),
                         isErrored: !!err,
                         baseCurrencyRate: data ? data.baseCurrencyRate || 1 : undefined,
                         currencies: data ? data.currencies || [] : undefined,
@@ -83,7 +85,11 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
         return (
             <React.Fragment>
                 {this.state.baseCurrencyRate === undefined && this.state.isBusy && (
-                    <StatusMessage status={this.state.status} isBusy={this.state.isBusy} color={this.state.isErrored ? "danger" : "info"} />
+                    <StatusMessage
+                        status={this.state.status}
+                        isBusy={this.state.isBusy}
+                        color={this.state.isErrored ? "danger" : "info"}
+                    />
                 )}
 
                 {this.state.baseCurrencyRate === undefined && !this.state.isBusy && (
@@ -93,13 +99,16 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                 {this.state.baseCurrencyRate !== undefined && (
                     <React.Fragment>
                         <Heading level={1}>Currency Conversion</Heading>
-                        <p>Fill in any of the fields to get automatic conversions at the current currency exchange rate.</p>
+                        <p>
+                            Fill in any of the fields to get automatic conversions
+                            at the current currency exchange rate.
+                        </p>
                         <Form>
                             <Fieldset>
                                 <label>Fiat</label>
                                 <Select
                                     value={this.state.fiatCode}
-                                    onChange={(e) => this.fiatCodeConversion(e.target.value)}
+                                    onChange={e => this.fiatCodeConversion(e.target.value)}
                                     selectSize="small"
                                 >
                                     {this.state.currencies && this.state.currencies.map(is => (
@@ -112,7 +121,7 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                                     inputSize="small"
                                     placeholder="Enter amount in the selected currency"
                                     restrict="float"
-                                    onChange={(e) => this.setState({ fiat: e.target.value }, () => this.fiatConversion())}
+                                    onChange={e => this.setState({ fiat: e.target.value }, () => this.fiatConversion())}
                                 />
                             </Fieldset>
                             <Fieldset>
@@ -124,7 +133,9 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                                     placeholder="Enter amount in iotas"
                                     maxLength={16}
                                     restrict="integer"
-                                    onChange={(e) => this.setState({ currencyIota: e.target.value }, () => this.iotaConversion("i", this.state.currencyIota))}
+                                    onChange={e => this.setState(
+                                        { currencyIota: e.target.value },
+                                        () => this.iotaConversion("i", this.state.currencyIota))}
                                 />
                             </Fieldset>
                             <Fieldset>
@@ -135,7 +146,9 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                                     inputSize="small"
                                     placeholder="Enter amount in Kilo Iotas"
                                     restrict="float"
-                                    onChange={(e) => this.setState({ currencyKiota: e.target.value }, () => this.iotaConversion("k", this.state.currencyKiota))}
+                                    onChange={e => this.setState(
+                                        { currencyKiota: e.target.value },
+                                        () => this.iotaConversion("k", this.state.currencyKiota))}
                                 />
                             </Fieldset>
                             <Fieldset>
@@ -146,7 +159,9 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                                     inputSize="small"
                                     placeholder="Enter amount in Mega Iotas"
                                     restrict="float"
-                                    onChange={(e) => this.setState({ currencyMiota: e.target.value }, () => this.iotaConversion("m", this.state.currencyMiota))}
+                                    onChange={e => this.setState(
+                                        { currencyMiota: e.target.value },
+                                        () => this.iotaConversion("m", this.state.currencyMiota))}
                                 />
                             </Fieldset>
                             <Fieldset>
@@ -157,7 +172,9 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                                     inputSize="small"
                                     placeholder="Enter amount in Giga Iotas"
                                     restrict="float"
-                                    onChange={(e) => this.setState({ currencyGiota: e.target.value }, () => this.iotaConversion("g", this.state.currencyGiota))}
+                                    onChange={e => this.setState(
+                                        { currencyGiota: e.target.value },
+                                        () => this.iotaConversion("g", this.state.currencyGiota))}
                                 />
                             </Fieldset>
                             <Fieldset>
@@ -168,7 +185,9 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                                     inputSize="small"
                                     placeholder="Enter amount in Tera Iotas"
                                     restrict="float"
-                                    onChange={(e) => this.setState({ currencyTiota: e.target.value }, () => this.iotaConversion("t", this.state.currencyTiota))}
+                                    onChange={e => this.setState(
+                                        { currencyTiota: e.target.value },
+                                        () => this.iotaConversion("t", this.state.currencyTiota))}
                                 />
                             </Fieldset>
                             <Fieldset>
@@ -179,7 +198,9 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
                                     inputSize="small"
                                     placeholder="Enter amount in Peta Iotas"
                                     restrict="float"
-                                    onChange={(e) => this.setState({ currencyPiota: e.target.value }, () => this.iotaConversion("p", this.state.currencyPiota))}
+                                    onChange={e => this.setState(
+                                        { currencyPiota: e.target.value },
+                                        () => this.iotaConversion("p", this.state.currencyPiota))}
                                 />
                             </Fieldset>
                         </Form>

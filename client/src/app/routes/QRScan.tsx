@@ -30,13 +30,19 @@ class QRScan extends Component<any, QRScanState> {
      * @returns The node to render.
      */
     public render(): ReactNode {
+        // tslint:disable:react-a11y-input-elements
         return (
             <React.Fragment>
                 <Heading level={1}>QR Scan</Heading>
                 <p>Try scanning a QR Code, if it has IOTA data it will be extracted.</p>
                 <Form>
                     <Fieldset>
-                        <Button color="primary" onClick={() => this.setState({ showScanner: true })}>Scan QR Code</Button>
+                        <Button
+                            color="primary"
+                            onClick={() => this.setState({ showScanner: true })}
+                        >
+                            Scan QR Code
+                        </Button>
                     </Fieldset>
                     {this.state.dataText && (
                         <Fieldset>
@@ -69,7 +75,7 @@ class QRScan extends Component<any, QRScanState> {
                     )}
                 </Form>
                 {this.state.showScanner && (
-                    <QRReader displayMode="fill" onData={(data) => this.qrData(data)} />
+                    <QRReader displayMode="fill" onData={data => this.qrData(data)} />
                 )}
             </React.Fragment>
         );

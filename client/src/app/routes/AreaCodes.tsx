@@ -56,7 +56,7 @@ class AreaCodes extends Component<AreaCodesProps, AreaCodesState> {
                         <Input
                             type="text"
                             value={this.state.areaCode}
-                            onChange={(e) => this.updateIac(e.target.value)}
+                            onChange={e => this.updateIac(e.target.value)}
                             restrict="trytes"
                             maxLength={14}
                             placeholder="Please enter IOTA Area code"
@@ -67,7 +67,11 @@ class AreaCodes extends Component<AreaCodesProps, AreaCodesState> {
                             <div className="danger">{this.state.areaCodeValidation}</div>
                         </Fieldrow>
                     )}
-                    <AreaCodeMap iac={this.state.mapAreaCode} onChanged={(iac) => this.setState({ areaCode: iac, mapAreaCode: iac })} />
+                    <AreaCodeMap
+                        iac={this.state.mapAreaCode}
+                        onChanged={iac =>
+                            this.setState({ areaCode: iac, mapAreaCode: iac })}
+                    />
                 </Form>
             </div>
         );

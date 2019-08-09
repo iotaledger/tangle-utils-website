@@ -155,10 +155,10 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
                         }}
                         defaultZoom={this.DEFAULT_ZOOM}
                         zoom={this.state.zoom || this.DEFAULT_ZOOM}
-                        onClick={(e) => this.mapClicked(e)}
-                        onGoogleApiLoaded={(e) => this.apiLoaded(e.map, e.maps)}
+                        onClick={e => this.mapClicked(e)}
+                        onGoogleApiLoaded={e => this.apiLoaded(e.map, e.maps)}
                         yesIWantToUseGoogleMapApiInternals={true}
-                        onChange={(e) => this.setState({ zoom: e.zoom }, () => this.saveSettings())}
+                        onChange={e => this.setState({ zoom: e.zoom }, () => this.saveSettings())}
                     />
                 </div>
                 <div className="area-code-map--actions">
@@ -295,7 +295,7 @@ class AreaCodeMap extends Component<AreaCodeMapProps, AreaCodeMapState> {
         if (navigator.geolocation) {
             this.setState({ findingLocation: true, zoom: 17 }, () => {
                 navigator.geolocation.getCurrentPosition(
-                    async (pos) => {
+                    async pos => {
                         await this.updateIac(
                             IotaAreaCodes.encode(
                                 pos.coords.latitude,

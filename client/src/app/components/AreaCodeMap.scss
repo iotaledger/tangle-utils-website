@@ -2,22 +2,22 @@
   position: relative;
 
   .area-code-map--disabled-overlay {
-    height: 640px;
-    width: 100%;
+    position: absolute;
     top: 0px;
     left: 0px;
-    background-color: #eeeeee;
+    width: 100%;
+    height: 640px;
     border: 1px solid var(--jade);
+    background-color: #eeeeee;
     opacity: 0.7;
-    position: absolute;
     z-index: 100;
   }
 
   .area-code-map--map-container {
-    height: 640px;
     width: 100%;
-    border: 1px solid var(--jade);
+    height: 640px;
     margin-bottom: 20px;
+    border: 1px solid var(--jade);
   }
 
   .area-code-map--actions {
@@ -25,8 +25,8 @@
     justify-content: flex-end;
 
     button {
+      margin-right: 0px;
       margin-left: 20px;
-      margin-right: 00px;
     }
   }
 }

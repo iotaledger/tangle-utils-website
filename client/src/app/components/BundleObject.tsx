@@ -47,7 +47,8 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
      * The component mounted.
      */
     public async componentDidMount(): Promise<void> {
-        const bundleGroupsPlain = await this._tangleCacheService.getBundleGroups(this.props.transactionHashes, this.props.network);
+        const bundleGroupsPlain = await this._tangleCacheService.getBundleGroups(
+            this.props.transactionHashes, this.props.network);
 
         const confirmationStates = await this._tangleCacheService.getTransactionConfirmationStates(
             bundleGroupsPlain.map(group => group[0].hash),
@@ -83,7 +84,8 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                     currencyConverted: ""
                 })),
                 confirmationState: confirmedIndex === i ? confirmationStates[i] :
-                    confirmedIndex >= 0 && confirmationStates[i] !== "confirmed" ? "reattachment" : confirmationStates[i]
+                    confirmedIndex >= 0 && confirmationStates[i] !== "confirmed"
+                        ? "reattachment" : confirmationStates[i]
             });
         }
         this.setState({ bundleGroups, isBusy: false });
@@ -117,20 +119,41 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
             <div className="transaction-object bundle-object">
                 <div className="row">
                     <div className="value">{this.props.hash}</div>
-                    <Button color="secondary" size="small" onClick={() => ClipboardHelper.copy(this.props.hash)}>Copy</Button>
+                    <Button
+                        color="secondary"
+                        size="small"
+                        onClick={() => ClipboardHelper.copy(this.props.hash)}
+                    >
+                        Copy
+                    </Button>
                 </div>
                 {this.state.isBusy && (
-                    <StatusMessage status="Loading bundle data, please wait..." color="info" isBusy={this.state.isBusy} />
+                    <StatusMessage
+                        status="Loading bundle data, please wait..."
+                        color="info"
+                        isBusy={this.state.isBusy}
+                    />
                 )}
                 {this.state.bundleGroups.map((group, idx) => (
                     <div className="group" key={idx}>
                         <div className="inputs">
-                            <div className="caption">Inputs [{group.transactions.filter(f => f.tx.value < 0).length}]</div>
+                            <div
+                                className="caption"
+                            >
+                                Inputs [{group.transactions.filter(f => f.tx.value < 0).length}]
+                            </div>
                             {group.transactions.filter(f => f.tx.value < 0).map((t, idx2) => (
                                 <div className="transaction" key={idx2}>
                                     <div className="row top">
                                         <div className="label">Hash</div>
-                                        <div className="value"><Link className="nav-link small" to={`/transaction/${t.tx.hash}${network}`}>{t.tx.hash}</Link></div>
+                                        <div className="value">
+                                            <Link
+                                                className="nav-link small"
+                                                to={`/transaction/${t.tx.hash}${network}`}
+                                            >
+                                                {t.tx.hash}
+                                            </Link>
+                                        </div>
                                     </div>
                                     <div className="row top">
                                         <div className="label">Value</div>
@@ -150,14 +173,25 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                         </div>
                         <div className="outputs">
                             <div className="caption-wrapper">
-                                <div className="caption">Outputs [{group.transactions.filter(f => f.tx.value >= 0).length}]</div>
+                                <div
+                                    className="caption"
+                                >
+                                    Outputs [{group.transactions.filter(f => f.tx.value >= 0).length}]
+                                </div>
                                 <Confirmation state={group.confirmationState} />
                             </div>
                             {group.transactions.filter(f => f.tx.value >= 0).map((t, idx2) => (
                                 <div className="transaction" key={idx2}>
                                     <div className="row top">
                                         <div className="label">Hash</div>
-                                        <div className="value"><Link className="nav-link small" to={`/transaction/${t.tx.hash}${network}`}>{t.tx.hash}</Link></div>
+                                        <div className="value">
+                                            <Link
+                                                className="nav-link small"
+                                                to={`/transaction/${t.tx.hash}${network}`}
+                                            >
+                                                {t.tx.hash}
+                                            </Link>
+                                        </div>
                                     </div>
                                     <div className="row top">
                                         <div className="label">Value</div>

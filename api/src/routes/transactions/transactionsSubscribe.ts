@@ -17,7 +17,7 @@ export function transactionsSubscribe(config: IConfiguration, socket: SocketIO.S
     try {
         const transactionsService = ServiceFactory.get<TransactionsService>("transactions");
 
-        const subscriptionId = transactionsService.subscribe((transactionData) => {
+        const subscriptionId = transactionsService.subscribe(transactionData => {
             socket.emit("transactions", transactionData);
         });
 

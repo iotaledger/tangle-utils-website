@@ -122,7 +122,9 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
         });
 
         if (!this.props.hideInteractive && this._mounted) {
-            const thisGroup: ReadonlyArray<Transaction> = await this._tangleCacheService.getTransactionBundleGroup(this.state.transactionObject, this.props.network);
+            const thisGroup: ReadonlyArray<Transaction> =
+                await this._tangleCacheService.getTransactionBundleGroup(
+                    this.state.transactionObject, this.props.network);
 
             if (thisGroup && thisGroup.length > 0) {
                 const thisIndex = thisGroup.findIndex(t => t.hash === this.state.transactionObject.hash);
@@ -138,7 +140,8 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                 } else if (zero === thisGroup.length) {
                     bundleResult = "Contains data, but does not transfer IOTA.";
                 } else {
-                    bundleResult = `Transfers IOTA from ${pos} input address${pos > 1 ? "s" : ""} to ${neg} output address${neg > 1 ? "s" : ""}.`;
+                    bundleResult = `Transfers IOTA from ${pos} input address${
+                        pos > 1 ? "s" : ""} to ${neg} output address${neg > 1 ? "s" : ""}.`;
                 }
 
                 // See if we can create a longer message using all of the transactions in this group
@@ -170,8 +173,9 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             messageType,
                             messageSpans,
                             tailHash,
-                            nextTransactionHash: this.state.transactionObject.currentIndex < this.state.transactionObject.lastIndex ?
-                                this.state.transactionObject.trunkTransaction : undefined,
+                            nextTransactionHash:
+                                this.state.transactionObject.currentIndex < this.state.transactionObject.lastIndex ?
+                                    this.state.transactionObject.trunkTransaction : undefined,
                             prevTransactionHash: thisIndex > 0 ? thisGroup[thisIndex - 1].hash : undefined
                         },
                         () => this.checkConfirmation());
@@ -206,11 +210,19 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                 <div className="row">
                     <div className="value">{this.props.hash}</div>
                     <div className="action-container">
-                        <Button color="secondary" size="small" onClick={() => ClipboardHelper.copy(this.props.hash)}>Copy</Button>
+                        <Button
+                            color="secondary"
+                            size="small"
+                            onClick={() => ClipboardHelper.copy(this.props.hash)}
+                        >
+                            Copy
+                        </Button>
                         <Link
                             className="button button--secondary button--small"
                             to={
-                                `/qr-create/${state.transactionObject.address}${state.addressChecksum}/${state.transactionObject.value}/${state.messageType === "ASCII" ? state.message : ""}`
+                                `/qr-create/${state.transactionObject.address}${state.addressChecksum}/${
+                                state.transactionObject.value}/${state.messageType === "ASCII" ? state.message
+                                    : ""}`
                             }
                         >
                             QR
@@ -234,7 +246,8 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                     <React.Fragment>
                         <div className="row">
                             <div className="value">
-                                {this.state.time.format("LLLL")} - {moment.duration(moment().diff(this.state.time)).humanize()} ago
+                                {this.state.time.format("LLLL")} - {
+                                    moment.duration(moment().diff(this.state.time)).humanize()} ago
                             </div>
                         </div>
                         <div className="row">
@@ -256,18 +269,20 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                         {this.state.currencies.length > 0 && (
                                             <Select
                                                 value={this.state.fiatCode}
-                                                onChange={(e) => this.setState({ fiatCode: e.target.value }, async () => {
+                                                onChange={e => this.setState({ fiatCode: e.target.value }, async () => {
                                                     if (this._mounted) {
                                                         this.setState(
                                                             {
-                                                                valueConverted: await this._currencyService.currencyConvert(
-                                                                    this.state.transactionObject.value,
-                                                                    {
-                                                                        fiatCode: this.state.fiatCode || "EUR",
-                                                                        currencies: this.state.currencies,
-                                                                        baseCurrencyRate: this.state.baseCurrencyRate
-                                                                    },
-                                                                    true)
+                                                                valueConverted:
+                                                                    await this._currencyService.currencyConvert(
+                                                                        this.state.transactionObject.value,
+                                                                        {
+                                                                            fiatCode: this.state.fiatCode || "EUR",
+                                                                            currencies: this.state.currencies,
+                                                                            baseCurrencyRate:
+                                                                                this.state.baseCurrencyRate
+                                                                        },
+                                                                        true)
                                                             });
                                                     }
                                                 }
@@ -288,8 +303,13 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             <div className="col">
                                 <div className="label">Address</div>
                                 <div className="value">
-                                    <Link className="nav-link" to={`/address/${this.state.transactionObject.address}${network}`}>{this.state.transactionObject.address}
-                                        <span className="checksum">{this.state.addressChecksum}</span></Link>
+                                    <Link
+                                        className="nav-link"
+                                        to={`/address/${this.state.transactionObject.address}${network}`}
+                                    >
+                                        {this.state.transactionObject.address}
+                                        <span className="checksum">{this.state.addressChecksum}</span>
+                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -299,12 +319,6 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                     <div className="label">Status</div>
                                     <div className="value">
                                         <Confirmation state={this.state.confirmationState} />
-                                        {/* {this.state.isPromotable && (
-                                            <Button disabled={this.state.isPromoting} color="secondary" size="small" onClick={() => this.promote()}>Promote</Button>
-                                        )}
-                                        {this.state.isPromoting && (
-                                            <Spinner />
-                                        )} */}
                                     </div>
                                 </div>
                             </div>
@@ -320,7 +334,11 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                     )}
 
                                     {this.state.isBundleValid !== undefined && (
-                                        <div className={`value ${this.state.isBundleValid ? "yes" : "no"}`}>{this.state.isBundleValid ? "Yes" : "No - This bundle will never confirm"}</div>
+                                        <div
+                                            className={`value ${this.state.isBundleValid ? "yes" : "no"}`}
+                                        >
+                                            {this.state.isBundleValid ? "Yes" : "No - This bundle will never confirm"}
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -328,32 +346,44 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         <div className="row">
                             <div className="col">
                                 <div className="label">Bundle Hash</div>
-                                <div className="value"><Link className="nav-link" to={`/bundle/${this.state.transactionObject.bundle}${network}`}>{this.state.transactionObject.bundle}</Link></div>
+                                <div className="value">
+                                    <Link
+                                        className="nav-link"
+                                        to={`/bundle/${this.state.transactionObject.bundle}${network}`}
+                                    >
+                                        {this.state.transactionObject.bundle}
+                                    </Link>
+                                </div>
                             </div>
                         </div>
-                        {/* <div className="row">
-                            <div className="col">
-                                <div className="label">Result</div>
-                                <div className="value">{this.state.bundleResult}</div>
-                            </div>
-                        </div> */}
                         <div className="row">
                             <div className="col">
                                 <div className="label">Index</div>
                                 <div className="value">
                                     {this.state.prevTransactionHash && (
                                         <React.Fragment>
-                                            <Link className="button button--secondary button--small" to={`/transaction/${this.state.prevTransactionHash}${network}`}>Prev</Link>
+                                            <Link
+                                                className="button button--secondary button--small"
+                                                to={`/transaction/${this.state.prevTransactionHash}${network}`}
+                                            >
+                                                Prev
+                                            </Link>
                                             &nbsp;
                                         </React.Fragment>
                                     )}
                                     <div className="index">
-                                        {this.state.transactionObject.currentIndex} / {this.state.transactionObject.lastIndex}
+                                        {this.state.transactionObject.currentIndex} / {
+                                            this.state.transactionObject.lastIndex}
                                     </div>
                                     {this.state.nextTransactionHash && (
                                         <React.Fragment>
                                             &nbsp;
-                                            <Link className="button button--secondary button--small" to={`/transaction/${this.state.nextTransactionHash}${network}`}>Next</Link>
+                                            <Link
+                                                className="button button--secondary button--small"
+                                                to={`/transaction/${this.state.nextTransactionHash}${network}`}
+                                            >
+                                                Next
+                                            </Link>
                                         </React.Fragment>
                                     )}
                                 </div>
@@ -364,12 +394,25 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         <div className="row">
                             <div className="col">
                                 <div className="label">Tag</div>
-                                <div className="value"><Link className="nav-link" to={`/tag/${this.state.transactionObject.tag}${network}`}>{this.state.transactionObject.tag}</Link></div>
+                                <div className="value">
+                                    <Link
+                                        className="nav-link"
+                                        to={`/tag/${this.state.transactionObject.tag}${network}`}
+                                    >
+                                        {this.state.transactionObject.tag}
+                                    </Link>
+                                </div>
                             </div>
                             <div className="col">
                                 <div className="label">Obsolete Tag</div>
-                                <div className="value"><Link className="nav-link" to={`/tag/${this.state.transactionObject.obsoleteTag}${network}`}>
-                                    {this.state.transactionObject.obsoleteTag}</Link></div>
+                                <div className="value">
+                                    <Link
+                                        className="nav-link"
+                                        to={`/tag/${this.state.transactionObject.obsoleteTag}${network}`}
+                                    >
+                                        {this.state.transactionObject.obsoleteTag}
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                         {this.state.iac && (
@@ -377,7 +420,12 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                 <div className="col">
                                     <div className="label">Area Code</div>
                                     <div className="value">
-                                        <Link className="button button--secondary button--small" to={`/area-codes/${this.state.iac}`}>View Map</Link>
+                                        <Link
+                                            className="button button--secondary button--small"
+                                            to={`/area-codes/${this.state.iac}`}
+                                        >
+                                            View Map
+                                        </Link>
                                         The Tag contains an IOTA Area Code which can be viewed.
                                     </div>
                                 </div>
@@ -387,7 +435,9 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             <div className="row top">
                                 <div className="col top fill">
                                     <div className="label">Message<br />{this.state.messageType}</div>
-                                    <div className="value fill"><pre className={this.state.messageType.toLowerCase()}>{this.state.message}</pre></div>
+                                    <div className="value fill">
+                                        <pre className={this.state.messageType.toLowerCase()}>{this.state.message}</pre>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -395,7 +445,11 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             <div className="row top">
                                 <div className="col top fill">
                                     <div className="label">Message<br />Trytes</div>
-                                    <div className="value fill"><pre className="trytes">{this.state.transactionObject.signatureMessageFragment}</pre></div>
+                                    <div className="value fill">
+                                        <pre className="trytes">
+                                            {this.state.transactionObject.signatureMessageFragment}
+                                        </pre>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -403,7 +457,9 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             <div className="row">
                                 <div className="col">
                                     <div className="label">&nbsp;</div>
-                                    <div className="value fill strong info">This message spans multiple transactions in the bundle.</div>
+                                    <div className="value fill strong info">
+                                        This message spans multiple transactions in the bundle.
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -415,15 +471,19 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                         <Button
                                             color="secondary"
                                             size="small"
-                                            onClick={() => this.setState({ messageShowRaw: !this.state.messageShowRaw })}
+                                            onClick={() => this.setState(
+                                                { messageShowRaw: !this.state.messageShowRaw })}
                                         >
-                                            {this.state.messageShowRaw ? `Show ${this.state.messageType}` : "Show Trytes"}
+                                            {this.state.messageShowRaw ?
+                                                `Show ${this.state.messageType}` : "Show Trytes"}
                                         </Button>
                                         <Button
                                             color="secondary"
                                             size="small"
                                             onClick={() => ClipboardHelper.copy(
-                                                this.state.messageShowRaw ? this.state.transactionObject.signatureMessageFragment : this.state.message)}
+                                                this.state.messageShowRaw ?
+                                                    this.state.transactionObject.signatureMessageFragment :
+                                                    this.state.message)}
                                         >
                                             Copy
                                         </Button>
@@ -436,15 +496,27 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         <div className="row">
                             <div className="col">
                                 <div className="label">Trunk</div>
-                                <div className="value"><Link className="nav-link" to={`/transaction/${this.state.transactionObject.trunkTransaction}${network}`}>
-                                    {this.state.transactionObject.trunkTransaction}</Link></div>
+                                <div className="value">
+                                    <Link
+                                        className="nav-link"
+                                        to={`/transaction/${this.state.transactionObject.trunkTransaction}${network}`}
+                                    >
+                                        {this.state.transactionObject.trunkTransaction}
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                         <div className="row">
                             <div className="col">
                                 <div className="label">Branch</div>
-                                <div className="value"><Link className="nav-link" to={`/transaction/${this.state.transactionObject.branchTransaction}${network}`}>
-                                    {this.state.transactionObject.branchTransaction}</Link></div>
+                                <div className="value">
+                                    <Link
+                                        className="nav-link"
+                                        to={`/transaction/${this.state.transactionObject.branchTransaction}${network}`}
+                                    >
+                                        {this.state.transactionObject.branchTransaction}
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                         <hr />
@@ -452,7 +524,10 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         <div className="row">
                             <div className="col">
                                 <div className="label">Timestamp</div>
-                                <div className="value">{this.state.attachmentTime.format("LLLL")} - {moment.duration(moment().diff(this.state.attachmentTime)).humanize()} ago</div>
+                                <div className="value">
+                                    {this.state.attachmentTime.format("LLLL")} - {
+                                        moment.duration(moment().diff(this.state.attachmentTime)).humanize()} ago
+                                </div>
                             </div>
                         </div>
                         <div className="row">
@@ -468,11 +543,15 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         <div className="row">
                             <div className="col">
                                 <div className="label">Lower Bound</div>
-                                <div className="value">{this.state.transactionObject.attachmentTimestampLowerBound}</div>
+                                <div className="value">
+                                    {this.state.transactionObject.attachmentTimestampLowerBound}
+                                </div>
                             </div>
                             <div className="col">
                                 <div className="label">Upper Bound</div>
-                                <div className="value">{this.state.transactionObject.attachmentTimestampUpperBound}</div>
+                                <div className="value">
+                                    {this.state.transactionObject.attachmentTimestampUpperBound}
+                                </div>
                             </div>
                         </div>
                         {!this.props.hideInteractive && (
@@ -496,7 +575,12 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                             >
                                                 Copy
                                             </Button>
-                                            <Link className="button button--secondary button--small" to={`/compress/${this.props.trytes}`}>View Compression Statistics</Link>
+                                            <Link
+                                                className="button button--secondary button--small"
+                                                to={`/compress/${this.props.trytes}`}
+                                            >
+                                                View Compression Statistics
+                                            </Link>
                                         </div>
                                     </div>
                                 </div>
@@ -517,11 +601,15 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             this._confirmationTimerId = undefined;
         }
 
-        const confirmationStates = await this._tangleCacheService.getTransactionConfirmationStates([this.props.hash], this.props.network);
+        const confirmationStates =
+            await this._tangleCacheService.getTransactionConfirmationStates(
+                [this.props.hash], this.props.network);
         let isPromotable = false;
 
         if (confirmationStates[0] !== "confirmed" && this.state.tailHash) {
-            isPromotable = await this._tangleCacheService.isTransactionPromotable(this.state.tailHash, this.props.network);
+            isPromotable =
+                await this._tangleCacheService.isTransactionPromotable(
+                    this.state.tailHash, this.props.network);
         }
 
         if (this._mounted) {

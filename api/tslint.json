@@ -35,7 +35,10 @@
         "react-anchor-blank-noopener": true,
         "react-iframe-missing-sandbox": true,
         "react-no-dangerous-html": true,
-        "await-promise": [true, "Bluebird"],
+        "await-promise": [
+            true,
+            "Bluebird"
+        ],
         "forin": false,
         "jquery-deferred-must-complete": true,
         "label-position": true,
@@ -106,7 +109,10 @@
             true,
             "array"
         ],
-        "arrow-parens": false,
+        "arrow-parens": [
+            true,
+            "ban-single-arg-parens"
+        ],
         "callable-types": true,
         "chai-prefer-contains-to-index-of": true,
         "chai-vague-errors": false,
@@ -143,7 +149,10 @@
         ],
         "max-line-length": [
             true,
-            200
+            {
+                "limit": 120,
+                "ignore-pattern": "^import"
+            }
         ],
         "member-access": true,
         "member-ordering": [
@@ -300,7 +309,7 @@
         "no-reference": true,
         "no-unexternalized-strings": false,
         "object-literal-shorthand": false,
-        "prefer-type-cast": false,
+        "prefer-type-cast": true,
         "space-before-function-paren": false,
         "prefer-switch": false,
         "prefer-function-over-method": false,
@@ -341,5 +350,5 @@
         "jsx-no-lambda": false,
         "prefer-readonly": true,
         "react-a11y-anchors": false
-     }
+    }
 }

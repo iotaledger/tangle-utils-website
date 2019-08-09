@@ -44,7 +44,7 @@ class Explore extends Component<ExploreProps, ExploreState> {
                             value={this.state.hash}
                             placeholder="Enter trytes, select hash type and then click explore"
                             restrict="trytes"
-                            onChange={(e) => this.setState({ hash: e.target.value }, () => this.validate())}
+                            onChange={e => this.setState({ hash: e.target.value }, () => this.validate())}
                         />
                     </Fieldset>
                     {this.state.validMessage && (
@@ -56,7 +56,9 @@ class Explore extends Component<ExploreProps, ExploreState> {
                         <label>Hash Type</label>
                         <Select
                             value={this.state.hashType}
-                            onChange={(e) => this.setState({ hashType: e.target.value as HashType }, () => this.validate())}
+                            onChange={e => this.setState(
+                                { hashType: e.target.value as HashType },
+                                () => this.validate())}
                             selectSize="small"
                         >
                             <option value="transaction">Transaction</option>
@@ -69,7 +71,8 @@ class Explore extends Component<ExploreProps, ExploreState> {
                         <label>Network</label>
                         <Select
                             value={this.state.network}
-                            onChange={(e) => this.setState({ network: e.target.value as NetworkType }, () => this.validate())}
+                            onChange={e => this.setState(
+                                { network: e.target.value as NetworkType }, () => this.validate())}
                             selectSize="small"
                         >
                             <option value="mainnet">MainNet</option>

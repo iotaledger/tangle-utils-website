@@ -93,7 +93,7 @@ class Mam extends Component<MamProps, MamState> {
      * The component will unmount from the dom.
      */
     public async componentWillUnmount(): Promise<void> {
-        this.stopData();
+        await this.stopData();
     }
 
     /**
@@ -111,7 +111,7 @@ class Mam extends Component<MamProps, MamState> {
                             type="text"
                             placeholder="The root for the mam channel"
                             value={this.state.root}
-                            onChange={(e) => this.setState({ root: e.target.value }, () => this.validate())}
+                            onChange={e => this.setState({ root: e.target.value }, () => this.validate())}
                             maxLength={81}
                             disabled={this.state.isBusy}
                             restrict="trytes"
@@ -126,7 +126,7 @@ class Mam extends Component<MamProps, MamState> {
                         <label>Mode</label>
                         <Select
                             value={this.state.mode}
-                            onChange={(e) => this.setState({ mode: e.target.value as MamMode }, () => this.validate())}
+                            onChange={e => this.setState({ mode: e.target.value as MamMode }, () => this.validate())}
                             selectSize="small"
                             disabled={this.state.isBusy}
                         >
@@ -141,7 +141,7 @@ class Mam extends Component<MamProps, MamState> {
                             type="text"
                             placeholder="The key to use in restricted mode"
                             value={this.state.key}
-                            onChange={(e) => this.setState({ key: e.target.value }, () => this.validate())}
+                            onChange={e => this.setState({ key: e.target.value }, () => this.validate())}
                             maxLength={81}
                             disabled={this.state.isBusy || this.state.mode !== "restricted"}
                         />
@@ -155,7 +155,7 @@ class Mam extends Component<MamProps, MamState> {
                         <label>Network</label>
                         <Select
                             value={this.state.network}
-                            onChange={(e) => this.setState({ network: e.target.value as NetworkType })}
+                            onChange={e => this.setState({ network: e.target.value as NetworkType })}
                             selectSize="small"
                             disabled={this.state.isBusy}
                         >
@@ -164,7 +164,12 @@ class Mam extends Component<MamProps, MamState> {
                         </Select>
                     </Fieldset>
                     <FormActions>
-                        <Button disabled={this.state.isBusy || !this.state.isValid} onClick={() => this.retrieveData()}>Retrieve</Button>
+                        <Button
+                            disabled={this.state.isBusy || !this.state.isValid}
+                            onClick={() => this.retrieveData()}
+                        >
+                            Retrieve
+                        </Button>
                         <Button disabled={!this.state.isBusy} onClick={() => this.stopData()}>Stop</Button>
                     </FormActions>
                 </Form>
@@ -204,7 +209,7 @@ class Mam extends Component<MamProps, MamState> {
             this.setState({ isBusy: true, packets: [] }, async () => {
                 this._nextRoot = this.state.root;
                 this._timeout = 100;
-                this.loadNextPacket(true);
+                await this.loadNextPacket(true);
             });
         }
     }
@@ -226,7 +231,8 @@ class Mam extends Component<MamProps, MamState> {
      */
     private async loadNextPacket(force?: boolean): Promise<void> {
         if (this._nextRoot && (this._updateTimer || force)) {
-            const packet = await this._tangleCacheService.getMamPacket(this._nextRoot, this.state.mode, this.state.key, this.state.network);
+            const packet = await this._tangleCacheService.getMamPacket(
+                this._nextRoot, this.state.mode, this.state.key, this.state.network);
 
             if (packet) {
                 const packets = this.state.packets;

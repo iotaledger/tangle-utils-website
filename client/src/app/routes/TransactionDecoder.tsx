@@ -60,7 +60,7 @@ class TransactionDecoder extends Component<TransactionDecoderProps, TransactionD
                         <label>Transaction Trytes</label>
                         <TextArea
                             value={this.state.trytes}
-                            onChange={(e) => this.setState({ trytes: e.target.value }, () => this.trytesUpdated())}
+                            onChange={e => this.setState({ trytes: e.target.value }, () => this.trytesUpdated())}
                             rows={10}
                             placeholder="Enter transaction payload trytes"
                             restrict="trytes"
@@ -75,7 +75,12 @@ class TransactionDecoder extends Component<TransactionDecoderProps, TransactionD
                         <React.Fragment>
                             <hr />
                             <Heading level={1}>Transaction</Heading>
-                            <TransactionObject hash={this.state.hash} trytes={this.state.trytes} network={this.state.network} hideInteractive={true} />
+                            <TransactionObject
+                                hash={this.state.hash}
+                                trytes={this.state.trytes}
+                                network={this.state.network}
+                                hideInteractive={true}
+                            />
                         </React.Fragment>
                     )}
                 </Form>

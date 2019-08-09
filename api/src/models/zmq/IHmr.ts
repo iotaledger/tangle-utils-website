@@ -1,5 +1,6 @@
 /**
- * The ratio of received transactions that the IRI stored in cache to received transaction that the IRI randomly removed (hit to miss ratio).
+ * The ratio of received transactions that the IRI stored in cache to received transaction
+ * that the IRI randomly removed (hit to miss ratio).
  */
 export interface IHmr {
     /**

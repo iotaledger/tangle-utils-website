@@ -5,30 +5,30 @@
   min-height: 100vh;
 
   header {
-      .select-wrapper {
-          width: auto;
+    .select-wrapper {
+      width: auto;
 
-          @media (max-width: 767px) {
-              width: 100%;
-              margin-top: 20px;
-          }
+      @media (max-width: 767px) {
+        width: 100%;
+        margin-top: 20px;
       }
+    }
   }
 
   nav {
     display: flex;
     flex-wrap: wrap;
-    border-bottom: 1px solid #eeeeee;
     padding: 10px 40px 10px 40px;
+    border-bottom: 1px solid #eeeeee;
 
     @media (max-width: 767px) {
       padding: 10px 16px 10px 16px;
     }
 
     a {
-      line-height: 2;
-      color: var(--jade);
       margin-right: 20px;
+      color: var(--jade);
+      line-height: 2;
       white-space: nowrap;
     }
   }
@@ -51,7 +51,7 @@
     }
 
     .label-multi {
-        margin-top: 5px;
+      margin-top: 5px;
     }
   }
 }
