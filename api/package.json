@@ -1,6 +1,6 @@
 {
     "name": "tangle-utils-api",
-    "description": "API for Tangle Utils",
+    "description": "API for Tangle Utilities",
     "version": "1.2.2",
     "author": "Martyn Janes <martyn.janes@iota.org>",
     "repository": {

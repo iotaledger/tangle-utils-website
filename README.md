@@ -1,8 +1,8 @@
-# Tangle Utils
+# Tangle Utilities
 
 A set of utilities for all things tangle, transaction and IOTA.
 
-The Tangle Utils is composed of 2 packages `api` and `client`.
+The Tangle Utilities is composed of 2 packages `api` and `client`.
 
 ## API
 

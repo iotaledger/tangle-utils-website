@@ -1,6 +1,6 @@
 {
     "name": "tangle-utils-client",
-    "description": "Tangle Tools UI",
+    "description": "Tangle Utilities UI",
     "version": "1.2.4",
     "author": "Martyn Janes <martyn.janes@iota.org>",
     "repository": {
