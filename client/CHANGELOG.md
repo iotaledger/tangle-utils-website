@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.4
+
+* QR Create allows empty amount field
+
 ## v1.2.3
 
 * Auto pad area code

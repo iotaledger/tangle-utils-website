@@ -178,7 +178,7 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
                     let qrDataPng: Buffer;
                     let htmlElement: Element;
                     let dataText;
-                    if (!this.state.amount) {
+                    if (!this.state.amount && !this.state.message) {
                         dataText = this.state.address.toUpperCase();
 
                         htmlElement = await AddressQR.renderHtml(
@@ -195,7 +195,7 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
                     } else {
                         const paymentData = TrinityPaymentQR.generatePaymentData(
                             this.state.address.toUpperCase(),
-                            parseInt(this.state.amount, 10),
+                            this.state.amount.length > 0 ? parseInt(this.state.amount, 10) : undefined,
                             this.state.tag,
                             this.state.message);
 
