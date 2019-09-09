@@ -17,29 +17,33 @@
             "text": "qubic"
         },
         {
+            "href": "https://docs.iota.org",
+            "text": "docs"
+        },
+        {
             "href": "https://ecosystem.iota.org/",
             "text": "ecosystem"
         }
     ],
     "footerSections": [
         {
-            "heading": "IOTA Tangle Utils",
+            "heading": "IOTA Tangle Utilities",
             "links": [
                 {
                     "href": "/",
-                    "text": "Explore"
+                    "text": "Tangle Explorer"
                 },
                 {
                     "href": "/mam",
-                    "text": "Mam"
+                    "text": "MAM Subscriber"
                 },
                 {
                     "href": "/currency-conversion",
-                    "text": "Currency Conversion"
+                    "text": "Currency Converter"
                 },
                 {
                     "href": "/text-conversion",
-                    "text": "Text Conversion"
+                    "text": "Text Converter"
                 },
                 {
                     "href": "/transaction-decoder",
@@ -47,23 +51,23 @@
                 },
                 {
                     "href": "/compress",
-                    "text": "Compress"
+                    "text": "Trytes Compressor"
                 },
                 {
                     "href": "/qr-create",
-                    "text": "QR Create"
+                    "text": "QR Code Generator"
                 },
                 {
                     "href": "/qr-scan",
-                    "text": "QR Scan"
+                    "text": "QR Code Scanner"
                 },
                 {
                     "href": "/simple-transaction",
-                    "text": "Simple Transaction"
+                    "text": "Simple Transaction Sender"
                 },
                 {
                     "href": "/area-codes",
-                    "text": "Area Codes"
+                    "text": "Area Code Finder"
                 }
             ]
         },
