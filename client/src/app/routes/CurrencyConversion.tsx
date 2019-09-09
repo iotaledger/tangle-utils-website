@@ -98,7 +98,7 @@ class CurrencyConversion extends Component<any, CurrencyConversionState> {
 
                 {this.state.baseCurrencyRate !== undefined && (
                     <React.Fragment>
-                        <Heading level={1}>Currency Conversion</Heading>
+                        <Heading level={1}>Currency Converter</Heading>
                         <p>
                             Fill in any of the fields to get automatic conversions
                             at the current currency exchange rate.

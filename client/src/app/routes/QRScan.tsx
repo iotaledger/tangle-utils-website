@@ -33,7 +33,7 @@ class QRScan extends Component<any, QRScanState> {
         // tslint:disable:react-a11y-input-elements
         return (
             <React.Fragment>
-                <Heading level={1}>QR Scan</Heading>
+                <Heading level={1}>QR Code Scanner</Heading>
                 <p>Try scanning a QR Code, if it has IOTA data it will be extracted.</p>
                 <Form>
                     <Fieldset>

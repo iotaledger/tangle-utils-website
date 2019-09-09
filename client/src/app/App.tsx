@@ -117,7 +117,7 @@ class App extends Component<RouteComponentProps, AppState> {
         return (
             <React.Fragment>
                 <Header
-                    title="IOTA Tangle Utils"
+                    title="IOTA Tangle Utilities"
                     topLinks={contentHomePage.headerTopLinks}
                     logo={logo}
                     compact={true}
@@ -125,16 +125,16 @@ class App extends Component<RouteComponentProps, AppState> {
                     hamburgerMediaQuery="tablet-up-hidden"
                 />
                 <nav className="tablet-down-hidden">
-                    <Link className="link" to="/">Explore</Link>
-                    <Link className="link" to="/mam">Mam</Link>
-                    <Link className="link" to="/currency-conversion">Currency Conversion</Link>
-                    <Link className="link" to="/text-conversion">Text Conversion</Link>
+                    <Link className="link" to="/">Tangle Explorer</Link>
+                    <Link className="link" to="/mam">Mam Subscriber</Link>
+                    <Link className="link" to="/currency-conversion">Currency Converter</Link>
+                    <Link className="link" to="/text-conversion">Text Converter</Link>
                     <Link className="link" to="/transaction-decoder">Transaction Decoder</Link>
-                    <Link className="link" to="/compress">Compress</Link>
-                    <Link className="link" to="/qr-create">QR Create</Link>
-                    <Link className="link" to="/qr-scan">QR Scan</Link>
-                    <Link className="link" to="/simple-transaction">Simple Transaction</Link>
-                    <Link className="link" to="/area-codes">Area Codes</Link>
+                    <Link className="link" to="/compress">Trytes Compressor</Link>
+                    <Link className="link" to="/qr-create">QR Code Generator</Link>
+                    <Link className="link" to="/qr-scan">QR Code Scanner</Link>
+                    <Link className="link" to="/simple-transaction">Simple Transaction Sender</Link>
+                    <Link className="link" to="/area-codes">Area Code Finder</Link>
                 </nav>
                 <SideMenu
                     isMenuOpen={this.state.isSideMenuOpen}
@@ -142,25 +142,25 @@ class App extends Component<RouteComponentProps, AppState> {
                     history={this.props.history}
                     items={[
                         {
-                            name: "IOTA Tangle Utils",
+                            name: "IOTA Tangle Utilities",
                             isExpanded: true,
                             items: [
                                 {
                                     items: [
                                         {
-                                            name: "Explore",
+                                            name: "Tangle Explorer",
                                             link: "/"
                                         },
                                         {
-                                            name: "Mam",
+                                            name: "Mam Subscriber",
                                             link: "/mam"
                                         },
                                         {
-                                            name: "Currency Conversion",
+                                            name: "Currency Converter",
                                             link: "/currency-conversion"
                                         },
                                         {
-                                            name: "Text Conversion",
+                                            name: "Text Converter",
                                             link: "/text-conversion"
                                         },
                                         {
@@ -168,23 +168,23 @@ class App extends Component<RouteComponentProps, AppState> {
                                             link: "/transaction-decoder"
                                         },
                                         {
-                                            name: "Compress",
+                                            name: "Trytes Compressor",
                                             link: "/compress"
                                         },
                                         {
-                                            name: "QR Create",
+                                            name: "QR Code Generator",
                                             link: "/qr-create"
                                         },
                                         {
-                                            name: "QR Scan",
+                                            name: "QR Code Scanner",
                                             link: "/qr-scan"
                                         },
                                         {
-                                            name: "Simple Transaction",
+                                            name: "Simple Transaction Sender",
                                             link: "/simple-transaction"
                                         },
                                         {
-                                            name: "Area Codes",
+                                            name: "Area Code Finder",
                                             link: "/area-codes"
                                         }
                                     ]

@@ -103,7 +103,7 @@ class Mam extends Component<MamProps, MamState> {
     public render(): ReactNode {
         return (
             <div className="mam">
-                <Heading level={1}>Mam</Heading>
+                <Heading level={1}>Mam Subscriber</Heading>
                 <Form>
                     <Fieldset>
                         <label>Root</label>

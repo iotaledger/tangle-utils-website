@@ -48,7 +48,7 @@ class AreaCodes extends Component<AreaCodesProps, AreaCodesState> {
     public render(): ReactNode {
         return (
             <div className="area-codes">
-                <Heading level={1}>Area Codes</Heading>
+                <Heading level={1}>Area Code Finder</Heading>
                 <p>Fill in the IOTA Area Code to show it on the map, on click the map to find the IOTA Area Code.</p>
                 <Form>
                     <Fieldset>

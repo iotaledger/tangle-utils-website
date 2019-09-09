@@ -51,7 +51,7 @@ class TextConversion extends Component<TextConversionProps, TextConversionState>
     public render(): ReactNode {
         return (
             <React.Fragment>
-                <Heading level={1}>Text Conversion</Heading>
+                <Heading level={1}>Text Converter</Heading>
                 <p>Please enter the text to convert to trytes, or the trytes to convert to text.
                     <br />
                     Characters outside the ASCII range (0-127) are escaped as Unicode characters</p>

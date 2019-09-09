@@ -35,7 +35,7 @@ class Explore extends Component<ExploreProps, ExploreState> {
     public render(): ReactNode {
         return (
             <div className="explore">
-                <Heading level={1}>Explore</Heading>
+                <Heading level={1}>Tangle Explorer</Heading>
                 <Form>
                     <Fieldset>
                         <label>Hash</label>

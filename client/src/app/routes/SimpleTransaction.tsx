@@ -80,7 +80,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
 
         return (
             <div className="simple-transaction">
-                <Heading level={1}>Simple Transaction</Heading>
+                <Heading level={1}>Simple Transaction Sender</Heading>
                 {!this.state.isPowAvailable && (
                     <p>Sorry, WebGL is not available in your browser,
                         you can not send a simple transaction using local PoW.</p>

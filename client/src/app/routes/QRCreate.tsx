@@ -70,7 +70,7 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
         // tslint:disable:react-a11y-input-elements
         return (
             <React.Fragment>
-                <Heading level={1}>QR Create</Heading>
+                <Heading level={1}>QR Code Generator</Heading>
                 <p>Please enter the details to generate the QR code, only the address is required.<br />
                     Once generated you will be able to scan the QR code into Trinity.</p>
                 <Form>

@@ -50,7 +50,7 @@ class Compress extends Component<CompressProps, CompressState> {
         // tslint:disable:react-a11y-input-elements
         return (
             <React.Fragment>
-                <Heading level={1}>Trytes Compress</Heading>
+                <Heading level={1}>Trytes Compressor</Heading>
                 <Form>
                     <Fieldset>
                         <label>Trytes</label>
