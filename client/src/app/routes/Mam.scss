@@ -32,6 +32,7 @@
         .payload {
           width: 100%;
           margin: 0;
+          overflow: auto;
 
           &.ascii,
           &.json,
