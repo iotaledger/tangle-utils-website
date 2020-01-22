@@ -1,4 +1,5 @@
-import { MamMode } from "@iota/mam";
+import { MamMode } from "@iota/mam.js";
+import { isTrytes } from "@iota/validators";
 import { Button, Fieldrow, Fieldset, Form, FormActions, Heading, Input, Select, Spinner } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
@@ -53,17 +54,34 @@ class Mam extends Component<MamProps, MamState> {
             if (this.props.match.params.root) {
                 paramRoot = this.props.match.params.root.toUpperCase();
             }
-            if (this.props.match.params.mode === "public" ||
-                this.props.match.params.mode === "private" ||
-                this.props.match.params.mode === "restricted") {
-                paramMode = this.props.match.params.mode;
+
+            const paramProps = [];
+            if (this.props.match.params.prop1) {
+                paramProps.push(this.props.match.params.prop1);
             }
-            if (this.props.match.params.key) {
-                paramKey = this.props.match.params.key;
+            if (this.props.match.params.prop2) {
+                paramProps.push(this.props.match.params.prop2);
             }
-            if (this.props.match.params.network === "mainnet" ||
-                this.props.match.params.network === "devnet") {
-                paramNetwork = this.props.match.params.network;
+            if (this.props.match.params.prop3) {
+                paramProps.push(this.props.match.params.prop3);
+            }
+
+            let possibleKey: string | undefined;
+            for (let i = 0; i < paramProps.length; i++) {
+                if (paramProps[i] === "public" ||
+                    paramProps[i] === "private" ||
+                    paramProps[i] === "restricted") {
+                    paramMode = paramProps[i] as MamMode;
+                } else if (paramProps[i] === "mainnet" ||
+                    paramProps[i] === "devnet") {
+                    paramNetwork = paramProps[i] as NetworkType;
+                } else if (isTrytes(paramProps[i])) {
+                    possibleKey = paramProps[i];
+                }
+            }
+
+            if (paramMode === "restricted" && possibleKey) {
+                paramKey = possibleKey;
             }
         }
 

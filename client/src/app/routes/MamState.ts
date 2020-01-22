@@ -1,4 +1,4 @@
-import { MamMode } from "@iota/mam";
+import { MamMode } from "@iota/mam.js";
 import { NetworkType } from "../../models/services/networkType";
 
 export interface MamState {

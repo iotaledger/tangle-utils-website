@@ -1,4 +1,4 @@
-import { MamMode } from "@iota/mam";
+import { MamMode } from "@iota/mam.js";
 import { RouteComponentProps } from "react-router-dom";
 import { NetworkType } from "../../models/services/networkType";
 
@@ -11,17 +11,17 @@ export interface MamProps extends RouteComponentProps<{
     /**
      * The mode for decoding.
      */
-    mode?: MamMode;
+    prop1?: string;
 
     /**
-     * The key for decoding.
+     * The key for decoding or network.
      */
-    key?: string;
+    prop2?: string;
 
     /**
-     * The network.
+     * The network if prop1 key was skipped.
      */
-    network?: NetworkType;
+    prop3?: string;
 }> {
     /**
      * Bust

@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.5
+
+* MAM subsciber switched to mam.js lib
+* MAM url parameters can now be in any order
+
 ## v1.2.4
 
 * QR Create allows empty amount field

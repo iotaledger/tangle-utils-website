@@ -1,5 +1,5 @@
-import { composeAPI, LoadBalancerSettings, Mam } from "@iota/client-load-balancer";
-import { MamMode } from "@iota/mam";
+import { composeAPI, LoadBalancerSettings } from "@iota/client-load-balancer";
+import { mamFetch, MamMode } from "@iota/mam.js";
 import { asTransactionObject, asTransactionObjects, Transaction } from "@iota/transaction-converter";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { PowHelper } from "../helpers/powHelper";
@@ -443,18 +443,16 @@ export class TangleCacheService {
     } | undefined> {
         if (!this._mam[network][root]) {
             try {
-                Mam.init(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
 
-                const result = await Mam.fetchSingle(root, mode, key);
+                const result = await mamFetch(api, root, mode, key);
 
-                if (!(result instanceof Error)) {
-                    if (result && result.payload) {
-                        this._mam[network][root] = {
-                            payload: result.payload,
-                            nextRoot: result.nextRoot,
-                            cached: Date.now()
-                        };
-                    }
+                if (result) {
+                    this._mam[network][root] = {
+                        payload: result.message,
+                        nextRoot: result.nextRoot,
+                        cached: Date.now()
+                    };
                 }
             } catch (err) {
                 console.error(err);

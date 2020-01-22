@@ -235,7 +235,7 @@ class App extends Component<RouteComponentProps, AppState> {
                                 />
                                 <Route
                                     exact={true}
-                                    path="/mam/:root?/:mode?/:key?/:network?"
+                                    path="/mam/:root?/:prop1?/:prop2?/:prop3?"
                                     component={(props: MamProps) => (<Mam {...props} bust={Date.now()} />)}
                                 />
                                 <Route
