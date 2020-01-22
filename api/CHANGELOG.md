@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.2.3
+
+* Added lastUpdated to currency response
+
 ## v1.2.2
 
 * Currency conversion and lookup can be disabled by omitting api keys from config

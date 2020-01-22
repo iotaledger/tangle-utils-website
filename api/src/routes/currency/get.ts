@@ -25,6 +25,7 @@ export async function get(config: IConfiguration, request: any): Promise<ICurren
             return {
                 success: true,
                 message: "OK",
+                lastUpdated: state.lastCurrencyUpdate,
                 baseRate: state.coinMarketCapRateEUR,
                 currencies: state.exchangeRatesEUR
             };

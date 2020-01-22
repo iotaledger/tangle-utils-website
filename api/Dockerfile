@@ -1,4 +1,4 @@
-FROM node:10.13.0-alpine
+FROM node:12.14.1-alpine3.11
 RUN apk --no-cache add git python make g++
 
 # Working DIR
