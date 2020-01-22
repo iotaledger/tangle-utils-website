@@ -2,7 +2,7 @@
 
 ## v1.2.3
 
-* Added lastUpdated to currency response
+* Added lastUpdated to currency response for timestamp of last update rates
 
 ## v1.2.2
 
