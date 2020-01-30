@@ -103,6 +103,11 @@ export interface TransactionObjectState {
     attachmentTime: moment.Moment;
 
     /**
+     * Human format of the attachment time.
+     */
+    attachmentTimeHuman: string;
+
+    /**
      * The previous indexed transactions.
      */
     prevTransactionHash?: string;

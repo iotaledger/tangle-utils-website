@@ -70,8 +70,10 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
         const iac = transactionObject.tag.replace(/\9+$/, "");
 
         const timeMoment = moment(transactionObject.timestamp * 1000);
+        const attachmentTimeMoment = moment(transactionObject.attachmentTimestamp);
 
         const postDate = (transactionObject.timestamp * 1000) > Date.now() ? "in the future" : "ago";
+        const postAttachmentDate = transactionObject.attachmentTimestamp > Date.now() ? "in the future" : "ago";
 
         this.state = {
             transactionObject,
@@ -88,6 +90,8 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             messageShowRaw: false,
             messageSpans: false,
             attachmentTime: moment(transactionObject.attachmentTimestamp),
+            attachmentTimeHuman: `${attachmentTimeMoment.format("LLLL")} - ${
+                moment.duration(moment().diff(attachmentTimeMoment)).humanize()} ${postAttachmentDate}`,
             addressChecksum: addChecksum(transactionObject.address).substr(-9),
             bundleResult: "",
             iac: IotaAreaCodes.isValid(iac) ? iac : ""
@@ -529,8 +533,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             <div className="col">
                                 <div className="label">Timestamp</div>
                                 <div className="value">
-                                    {this.state.attachmentTime.format("LLLL")} - {
-                                        moment.duration(moment().diff(this.state.attachmentTime)).humanize()} ago
+                                    {this.state.attachmentTimeHuman}
                                 </div>
                             </div>
                         </div>
