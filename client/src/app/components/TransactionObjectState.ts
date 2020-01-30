@@ -9,9 +9,14 @@ export interface TransactionObjectState {
     transactionObject: Transaction;
 
     /**
-     * The transaction from the tangle.
+     * The time of the transaction.
      */
     time: moment.Moment;
+
+    /**
+     * Human format of the time.
+     */
+    timeHuman: string;
 
     /**
      * Is the transaction confirmed.

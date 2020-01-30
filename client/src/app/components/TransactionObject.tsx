@@ -69,10 +69,15 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
 
         const iac = transactionObject.tag.replace(/\9+$/, "");
 
+        const timeMoment = moment(transactionObject.timestamp * 1000);
+
+        const postDate = (transactionObject.timestamp * 1000) > Date.now() ? "in the future" : "ago";
+
         this.state = {
             transactionObject,
             confirmationState: "unknown",
-            time: moment(transactionObject.timestamp * 1000),
+            time: timeMoment,
+            timeHuman: `${timeMoment.format("LLLL")} - ${moment.duration(moment().diff(timeMoment)).humanize()} ${postDate}`,
             valueFormatted: UnitsHelper.formatBest(transactionObject.value, false),
             valueIota: `${transactionObject.value} i`,
             currencies: [],
@@ -246,8 +251,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                     <React.Fragment>
                         <div className="row">
                             <div className="value">
-                                {this.state.time.format("LLLL")} - {
-                                    moment.duration(moment().diff(this.state.time)).humanize()} ago
+                                {this.state.timeHuman}
                             </div>
                         </div>
                         <div className="row">
