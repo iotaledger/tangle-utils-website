@@ -122,7 +122,9 @@ export class AppHelper {
                     if (dataResponse.filename) {
                         res.setHeader("Content-Disposition", `attachment; filename="${dataResponse.filename}"`);
                     }
-                    res.send(dataResponse.data);
+                    if (dataResponse.data) {
+                        res.send(dataResponse.data);
+                    }
                 } else {
                     res.setHeader("Content-Type", "application/json");
                     res.send(JSON.stringify(response));
