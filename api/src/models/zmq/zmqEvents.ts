@@ -15,4 +15,5 @@ export type ZmqEvent = "antn" |
     "rtl" |
     "sn" |
     "tx" |
-    "tx_trytes";
+    "tx_trytes" |
+    "trytes";

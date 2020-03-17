@@ -34,6 +34,11 @@ export class ZmqService {
     private _socket?: zmq.Socket;
 
     /**
+     * Last time a message was received.
+     */
+    private _lastMessageTime: number;
+
+    /**
      * The callback for different events.
      */
     private readonly _subscriptions: {
@@ -58,6 +63,8 @@ export class ZmqService {
     constructor(config: IZmqConfiguration) {
         this._config = config;
         this._subscriptions = {};
+        this._lastMessageTime = 0;
+        setInterval(() => this.keepAlive(), 5000);
     }
 
     /**
@@ -164,7 +171,7 @@ export class ZmqService {
      * @param callback The callback to call with data for the event.
      * @returns An id to use for unsubscribe.
      */
-    public subscribe(event: "tx_trytes", callback: (event: string, data: ITxTrytes) => void): string;
+    public subscribe(event: "tx_trytes" | "trytes", callback: (event: string, data: ITxTrytes) => void): string;
     /**
      * Subscribe to named event.
      * @param event The event to subscribe to.
@@ -240,8 +247,12 @@ export class ZmqService {
                 for (let i = 0; i < keys.length; i++) {
                     this._socket.subscribe(keys[i]);
                 }
+
+                this._lastMessageTime = Date.now();
             }
         } catch (err) {
+            this._socket = undefined;
+
             console.log("ZMQ Connect Failed", err);
 
             throw new Error(`Unable to connect to ZMQ.\n${err}`);
@@ -253,8 +264,23 @@ export class ZmqService {
      */
     private disconnect(): void {
         if (this._socket) {
-            this._socket.close();
+            try {
+                this._socket.close();
+            } catch {}
             this._socket = undefined;
+        }
+    }
+
+    /**
+     * Keep the connection alive.
+     */
+    private keepAlive(): void {
+        if (Object.keys(this._subscriptions).length > 0) {
+            if (Date.now() - this._lastMessageTime > 15000) {
+                this._lastMessageTime = Date.now();
+                this.disconnect();
+                this.connect();
+            }
         }
     }
 
@@ -286,6 +312,8 @@ export class ZmqService {
     private handleMessage(message: Buffer): void {
         const messageContent = message.toString();
         const messageParams = messageContent.split(" ");
+
+        this._lastMessageTime = Date.now();
 
         const event = messageParams[0];
 

@@ -76,8 +76,18 @@ export class TransactionsService {
                 this._mainNetTransactions.unshift(message.trytes);
                 await this.updateSubscriptions();
             });
+            this._mainNetSubscriptionId = this._zmqMainNet.subscribe(
+                "trytes", async (evnt: string, message: ITxTrytes) => {
+                this._mainNetTransactions.unshift(message.trytes);
+                await this.updateSubscriptions();
+            });
             this._devNetSubscriptionId = this._zmqDevNet.subscribe(
                 "tx_trytes", async (evnt: string, message: ITxTrytes) => {
+                this._devNetTransactions.unshift(message.trytes);
+                await this.updateSubscriptions();
+            });
+            this._devNetSubscriptionId = this._zmqDevNet.subscribe(
+                "trytes", async (evnt: string, message: ITxTrytes) => {
                 this._devNetTransactions.unshift(message.trytes);
                 await this.updateSubscriptions();
             });
