@@ -74,7 +74,7 @@ class App extends Component<RouteComponentProps, AppState> {
 
             ServiceFactory.register("configuration", () => configService);
             ServiceFactory.register("local-storage", () => new LocalStorageService());
-            ServiceFactory.register("tangle-cache", () => new TangleCacheService());
+            ServiceFactory.register("tangle-cache", () => new TangleCacheService(config.permaNodeEndpoint));
             ServiceFactory.register("transactions", () => new TransactionsClient(config.apiEndpoint));
 
             const loadBalancerSettingsMainNet: LoadBalancerSettings = {

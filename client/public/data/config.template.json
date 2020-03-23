@@ -24,6 +24,7 @@
             "mwm": 9
         }
     ],
+    "permaNodeEndpoint": "PERMANODE-ENDPOINT",
     "googleMapsKey": "GOOGLE-MAPS-KEY",
     "googleAnalyticsId": ""
 }

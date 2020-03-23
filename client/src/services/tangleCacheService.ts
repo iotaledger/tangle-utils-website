@@ -1,11 +1,14 @@
 import { composeAPI, LoadBalancerSettings } from "@iota/client-load-balancer";
+import { API, Transaction } from "@iota/core";
 import { mamFetch, MamMode } from "@iota/mam.js";
-import { asTransactionObject, asTransactionObjects, Transaction } from "@iota/transaction-converter";
+import { asTransactionObject, asTransactionObjects, asTransactionTrytes } from "@iota/transaction-converter";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { PowHelper } from "../helpers/powHelper";
 import { ConfirmationState } from "../models/confirmationState";
 import { HashType } from "../models/hashType";
 import { NetworkType } from "../models/services/networkType";
+import { ChronicleClient } from "./chronicleClient";
+import { ChronicleMamClient } from "./chronicleMamClient";
 
 /**
  * Cache tangle requests.
@@ -15,6 +18,11 @@ export class TangleCacheService {
      * Timeout for stale cached items (5 mins).
      */
     private readonly STALE_TIME: number = 300000;
+
+    /**
+     * The endpoint for the permanode.
+     */
+    private readonly _permaNodeEndpoint?: string;
 
     /**
      * The cache for the transactions.
@@ -142,8 +150,11 @@ export class TangleCacheService {
 
     /**
      * Create a new instance of TangleCacheService.
+     * @param permaNodeEndpoint The endpoint for the permanode.
      */
-    constructor() {
+    constructor(permaNodeEndpoint?: string) {
+        this._permaNodeEndpoint = permaNodeEndpoint;
+
         this._transactionCache = {
             mainnet: {},
             devnet: {}
@@ -200,14 +211,24 @@ export class TangleCacheService {
         }
 
         if (doLookup) {
-            const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+            const req = hashType === "tag" ? { tags: [hash] } :
+                hashType === "address" ? { addresses: [hash] } : { bundles: [hash] };
 
-            const response = await api.findTransactions(
-                hashType === "tag" ? { tags: [hash] } :
-                    hashType === "address" ? { addresses: [hash] } : { bundles: [hash] });
+            if (this._permaNodeEndpoint) {
+                const chronicleClient = new ChronicleClient(this._permaNodeEndpoint);
 
-            if (response && response.length > 0) {
-                transactionHashes = response;
+                const response = await chronicleClient.findTransactions(req);
+
+                if (response && response.hashes) {
+                    transactionHashes = response.hashes;
+                }
+            } else {
+                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+
+                transactionHashes = await api.findTransactions(req);
+            }
+
+            if (transactionHashes && transactionHashes.length > 0) {
                 this._findCache[network][hashType][hash] = {
                     transactionHashes,
                     cached: Date.now()
@@ -215,7 +236,7 @@ export class TangleCacheService {
             }
         }
 
-        return transactionHashes;
+        return transactionHashes || [];
     }
 
     /**
@@ -233,16 +254,33 @@ export class TangleCacheService {
 
         if (unknownHashes.length > 0) {
             try {
-                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+                if (this._permaNodeEndpoint) {
+                    const chronicleClient = new ChronicleClient(this._permaNodeEndpoint);
 
-                const response = await api.getTrytes(unknownHashes);
-                if (response) {
-                    for (let i = 0; i < response.length; i++) {
-                        this._transactionCache[network][unknownHashes[i]] =
-                            this._transactionCache[network][unknownHashes[i]] || {};
-                        this._transactionCache[network][unknownHashes[i]].trytes = response[i];
-                        this._transactionCache[network][unknownHashes[i]].confirmedState =
-                            this._transactionCache[network][unknownHashes[i]].confirmedState || "unknown";
+                    const response = await chronicleClient.getTrytes({ hashes: unknownHashes });
+
+                    if (response && response.trytes) {
+                        for (let i = 0; i < response.trytes.length; i++) {
+                            this._transactionCache[network][unknownHashes[i]] =
+                                this._transactionCache[network][unknownHashes[i]] || {};
+                            this._transactionCache[network][unknownHashes[i]].trytes =
+                                asTransactionTrytes(response.trytes[i]);
+                            this._transactionCache[network][unknownHashes[i]].confirmedState =
+                                response.trytes[i].snapshotIndex ? "confirmed" : "pending";
+                        }
+                    }
+                } else {
+                    const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+
+                    const response = await api.getTrytes(unknownHashes);
+                    if (response) {
+                        for (let i = 0; i < response.length; i++) {
+                            this._transactionCache[network][unknownHashes[i]] =
+                                this._transactionCache[network][unknownHashes[i]] || {};
+                            this._transactionCache[network][unknownHashes[i]].trytes = response[i];
+                            this._transactionCache[network][unknownHashes[i]].confirmedState =
+                                this._transactionCache[network][unknownHashes[i]].confirmedState || "unknown";
+                        }
                     }
                 }
             } catch (err) {
@@ -300,52 +338,67 @@ export class TangleCacheService {
      */
     public async getTransactionConfirmationStates(
         hashes: ReadonlyArray<string>, network: NetworkType): Promise<ReadonlyArray<ConfirmationState>> {
-        const now = Date.now();
-        const unknownStates = hashes.filter(h =>
-            !this._transactionCache[network][h] ||
-            this._transactionCache[network][h].confirmedState === "unknown" ||
-            now - this._transactionCache[network][h].cached > 15000);
+        if (!this._permaNodeEndpoint) {
+            const now = Date.now();
+            const unknownStates = hashes.filter(h =>
+                !this._transactionCache[network][h] ||
+                this._transactionCache[network][h].confirmedState === "unknown" ||
+                now - this._transactionCache[network][h].cached > 15000);
 
-        if (unknownStates.length > 0) {
-            try {
-                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+            if (unknownStates.length > 0) {
+                try {
+                    const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
 
-                if (this._lastestSolidSubtangleMilestone === "" ||
-                    now - this._lastestSolidSubtangleMilestoneCached > 10000) {
-                    const nodeInfo = await api.getNodeInfo();
-                    if (nodeInfo) {
-                        this._lastestSolidSubtangleMilestoneCached = now;
-                        this._lastestSolidSubtangleMilestone = nodeInfo.latestSolidSubtangleMilestone;
+                    if (this._lastestSolidSubtangleMilestone === "" ||
+                        now - this._lastestSolidSubtangleMilestoneCached > 10000) {
+                        const nodeInfo = await api.getNodeInfo();
+                        if (nodeInfo) {
+                            this._lastestSolidSubtangleMilestoneCached = now;
+                            this._lastestSolidSubtangleMilestone = nodeInfo.latestSolidSubtangleMilestone;
+                        }
                     }
-                }
 
-                const response = await api.getInclusionStates(hashes, [this._lastestSolidSubtangleMilestone]);
-                if (response && response.length > 0) {
-                    for (let i = 0; i < response.length; i++) {
-                        this._transactionCache[network][unknownStates[i]] =
-                            this._transactionCache[network][unknownStates[i]] || {};
+                    const response = await api.getInclusionStates(hashes, [this._lastestSolidSubtangleMilestone]);
+                    if (response && response.length > 0) {
+                        for (let i = 0; i < response.length; i++) {
+                            this._transactionCache[network][unknownStates[i]] =
+                                this._transactionCache[network][unknownStates[i]] || {};
 
-                        this._transactionCache[network][unknownStates[i]].confirmedState =
-                            response[i] ? "confirmed" : "pending";
-                        this._transactionCache[network][unknownStates[i]].cached = Date.now();
+                            this._transactionCache[network][unknownStates[i]].confirmedState =
+                                response[i] ? "confirmed" : "pending";
+                            this._transactionCache[network][unknownStates[i]].cached = Date.now();
+                        }
                     }
-                }
-            } catch (err) {
-                if (err.message.toString().indexOf("subtangle has not been updated")) {
-                    for (let i = 0; i < unknownStates.length; i++) {
-                        this._transactionCache[network][unknownStates[i]] =
-                            this._transactionCache[network][unknownStates[i]] || {};
+                } catch (err) {
+                    if (err.message.toString().indexOf("subtangle has not been updated")) {
+                        for (let i = 0; i < unknownStates.length; i++) {
+                            this._transactionCache[network][unknownStates[i]] =
+                                this._transactionCache[network][unknownStates[i]] || {};
 
-                        this._transactionCache[network][unknownStates[i]].confirmedState = "subtangle";
-                        this._transactionCache[network][unknownStates[i]].cached = Date.now();
+                            this._transactionCache[network][unknownStates[i]].confirmedState = "subtangle";
+                            this._transactionCache[network][unknownStates[i]].cached = Date.now();
+                        }
+                    } else {
+                        console.error(err);
                     }
-                } else {
-                    console.error(err);
                 }
             }
-        }
 
-        return hashes.map(h => this._transactionCache[network][h].confirmedState);
+            return hashes.map(h => this._transactionCache[network][h].confirmedState);
+        } else {
+            // If we haven't got the confirmed state from the permanode the transaction must be missing
+            // so set to unknown
+            for (const hash of hashes) {
+                if (!this._transactionCache[network][hash]) {
+                    this._transactionCache[network][hash] = {
+                        confirmedState: "unknown",
+                        cached: Date.now(),
+                        manual: false
+                    };
+                }
+            }
+            return hashes.map(h => this._transactionCache[network][h].confirmedState);
+        }
     }
 
     /**
@@ -443,9 +496,14 @@ export class TangleCacheService {
     } | undefined> {
         if (!this._mam[network][root]) {
             try {
-                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+                let api;
+                if (!this._permaNodeEndpoint) {
+                    api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+                } else {
+                    api = new ChronicleMamClient(this._permaNodeEndpoint);
+                }
 
-                const result = await mamFetch(api, root, mode, key);
+                const result = await mamFetch(api as API, root, mode, key);
 
                 if (result) {
                     this._mam[network][root] = {

@@ -17,6 +17,11 @@ export interface IConfiguration {
     nodesDevnet: INodeConfiguration[];
 
     /**
+     * The permanode endpoint.
+     */
+    permaNodeEndpoint?: string;
+
+    /**
      * The google maps key.
      */
     googleMapsKey: string;
