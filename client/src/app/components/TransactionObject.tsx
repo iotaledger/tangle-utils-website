@@ -69,7 +69,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
 
         const iac = transactionObject.tag.replace(/\9+$/, "");
 
-        const timeMoment = moment(transactionObject.timestamp * 1000);
+        const timeMoment = (transactionObject.timestamp).toString().length === 10 ? moment(transactionObject.timestamp * 1000) : moment(transactionObject.timestamp) ;
         const attachmentTimeMoment = moment(transactionObject.attachmentTimestamp);
 
         const postDate = (transactionObject.timestamp * 1000) > Date.now() ? "in the future" : "ago";
