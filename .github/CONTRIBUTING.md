@@ -72,7 +72,7 @@ This section guides you through suggesting a new feature. Following these guidel
 
 ### Suggesting a new feature
 
-To suggest a new feature, talk to the IOTA community and IOTA Foundation members in the #goshimmer-discussion channel on [Discord](https://discord.iota.org/).
+To suggest a new feature, talk to the IOTA community and IOTA Foundation members on [Discord](https://discord.iota.org/).
 
 If the team members approve your feature, they will create an issue for it.
 </details>
@@ -87,15 +87,13 @@ This section guides you through building a new feature. Following these guidelin
 
 ### Before building a new feature
 
-Make sure to discuss the feature in the #goshimmer-discussion channel on [Discord](https://discord.iota.org/).
-
-Otherwise, your feature may not be approved at all.
+Make sure to discuss the feature on [Discord](https://discord.iota.org/).
 
 ### Building a new feature
 
 To build a new feature, check out a new branch based on the `master` branch, and be sure to consider the following:
 
-- If the feature has a public facing API, make sure to document it, using Godoc code comments
+- If the feature has a public facing API, make sure to document it, using JSDoc code comments
 </details>
 
 <br>
