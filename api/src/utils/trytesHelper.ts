@@ -1,3 +1,4 @@
+import { TRYTE_ALPHABET } from "@iota/converter";
 import * as crypto from "crypto";
 
 /**
@@ -12,10 +13,11 @@ export class TrytesHelper {
     public static generateHash(length: number = 81): string {
         let hash = "";
 
-        const randomValues = new Uint32Array(crypto.randomBytes(length));
-
-        for (let i = 0; i < length; i++) {
-            hash += "9ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(randomValues[i] % 27);
+        while (hash.length < length) {
+            const byte = crypto.randomBytes(1);
+            if (byte[0] < 243) {
+                hash += TRYTE_ALPHABET.charAt(byte[0] % 27);
+            }
         }
 
         return hash;
