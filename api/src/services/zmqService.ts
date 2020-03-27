@@ -34,6 +34,11 @@ export class ZmqService {
     private _socket?: zmq.Socket;
 
     /**
+     * Avoid interlock when connecting.
+     */
+    private _connecting: boolean;
+
+    /**
      * Last time a message was received.
      */
     private _lastMessageTime: number;
@@ -64,6 +69,7 @@ export class ZmqService {
         this._config = config;
         this._subscriptions = {};
         this._lastMessageTime = 0;
+        this._connecting = false;
         setInterval(() => this.keepAlive(), 5000);
     }
 
@@ -237,25 +243,28 @@ export class ZmqService {
      */
     private connect(): void {
         try {
-            if (!this._socket) {
-                this._socket = zmq.socket("sub");
-                this._socket.connect(this._config.endpoint);
+            if (!this._connecting) {
+                this._connecting = true;
 
-                this._socket.on("message", msg => this.handleMessage(msg));
+                const localSocket = zmq.socket("sub");
+                localSocket.connect(this._config.endpoint);
+
+                localSocket.on("message", msg => this.handleMessage(msg));
 
                 const keys = Object.keys(this._subscriptions);
                 for (let i = 0; i < keys.length; i++) {
-                    this._socket.subscribe(keys[i]);
+                    localSocket.subscribe(keys[i]);
                 }
 
+                this._socket = localSocket;
                 this._lastMessageTime = Date.now();
+                this._connecting = false;
             }
         } catch (err) {
             this._socket = undefined;
+            this._connecting = false;
 
             console.log("ZMQ Connect Failed", err);
-
-            throw new Error(`Unable to connect to ZMQ.\n${err}`);
         }
     }
 
@@ -263,11 +272,12 @@ export class ZmqService {
      * Disconnect the ZQM service.
      */
     private disconnect(): void {
-        if (this._socket) {
+        const localSocket = this._socket;
+        this._socket = undefined;
+        if (localSocket) {
             try {
-                this._socket.close();
+                localSocket.close();
             } catch {}
-            this._socket = undefined;
         }
     }
 
