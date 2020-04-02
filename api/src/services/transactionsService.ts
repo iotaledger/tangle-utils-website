@@ -73,14 +73,14 @@ export class TransactionsService {
         if (Object.keys(this._subscriptions).length === 0) {
             this._mainNetSubscriptionId = this._zmqMainNet.subscribe(
                 "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                this._mainNetTransactions.unshift(message.trytes);
-                await this.updateSubscriptions();
-            });
+                    this._mainNetTransactions.unshift(message.trytes);
+                    await this.updateSubscriptions();
+                });
             this._devNetSubscriptionId = this._zmqDevNet.subscribe(
                 "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                this._devNetTransactions.unshift(message.trytes);
-                await this.updateSubscriptions();
-            });
+                    this._devNetTransactions.unshift(message.trytes);
+                    await this.updateSubscriptions();
+                });
         }
 
         const id = TrytesHelper.generateHash(27);

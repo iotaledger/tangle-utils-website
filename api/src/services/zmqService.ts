@@ -34,6 +34,16 @@ export class ZmqService {
     private _socket?: zmq.Socket;
 
     /**
+     * Avoid interlock when connecting.
+     */
+    private _connecting: boolean;
+
+    /**
+     * Last time a message was received.
+     */
+    private _lastMessageTime: number;
+
+    /**
      * The callback for different events.
      */
     private readonly _subscriptions: {
@@ -58,6 +68,9 @@ export class ZmqService {
     constructor(config: IZmqConfiguration) {
         this._config = config;
         this._subscriptions = {};
+        this._lastMessageTime = 0;
+        this._connecting = false;
+        setInterval(() => this.keepAlive(), 5000);
     }
 
     /**
@@ -164,7 +177,7 @@ export class ZmqService {
      * @param callback The callback to call with data for the event.
      * @returns An id to use for unsubscribe.
      */
-    public subscribe(event: "tx_trytes", callback: (event: string, data: ITxTrytes) => void): string;
+    public subscribe(event: "tx_trytes" | "trytes", callback: (event: string, data: ITxTrytes) => void): string;
     /**
      * Subscribe to named event.
      * @param event The event to subscribe to.
@@ -230,21 +243,28 @@ export class ZmqService {
      */
     private connect(): void {
         try {
-            if (!this._socket) {
-                this._socket = zmq.socket("sub");
-                this._socket.connect(this._config.endpoint);
+            if (!this._connecting) {
+                this._connecting = true;
 
-                this._socket.on("message", msg => this.handleMessage(msg));
+                const localSocket = zmq.socket("sub");
+                localSocket.connect(this._config.endpoint);
+
+                localSocket.on("message", msg => this.handleMessage(msg));
 
                 const keys = Object.keys(this._subscriptions);
                 for (let i = 0; i < keys.length; i++) {
-                    this._socket.subscribe(keys[i]);
+                    localSocket.subscribe(keys[i]);
                 }
+
+                this._socket = localSocket;
+                this._lastMessageTime = Date.now();
+                this._connecting = false;
             }
         } catch (err) {
-            console.log("ZMQ Connect Failed", err);
+            this._socket = undefined;
+            this._connecting = false;
 
-            throw new Error(`Unable to connect to ZMQ.\n${err}`);
+            console.log("ZMQ Connect Failed", err);
         }
     }
 
@@ -252,9 +272,25 @@ export class ZmqService {
      * Disconnect the ZQM service.
      */
     private disconnect(): void {
-        if (this._socket) {
-            this._socket.close();
-            this._socket = undefined;
+        const localSocket = this._socket;
+        this._socket = undefined;
+        if (localSocket) {
+            try {
+                localSocket.close();
+            } catch {}
+        }
+    }
+
+    /**
+     * Keep the connection alive.
+     */
+    private keepAlive(): void {
+        if (Object.keys(this._subscriptions).length > 0) {
+            if (Date.now() - this._lastMessageTime > 15000) {
+                this._lastMessageTime = Date.now();
+                this.disconnect();
+                this.connect();
+            }
         }
     }
 
@@ -286,6 +322,8 @@ export class ZmqService {
     private handleMessage(message: Buffer): void {
         const messageContent = message.toString();
         const messageParams = messageContent.split(" ");
+
+        this._lastMessageTime = Date.now();
 
         const event = messageParams[0];
 
