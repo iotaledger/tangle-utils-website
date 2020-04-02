@@ -1,8 +1,8 @@
 import { CoinMarketCapClient } from "../clients/coinMarketCapClient";
 import { FixerClient } from "../clients/fixerClient";
+import { IAWSDynamoDbConfiguration } from "../models/configuration/IAWSDynamoDbConfiguration";
+import { IConfiguration } from "../models/configuration/IConfiguration";
 import { IState } from "../models/db/IState";
-import { IAWSDynamoDbConfiguration } from "../models/IAWSDynamoDbConfiguration";
-import { IConfiguration } from "../models/IConfiguration";
 import { AmazonDynamoDbService } from "./amazonDynamoDbService";
 
 /**

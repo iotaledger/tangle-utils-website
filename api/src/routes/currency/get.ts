@@ -1,5 +1,5 @@
 import { ICurrenciesResponse } from "../../models/api/ICurrenciesResponse";
-import { IConfiguration } from "../../models/IConfiguration";
+import { IConfiguration } from "../../models/configuration/IConfiguration";
 import { StateService } from "../../services/stateService";
 
 /**

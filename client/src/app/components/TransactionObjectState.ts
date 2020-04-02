@@ -133,16 +133,6 @@ export interface TransactionObjectState {
     tailHash?: string;
 
     /**
-     * Is the bundle promotable.
-     */
-    isPromotable?: boolean;
-
-    /**
-     * Is the bundle being promoted.
-     */
-    isPromoting?: boolean;
-
-    /**
      * Does the tag contain an area code.
      */
     iac?: string;

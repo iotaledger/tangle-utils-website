@@ -4,10 +4,6 @@ export interface IGetTrytesResponse {
      */
     trytes: {
         /**
-         * Hash.
-         */
-        hash: string;
-        /**
          * Address.
          */
         address: string;

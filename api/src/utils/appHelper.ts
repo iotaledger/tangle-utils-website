@@ -1,9 +1,12 @@
 import bodyParser from "body-parser";
 import cors from "cors";
 import express, { Application } from "express";
+import path from "path";
+import { inspect } from "util";
+import { HttpError } from "../errors/httpError";
 import { IDataResponse } from "../models/api/IDataResponse";
 import { IRoute } from "../models/app/IRoute";
-import { IConfiguration } from "../models/IConfiguration";
+import { IConfiguration } from "../models/configuration/IConfiguration";
 
 /**
  * Class to help with expressjs routing.
@@ -19,7 +22,7 @@ export class AppHelper {
     public static build(
         routes: IRoute[],
         onComplete?: (app: Application, config: IConfiguration, port: number) => void,
-        customListener?: boolean): Application {
+        customListener: boolean = false): Application {
         // tslint:disable:no-var-requires no-require-imports
         const packageJson = require("../../package.json");
         const configId = process.env.CONFIG_ID || "local";
@@ -28,20 +31,26 @@ export class AppHelper {
 
         const app: Application = express();
 
+        const corsConfig = {
+            origin: config.allowedDomains && config.allowedDomains.length > 0 ? config.allowedDomains : "*",
+            methods: ["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+            allowedHeaders: ["content-type", "authorization"]
+        };
+
+        app.use(cors(corsConfig));
+
         app.use(bodyParser.json({ limit: "10mb" }));
         app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
         app.use(bodyParser.json());
 
-        app.use(cors({
-            origin: config.allowedDomains && config.allowedDomains.length > 0 ? config.allowedDomains : "*",
-            allowedHeaders: "content-type"
-        }));
+        routes.unshift(
+            {
+                path: "/",
+                method: "get",
+                inline: async () => ({ name: packageJson.name, version: packageJson.version })
+            });
 
-        routes.unshift({
-            path: "/",
-            method: "get",
-            inline: async () => ({ name: packageJson.name, version: packageJson.version })
-        });
+        app.use("/docs", express.static(path.resolve(__dirname, "../", "docs")));
 
         AppHelper.buildRoutes(config, app, routes);
 
@@ -56,12 +65,20 @@ export class AppHelper {
                 console.log(`Running Config '${configId}'`);
 
                 if (onComplete) {
-                    onComplete(app, config, port);
+                    try {
+                        onComplete(app, config, port);
+                    } catch (err) {
+                        console.error("Failed running startup", err);
+                    }
                 }
             });
         } else {
             if (onComplete) {
-                onComplete(app, config, port);
+                try {
+                    onComplete(app, config, port);
+                } catch (err) {
+                    console.error("Failed running startup", err);
+                }
             }
         }
 
@@ -75,53 +92,59 @@ export class AppHelper {
      * @param routes The routes.
      */
     public static buildRoutes(config: IConfiguration, app: Application, routes: IRoute[]): void {
-        for (let i = 0; i < routes.length; i++) {
-            app[routes[i].method](routes[i].path, async (req, res) => {
+        for (const route of routes) {
+            app[route.method](route.path, async (req, res) => {
                 let response;
                 const start = Date.now();
+
                 try {
                     let params = { ...req.params, ...req.query };
                     let body;
-                    if (routes[i].dataBody) {
+                    if (route.dataBody) {
                         body = req.body;
                     } else {
                         params = { ...params, ...req.query, ...req.body };
                     }
 
-                    const filteredParams = {};
-                    const keys = Object.keys(params);
-                    for (let k = 0; k < keys.length; k++) {
-                        if (keys[k].indexOf("pass") < 0) {
-                            filteredParams[keys[k]] = params[keys[k]];
-                        } else {
-                            filteredParams[keys[k]] = "*************";
-                        }
-                    }
+                    console.log(`===> ${route.method.toUpperCase()} ${route.path}`);
+                    console.log(inspect(params, false, null, true));
 
-                    console.log(`===> ${routes[i].method.toUpperCase()} ${routes[i].path}`, filteredParams);
-                    if (routes[i].func) {
+                    if (route.func) {
                         let modulePath = "../routes/";
-                        if (routes[i].folder) {
-                            modulePath += `${routes[i].folder}/`;
+                        if (route.folder) {
+                            modulePath += `${route.folder}/`;
                         }
-                        modulePath += routes[i].func;
+                        modulePath += route.func;
                         // tslint:disable-next-line:non-literal-require
                         const mod = require(modulePath);
-                        response = await mod[routes[i].func](config, params, body);
-                    } else if (routes[i].inline) {
-                        response = await routes[i].inline(config, params, body);
+                        response = await mod[route.func](config, params, body, req.headers || {});
+                    } else if (route.inline !== undefined) {
+                        response = await route.inline(config, params, body, req.headers || {});
                     }
                 } catch (err) {
+                    res.status(err.httpCode || 400);
                     response = { success: false, message: err.message };
                 }
                 console.log(`<=== duration: ${Date.now() - start}ms`);
-                console.log(response);
-                if (routes[i].dataResponse) {
-                    const dataResponse = <IDataResponse>response;
-                    res.setHeader("Content-Type", dataResponse.contentType);
-                    if (dataResponse.filename) {
-                        res.setHeader("Content-Disposition", `attachment; filename="${dataResponse.filename}"`);
+                console.log(inspect(response, false, null, true));
+                if (route.dataResponse) {
+                    const dataResponse = response as IDataResponse;
+                    if (!dataResponse.success) {
+                        res.status(HttpError.BAD_REQUEST);
                     }
+                    if (dataResponse.contentType) {
+                        res.setHeader("Content-Type", dataResponse.contentType);
+                    }
+                    let filename = "";
+                    if (dataResponse.filename) {
+                        filename = `; filename="${dataResponse.filename}"`;
+                    }
+                    res.setHeader(
+                        "Content-Disposition", `${dataResponse.inline ? "inline" : "attachment"}${filename}`);
+
+                    res.setHeader(
+                        "Content-Length", dataResponse.data.length);
+
                     res.send(dataResponse.data);
                 } else {
                     res.setHeader("Content-Type", "application/json");

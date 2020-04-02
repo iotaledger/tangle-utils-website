@@ -1,21 +1,30 @@
 import { Transaction, Transfer } from "@iota/core";
-import { ChronicleClient } from "./chronicleClient";
+import { asTransactionObject } from "@iota/transaction-converter";
+import { NetworkType } from "../models/services/networkType";
+import { ApiClient } from "./apiClient";
 
 /**
- * Class to handle api communications to chronicle permanode for mam.
+ * Class to handle api communications to api for mam.
  */
-export class ChronicleMamClient {
+export class ApiMamClient {
     /**
-     * The base chronicle client.
+     * The base api client.
      */
-    private readonly _chronicleClient: ChronicleClient;
+    private readonly _apiClient: ApiClient;
 
     /**
-     * Create a new instance of ChronicleClient.
-     * @param endpoint The endpoint for the api.
+     * The network.
      */
-    constructor(endpoint: string) {
-        this._chronicleClient = new ChronicleClient(endpoint);
+    private readonly _network: NetworkType;
+
+    /**
+     * Create a new instance of ApiMamClient.
+     * @param endpoint The endpoint for the api.
+     * @param network The network to use.
+     */
+    constructor(endpoint: string, network: NetworkType) {
+        this._apiClient = new ApiClient(endpoint);
+        this._network = network;
     }
 
     /**
@@ -28,7 +37,7 @@ export class ChronicleMamClient {
         seed: string | Int8Array,
         transfers: ReadonlyArray<Transfer>,
         options?: Partial<any>): Promise<ReadonlyArray<string>> {
-        throw new Error("This method is not supported by Chronicle");
+        throw new Error("This method is not supported by the API");
     }
 
     /**
@@ -44,7 +53,7 @@ export class ChronicleMamClient {
         depth: number,
         minWeightMagnitude: number,
         reference?: string | undefined): Promise<ReadonlyArray<Transaction>> {
-        throw new Error("This method is not supported by Chronicle");
+        throw new Error("This method is not supported by the API");
     }
 
     /**
@@ -70,16 +79,31 @@ export class ChronicleMamClient {
          */
         tags?: ReadonlyArray<string>
     }): Promise<ReadonlyArray<Transaction>> {
-        const response = await this._chronicleClient.findTransactions(request);
+
+        if (!request.addresses) {
+            throw new Error("This method is not supported by the API");
+        }
+
+        const response = await this._apiClient.findTransactions(
+            {
+                mode: "address",
+                network: this._network,
+                hash: request.addresses[0]
+            }
+        );
         let txs: Transaction[] = [];
 
         if (response && response.hashes) {
-            const trytesResponse = await this._chronicleClient.getTrytes({
-                hashes: response.hashes
+            const hashes = response.hashes;
+
+            const trytesResponse = await this._apiClient.getTrytes({
+                network: this._network,
+                hashes
             });
 
             if (trytesResponse && trytesResponse.trytes) {
-                txs = trytesResponse.trytes.map(t => t);
+                txs = trytesResponse.trytes.map(
+                    (t, idx) => asTransactionObject(t, hashes[idx]));
             }
         }
 

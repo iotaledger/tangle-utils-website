@@ -1,4 +1,4 @@
-import { composeAPI, LoadBalancerSettings } from "@iota/client-load-balancer";
+import { composeAPI } from "@iota/core";
 import { asTransactionTrytes } from "@iota/transaction-converter";
 import { isTrytesOfExactLength, isTrytesOfMaxLength } from "@iota/validators";
 import { Button, Fieldrow, Fieldset, Form, FormActions, FormStatus, Heading, Input, Select, Success, TextArea } from "iota-react-components";
@@ -7,7 +7,9 @@ import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { PowHelper } from "../../helpers/powHelper";
 import { TextHelper } from "../../helpers/textHelper";
+import { IConfiguration } from "../../models/config/IConfiguration";
 import { NetworkType } from "../../models/services/networkType";
+import { ConfigurationService } from "../../services/configurationService";
 import { SettingsService } from "../../services/settingsService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import AreaCodeMap from "../components/AreaCodeMap";
@@ -240,12 +242,19 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                 transactionHash: ""
             },
             async () => {
-                const loadBalancerSettings = ServiceFactory.get<LoadBalancerSettings>(
-                    `load-balancer-${this.state.network}`);
-                PowHelper.attachLocalPow(loadBalancerSettings);
-
                 try {
-                    const api = composeAPI(loadBalancerSettings);
+                    const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>
+                        ("configuration");
+
+                    const config = configService.get();
+
+                    const nodeConfig = this.state.network === "mainnet"
+                        ? config.nodeMainnet : config.nodeDevnet;
+
+                    const api = composeAPI({
+                        provider: nodeConfig.provider,
+                        attachToTangle: PowHelper.localPow as any
+                    });
 
                     const preparedTrytes = await api.prepareTransfers(
                         "9".repeat(81),
@@ -259,8 +268,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                         ]
                     );
 
-                    // Use 0 for depth and mwm, the load balancer will replace with sensible values
-                    const txs = await api.sendTrytes(preparedTrytes, 0, 0);
+                    const txs = await api.sendTrytes(preparedTrytes, nodeConfig.depth, nodeConfig.mwm);
 
                     this._tangleCacheService.addTransactions(
                         txs.map(t => t.hash), asTransactionTrytes(txs), this.state.network);
@@ -283,8 +291,6 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                         }
                     );
                 }
-
-                PowHelper.dettachLocalPow(loadBalancerSettings);
             });
     }
 

@@ -13,7 +13,9 @@ import { ScheduleHelper } from "./utils/scheduleHelper";
 
 const routes: IRoute[] = [
     { path: "/init", method: "get", func: "init" },
-    { path: "/currencies", method: "get", folder: "currency", func: "get" }
+    { path: "/currencies", method: "get", folder: "currency", func: "get" },
+    { path: "/find-transactions", method: "get", folder: "tangle", func: "findTransactions" },
+    { path: "/get-trytes", method: "post", folder: "tangle", func: "getTrytes" }
 ];
 
 AppHelper.build(

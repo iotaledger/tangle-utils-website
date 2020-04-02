@@ -13,6 +13,17 @@
     "zmqDevNet": {
         "endpoint": "ZMQ_ENDPOINT"
     },
+    "nodeMainnet": {
+        "provider": "NODE_MAINNET",
+        "depth": 3,
+        "mwm": 14
+    },
+    "nodeDevnet": {
+        "provider": "NODE_DEVNET",
+        "depth": 3,
+        "mwm": 9
+    },
+    "permaNodeEndpoint": "NODE_CHRONICLE",
     "allowedDomains": [
         "https://utils.iota.works",
         "https://utils.iota.org"

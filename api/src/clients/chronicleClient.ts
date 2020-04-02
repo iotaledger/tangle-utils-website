@@ -1,8 +1,8 @@
 import axios from "axios";
-import { IFindTransactionsRequest } from "../models/api/chronicle/IFindTransactionsRequest";
-import { IFindTransactionsResponse } from "../models/api/chronicle/IFindTransactionsResponse";
-import { IGetTrytesRequest } from "../models/api/chronicle/IGetTrytesRequest";
-import { IGetTrytesResponse } from "../models/api/chronicle/IGetTrytesResponse";
+import { IFindTransactionsRequest } from "../models/clients/chronicle/IFindTransactionsRequest";
+import { IFindTransactionsResponse } from "../models/clients/chronicle/IFindTransactionsResponse";
+import { IGetTrytesRequest } from "../models/clients/chronicle/IGetTrytesRequest";
+import { IGetTrytesResponse } from "../models/clients/chronicle/IGetTrytesResponse";
 
 /**
  * Class to handle api communications.
@@ -30,6 +30,7 @@ export class ChronicleClient {
         const ax = axios.create({ baseURL: this._endpoint });
 
         try {
+            console.log("chronicle::getTrytes");
             const axiosResponse = await ax.post<IGetTrytesResponse>(
                 "",
                 { ...{ command: "getTrytes" }, ...request },
@@ -39,12 +40,6 @@ export class ChronicleClient {
                     }
                 }
             );
-
-            if (axiosResponse.data && axiosResponse.data.trytes) {
-                axiosResponse.data.trytes = axiosResponse.data.trytes.map(
-                    (t, i) => ({ ...t, hash: request.hashes[i] })
-                );
-            }
 
             return axiosResponse.data;
         } catch (err) {
@@ -62,6 +57,7 @@ export class ChronicleClient {
         const ax = axios.create({ baseURL: this._endpoint });
 
         try {
+            console.log("chronicle::findTransactions");
             const axiosResponse = await ax.post<IFindTransactionsResponse>(
                 "",
                 { ...{ command: "findTransactions" }, ...request },

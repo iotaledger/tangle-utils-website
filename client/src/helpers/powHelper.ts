@@ -1,4 +1,3 @@
-import { LoadBalancerSettings } from "@iota/client-load-balancer";
 import { asTransactionObject, asTransactionTrytes } from "@iota/transaction-converter";
 import { init, pow } from "curl.lib.js";
 
@@ -6,24 +5,6 @@ import { init, pow } from "curl.lib.js";
  * Class to perform local pow.
  */
 export class PowHelper {
-    /**
-     * Attach the local pow to the load balancer settings.
-     * @param loadBalancerSettings The load balancer to attach to.
-     */
-    public static attachLocalPow(loadBalancerSettings: LoadBalancerSettings): void {
-        loadBalancerSettings.attachToTangle = PowHelper.localPow as any;
-        loadBalancerSettings.timeoutMs = 300000; // 5 Mins
-    }
-
-    /**
-     * Detach the local pow from the load balancer settings.
-     * @param loadBalancerSettings The load balancer to dettach from.
-     */
-    public static dettachLocalPow(loadBalancerSettings: LoadBalancerSettings): void {
-        loadBalancerSettings.attachToTangle = undefined;
-        loadBalancerSettings.timeoutMs = 20000; // Default 20s
-    }
-
     /**
      * Perform a proof of work on the data.
      * @param trunkTransaction The trunkTransaction to use for the pow.

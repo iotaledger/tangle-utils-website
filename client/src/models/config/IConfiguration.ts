@@ -7,19 +7,14 @@ export interface IConfiguration {
     apiEndpoint: string;
 
     /**
-     * The mainnet nodes to load balance.
+     * The mainnet node.
      */
-    nodesMainnet: INodeConfiguration[];
+    nodeMainnet: INodeConfiguration;
 
     /**
      * The devnet nodes to load balance.
      */
-    nodesDevnet: INodeConfiguration[];
-
-    /**
-     * The permanode endpoint.
-     */
-    permaNodeEndpoint?: string;
+    nodeDevnet: INodeConfiguration;
 
     /**
      * The google maps key.

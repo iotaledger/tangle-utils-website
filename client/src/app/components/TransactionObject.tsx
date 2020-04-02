@@ -611,39 +611,15 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
         const confirmationStates =
             await this._tangleCacheService.getTransactionConfirmationStates(
                 [this.props.hash], this.props.network);
-        let isPromotable = false;
-
-        if (confirmationStates[0] !== "confirmed" && this.state.tailHash) {
-            isPromotable =
-                await this._tangleCacheService.isTransactionPromotable(
-                    this.state.tailHash, this.props.network);
-        }
 
         if (this._mounted) {
             this.setState({
-                confirmationState: confirmationStates[0],
-                isPromotable
+                confirmationState: confirmationStates[0]
             });
         }
 
         if (confirmationStates[0] !== "confirmed") {
             this._confirmationTimerId = setTimeout(() => this.checkConfirmation(), 15000);
-        }
-    }
-
-    /**
-     * Promote the transaction
-     */
-    private async promote(): Promise<void> {
-        if (this.state.isPromotable && this.state.tailHash && this._mounted) {
-            this.setState({ isPromoting: true }, async () => {
-                if (this.state.tailHash) {
-                    await this._tangleCacheService.transactionPromote(this.state.tailHash, this.props.network);
-                }
-                if (this._mounted) {
-                    this.setState({ isPromoting: false });
-                }
-            });
         }
     }
 }
