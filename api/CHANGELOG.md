@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.0
+
+* Updated API to use permanode.
+
 ## v1.2.3
 
 * Added lastUpdated to currency response for timestamp of last update rates

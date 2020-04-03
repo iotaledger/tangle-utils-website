@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.0
+
+* Swith to use permanode
+
 ## v1.2.5
 
 * MAM subsciber switched to mam.js lib
