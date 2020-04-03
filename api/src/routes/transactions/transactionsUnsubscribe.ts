@@ -2,7 +2,7 @@ import SocketIO from "socket.io";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { IResponse } from "../../models/api/IResponse";
 import { ITransactionsUnsubscribeRequest } from "../../models/api/ITransactionsUnsubscribeRequest";
-import { IConfiguration } from "../../models/IConfiguration";
+import { IConfiguration } from "../../models/configuration/IConfiguration";
 import { TransactionsService } from "../../services/transactionsService";
 
 /**

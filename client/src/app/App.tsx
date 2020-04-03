@@ -1,4 +1,3 @@
-import { LoadBalancerSettings, RandomWalkStrategy } from "@iota/client-load-balancer";
 import "iota-css-theme";
 import { Footer, GoogleAnalytics, Header, LayoutAppSingle, SideMenu, StatusMessage } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
@@ -7,6 +6,7 @@ import logo from "../assets/logo.svg";
 import contentHomePage from "../content/contentHomePage.json";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { IConfiguration } from "../models/config/IConfiguration";
+import { ApiClient } from "../services/apiClient";
 import { ConfigurationService } from "../services/configurationService";
 import { CurrencyService } from "../services/currencyService";
 import { LocalStorageService } from "../services/localStorageService";
@@ -72,22 +72,27 @@ class App extends Component<RouteComponentProps, AppState> {
             const configId = process.env.REACT_APP_CONFIG_ID || "local";
             const config = await configService.load(`/data/config.${configId}.json`);
 
+            if (!config.nodeMainnet) {
+                config.nodeMainnet = {
+                    provider: "https://nodes.iota.org:443",
+                    depth: 3,
+                    mwm: 14
+                };
+            }
+
+            if (!config.nodeMainnet) {
+                config.nodeMainnet = {
+                    provider: "https://nodes.devnet.iota.org:443",
+                    depth: 3,
+                    mwm: 9
+                };
+            }
+
             ServiceFactory.register("configuration", () => configService);
             ServiceFactory.register("local-storage", () => new LocalStorageService());
-            ServiceFactory.register("tangle-cache", () => new TangleCacheService());
+            ServiceFactory.register("tangle-cache", () => new TangleCacheService(config));
             ServiceFactory.register("transactions", () => new TransactionsClient(config.apiEndpoint));
-
-            const loadBalancerSettingsMainNet: LoadBalancerSettings = {
-                nodeWalkStrategy: new RandomWalkStrategy(config.nodesMainnet),
-                timeoutMs: 20000
-            };
-            ServiceFactory.register("load-balancer-mainnet", () => loadBalancerSettingsMainNet);
-
-            const loadBalancerSettingsDevNet: LoadBalancerSettings = {
-                nodeWalkStrategy: new RandomWalkStrategy(config.nodesDevnet),
-                timeoutMs: 20000
-            };
-            ServiceFactory.register("load-balancer-devnet", () => loadBalancerSettingsDevNet);
+            ServiceFactory.register("api-client", () => new ApiClient(config.apiEndpoint));
 
             this._settingsService = new SettingsService();
             ServiceFactory.register("settings", () => this._settingsService);

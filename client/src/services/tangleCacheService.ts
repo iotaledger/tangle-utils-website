@@ -1,11 +1,14 @@
-import { composeAPI, LoadBalancerSettings } from "@iota/client-load-balancer";
+import { composeAPI, Transaction } from "@iota/core";
 import { mamFetch, MamMode } from "@iota/mam.js";
-import { asTransactionObject, asTransactionObjects, Transaction } from "@iota/transaction-converter";
+import { asTransactionObject, asTransactionObjects } from "@iota/transaction-converter";
 import { ServiceFactory } from "../factories/serviceFactory";
-import { PowHelper } from "../helpers/powHelper";
+import { FindTransactionsMode } from "../models/api/findTransactionsMode";
+import { IConfiguration } from "../models/config/IConfiguration";
 import { ConfirmationState } from "../models/confirmationState";
 import { HashType } from "../models/hashType";
 import { NetworkType } from "../models/services/networkType";
+import { ApiClient } from "./apiClient";
+import { ApiMamClient } from "./apiMamClient";
 
 /**
  * Cache tangle requests.
@@ -15,6 +18,11 @@ export class TangleCacheService {
      * Timeout for stale cached items (5 mins).
      */
     private readonly STALE_TIME: number = 300000;
+
+    /**
+     * The main configuration.
+     */
+    private readonly _configuration: IConfiguration;
 
     /**
      * The cache for the transactions.
@@ -69,6 +77,10 @@ export class TangleCacheService {
                      * The transactions hashes found.
                      */
                     transactionHashes: ReadonlyArray<string>;
+                    /**
+                     * The total count of hashes.
+                     */
+                    totalCount: number;
                     /**
                      * The time of cache.
                      */
@@ -131,19 +143,12 @@ export class TangleCacheService {
     };
 
     /**
-     * Used for inclusion states timestamp.
-     */
-    private _lastestSolidSubtangleMilestoneCached: number;
-
-    /**
-     * Used for inclusion states.
-     */
-    private _lastestSolidSubtangleMilestone: string;
-
-    /**
      * Create a new instance of TangleCacheService.
+     * @param config The main configuration.
      */
-    constructor() {
+    constructor(config: IConfiguration) {
+        this._configuration = config;
+
         this._transactionCache = {
             mainnet: {},
             devnet: {}
@@ -172,9 +177,6 @@ export class TangleCacheService {
             devnet: {}
         };
 
-        this._lastestSolidSubtangleMilestoneCached = Date.now();
-        this._lastestSolidSubtangleMilestone = "";
-
         // Check for stale cache items every minute
         setInterval(() => this.staleCheck(), 60000);
     }
@@ -187,8 +189,18 @@ export class TangleCacheService {
      * @returns The transactions hashes returned from the looked up type.
      */
     public async findTransactionHashes(
-        hashType: HashType, hash: string, network: NetworkType): Promise<ReadonlyArray<string>> {
+        hashType: HashType, hash: string, network: NetworkType): Promise<{
+            /**
+             * The lookup hashes.
+             */
+            hashes: ReadonlyArray<string>;
+            /**
+             * The total number of hashes.
+             */
+            totalCount: number;
+        }> {
         let transactionHashes: ReadonlyArray<string> = [];
+        let totalCount = 0;
         let doLookup = true;
 
         if (this._findCache[network][hashType][hash]) {
@@ -196,26 +208,35 @@ export class TangleCacheService {
             if (Date.now() - this._findCache[network][hashType][hash].cached < 60000) {
                 doLookup = false;
                 transactionHashes = this._findCache[network][hashType][hash].transactionHashes;
+                totalCount = this._findCache[network][hashType][hash].totalCount;
             }
         }
 
         if (doLookup) {
-            const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+            const apiClient = ServiceFactory.get<ApiClient>("api-client");
 
-            const response = await api.findTransactions(
-                hashType === "tag" ? { tags: [hash] } :
-                    hashType === "address" ? { addresses: [hash] } : { bundles: [hash] });
+            const response = await apiClient.findTransactions({
+                network,
+                hash,
+                mode: hashType as FindTransactionsMode
+            });
 
-            if (response && response.length > 0) {
-                transactionHashes = response;
+            if (response.success && response.hashes && response.hashes.length > 0) {
+                transactionHashes = response.hashes;
+                totalCount = response.totalCount || totalCount;
+
                 this._findCache[network][hashType][hash] = {
                     transactionHashes,
+                    totalCount,
                     cached: Date.now()
                 };
             }
         }
 
-        return transactionHashes;
+        return {
+            hashes: transactionHashes || [],
+            totalCount
+        };
     }
 
     /**
@@ -229,20 +250,29 @@ export class TangleCacheService {
         const unknownHashes = hashes.filter(h =>
             !this._transactionCache[network][h] ||
             this._transactionCache[network][h].trytes === undefined ||
+            this._transactionCache[network][h].confirmedState === "unknown" ||
             now - this._transactionCache[network][h].cached > 60000);
 
         if (unknownHashes.length > 0) {
             try {
-                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+                const apiClient = ServiceFactory.get<ApiClient>("api-client");
 
-                const response = await api.getTrytes(unknownHashes);
-                if (response) {
-                    for (let i = 0; i < response.length; i++) {
+                const response = await apiClient.getTrytes({
+                    network,
+                    hashes: unknownHashes
+                });
+
+                if (response &&
+                    response.success &&
+                    response.trytes &&
+                    response.confirmationStates) {
+                    for (let i = 0; i < response.trytes.length; i++) {
                         this._transactionCache[network][unknownHashes[i]] =
                             this._transactionCache[network][unknownHashes[i]] || {};
-                        this._transactionCache[network][unknownHashes[i]].trytes = response[i];
+                        this._transactionCache[network][unknownHashes[i]].trytes =
+                            response.trytes[i];
                         this._transactionCache[network][unknownHashes[i]].confirmedState =
-                            this._transactionCache[network][unknownHashes[i]].confirmedState || "unknown";
+                            response.confirmationStates[i];
                     }
                 }
             } catch (err) {
@@ -307,45 +337,13 @@ export class TangleCacheService {
             now - this._transactionCache[network][h].cached > 15000);
 
         if (unknownStates.length > 0) {
-            try {
-                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
-
-                if (this._lastestSolidSubtangleMilestone === "" ||
-                    now - this._lastestSolidSubtangleMilestoneCached > 10000) {
-                    const nodeInfo = await api.getNodeInfo();
-                    if (nodeInfo) {
-                        this._lastestSolidSubtangleMilestoneCached = now;
-                        this._lastestSolidSubtangleMilestone = nodeInfo.latestSolidSubtangleMilestone;
-                    }
-                }
-
-                const response = await api.getInclusionStates(hashes, [this._lastestSolidSubtangleMilestone]);
-                if (response && response.length > 0) {
-                    for (let i = 0; i < response.length; i++) {
-                        this._transactionCache[network][unknownStates[i]] =
-                            this._transactionCache[network][unknownStates[i]] || {};
-
-                        this._transactionCache[network][unknownStates[i]].confirmedState =
-                            response[i] ? "confirmed" : "pending";
-                        this._transactionCache[network][unknownStates[i]].cached = Date.now();
-                    }
-                }
-            } catch (err) {
-                if (err.message.toString().indexOf("subtangle has not been updated")) {
-                    for (let i = 0; i < unknownStates.length; i++) {
-                        this._transactionCache[network][unknownStates[i]] =
-                            this._transactionCache[network][unknownStates[i]] || {};
-
-                        this._transactionCache[network][unknownStates[i]].confirmedState = "subtangle";
-                        this._transactionCache[network][unknownStates[i]].cached = Date.now();
-                    }
-                } else {
-                    console.error(err);
-                }
-            }
+            await this.getTransactions(unknownStates, network);
         }
 
-        return hashes.map(h => this._transactionCache[network][h].confirmedState);
+        return hashes.map(h =>
+            this._transactionCache[network] &&
+                this._transactionCache[network][h] ?
+                this._transactionCache[network][h].confirmedState : "unknown");
     }
 
     /**
@@ -402,7 +400,12 @@ export class TangleCacheService {
         if (!this._addressBalances[network][addressHash] ||
             now - this._addressBalances[network][addressHash].balance > 30000) {
             try {
-                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+                const nodeConfig = network === "mainnet"
+                    ? this._configuration.nodeMainnet : this._configuration.nodeDevnet;
+
+                const api = composeAPI({
+                    provider: nodeConfig.provider
+                });
 
                 const response = await api.getBalances([addressHash], 100);
                 if (response && response.balances) {
@@ -443,9 +446,9 @@ export class TangleCacheService {
     } | undefined> {
         if (!this._mam[network][root]) {
             try {
-                const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
+                const api = new ApiMamClient(this._configuration.apiEndpoint, network);
 
-                const result = await mamFetch(api, root, mode, key);
+                const result = await mamFetch(api as any, root, mode, key);
 
                 if (result) {
                     this._mam[network][root] = {
@@ -489,9 +492,9 @@ export class TangleCacheService {
         } else {
             // Otherwise we have to grab the whole bundle.
             // and find which group this transaction is in
-            const bundleTransactionsHashes = await this.findTransactionHashes("bundle", transaction.bundle, network);
-            if (bundleTransactionsHashes.length > 0) {
-                const bundleGroups = await this.getBundleGroups(bundleTransactionsHashes, network);
+            const { hashes } = await this.findTransactionHashes("bundle", transaction.bundle, network);
+            if (hashes.length > 0) {
+                const bundleGroups = await this.getBundleGroups(hashes, network);
 
                 const bg = bundleGroups.find(group => group.findIndex(t => t.hash === transaction.hash) >= 0);
                 if (bg) {
@@ -500,48 +503,6 @@ export class TangleCacheService {
             }
         }
         return thisGroup;
-    }
-
-    /**
-     * Check if the transaction promotable.
-     * @param transactionHash The transaction to use as the starting point.
-     * @param network The network to communicate with.
-     * @returns The transactions bundle group.
-     */
-    public async isTransactionPromotable(transactionHash: string, network: NetworkType): Promise<boolean> {
-        let isPromotable = false;
-
-        try {
-            const api = composeAPI(ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`));
-
-            isPromotable = await api.isPromotable(transactionHash);
-        } catch (err) {
-            console.error(err);
-
-        }
-
-        return isPromotable;
-    }
-
-    /**
-     * Promote the transaction on the tangle.
-     * @param transactionHash The transaction to use as the starting point.
-     * @param network The network to communicate with.
-     * @returns The transactions bundle group.
-     */
-    public async transactionPromote(transactionHash: string, network: NetworkType): Promise<void> {
-        const loadBalancerSettings = ServiceFactory.get<LoadBalancerSettings>(`load-balancer-${network}`);
-        PowHelper.attachLocalPow(loadBalancerSettings);
-
-        try {
-            const api = composeAPI(loadBalancerSettings);
-
-            await api.promoteTransaction(transactionHash, 0, 0);
-        } catch (err) {
-            console.error(err);
-        }
-
-        PowHelper.dettachLocalPow(loadBalancerSettings);
     }
 
     /**

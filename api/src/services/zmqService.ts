@@ -1,5 +1,5 @@
 import zmq from "zeromq";
-import { IZmqConfiguration } from "../models/IZmqConfiguration";
+import { IZmqConfiguration } from "../models/configuration/IZmqConfiguration";
 import { IAddress } from "../models/zmq/IAddress";
 import { IAntn } from "../models/zmq/IAntn";
 import { IDnscc } from "../models/zmq/IDnscc";

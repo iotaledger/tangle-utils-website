@@ -1,7 +1,7 @@
 import SocketIO from "socket.io";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { ITransactionsSubscribeResponse } from "../../models/api/ITransactionsSubscribeResponse";
-import { IConfiguration } from "../../models/IConfiguration";
+import { IConfiguration } from "../../models/configuration/IConfiguration";
 import { TransactionsService } from "../../services/transactionsService";
 
 /**

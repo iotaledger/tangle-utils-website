@@ -4,16 +4,16 @@ import { addChecksum } from "@iota/checksum";
 import { trytesToTrits } from "@iota/converter";
 import { asTransactionObject, Transaction } from "@iota/transaction-converter";
 import { isEmpty } from "@iota/validators";
-import { Button, ClipboardHelper, Heading, Select, Spinner } from "iota-react-components";
+import { Button, ClipboardHelper, Heading, Spinner } from "iota-react-components";
 import moment from "moment";
 import React, { Component, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { TrytesHelper } from "../../helpers/trytesHelper";
 import { UnitsHelper } from "../../helpers/unitsHelper";
-import { CurrencyService } from "../../services/currencyService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import Confirmation from "./Confirmation";
+import InlineCurrency from "./InlineCurrency";
 import "./TransactionObject.scss";
 import { TransactionObjectProps } from "./TransactionObjectProps";
 import { TransactionObjectState } from "./TransactionObjectState";
@@ -26,11 +26,6 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
      * The tangle cache service.
      */
     private readonly _tangleCacheService: TangleCacheService;
-
-    /**
-     * The network to use for transaction requests.
-     */
-    private readonly _currencyService: CurrencyService;
 
     /**
      * Confirmation state timer.
@@ -50,7 +45,6 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
         super(props);
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
-        this._currencyService = ServiceFactory.get<CurrencyService>("currency");
         this._mounted = false;
 
         const transactionObject = asTransactionObject(this.props.trytes);
@@ -82,7 +76,6 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             timeHuman: `${timeMoment.format("LLLL")} - ${moment.duration(moment().diff(timeMoment)).humanize()} ${postDate}`,
             valueFormatted: UnitsHelper.formatBest(transactionObject.value, false),
             valueIota: `${transactionObject.value} i`,
-            currencies: [],
             isMissing: this.props.hideInteractive ? false : isEmpty(this.props.trytes),
             mwm,
             message: decoded.message,
@@ -103,32 +96,6 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
      */
     public async componentDidMount(): Promise<void> {
         this._mounted = true;
-
-        await this._currencyService.loadCurrencies((isAvailable, data) => {
-            if (this._mounted) {
-                this.setState(
-                    {
-                        currencies: isAvailable && data ? data.currencies : undefined,
-                        fiatCode: isAvailable && data ? data.fiatCode : "EUR",
-                        baseCurrencyRate: isAvailable && data ? data.baseCurrencyRate : 1
-                    },
-                    async () => {
-                        if (this._mounted) {
-                            this.setState({
-                                valueConverted: await this._currencyService.currencyConvert(
-                                    this.state.transactionObject.value,
-                                    {
-                                        fiatCode: this.state.fiatCode || "EUR",
-                                        currencies: this.state.currencies,
-                                        baseCurrencyRate: this.state.baseCurrencyRate
-                                    },
-                                    false)
-                            }
-                            );
-                        }
-                    });
-            }
-        });
 
         if (!this.props.hideInteractive && this._mounted) {
             const thisGroup: ReadonlyArray<Transaction> =
@@ -269,44 +236,14 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                                 </div>
                             </div>
                         </div>
-                        {this.state.currencies && (
-                            <div className="row">
-                                <div className="col">
-                                    <div className="label">Currency</div>
-                                    <div className="value">
-                                        {this.state.currencies.length > 0 && (
-                                            <Select
-                                                value={this.state.fiatCode}
-                                                onChange={e => this.setState({ fiatCode: e.target.value }, async () => {
-                                                    if (this._mounted) {
-                                                        this.setState(
-                                                            {
-                                                                valueConverted:
-                                                                    await this._currencyService.currencyConvert(
-                                                                        this.state.transactionObject.value,
-                                                                        {
-                                                                            fiatCode: this.state.fiatCode || "EUR",
-                                                                            currencies: this.state.currencies,
-                                                                            baseCurrencyRate:
-                                                                                this.state.baseCurrencyRate
-                                                                        },
-                                                                        true)
-                                                            });
-                                                    }
-                                                }
-                                                )}
-                                                selectSize="small"
-                                            >
-                                                {this.state.currencies.map(is => (
-                                                    <option key={is.id} value={is.id}>{is.id}</option>
-                                                ))}
-                                            </Select>
-                                        )}
-                                        <span className="currency">{this.state.valueConverted}</span>
-                                    </div>
+                        <div className="row">
+                            <div className="col">
+                                <div className="label">Currency</div>
+                                <div className="value">
+                                    <InlineCurrency valueIota={this.state.transactionObject.value} />
                                 </div>
                             </div>
-                        )}
+                        </div>
                         <div className="row">
                             <div className="col">
                                 <div className="label">Address</div>
@@ -611,39 +548,15 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
         const confirmationStates =
             await this._tangleCacheService.getTransactionConfirmationStates(
                 [this.props.hash], this.props.network);
-        let isPromotable = false;
-
-        if (confirmationStates[0] !== "confirmed" && this.state.tailHash) {
-            isPromotable =
-                await this._tangleCacheService.isTransactionPromotable(
-                    this.state.tailHash, this.props.network);
-        }
 
         if (this._mounted) {
             this.setState({
-                confirmationState: confirmationStates[0],
-                isPromotable
+                confirmationState: confirmationStates[0]
             });
         }
 
         if (confirmationStates[0] !== "confirmed") {
             this._confirmationTimerId = setTimeout(() => this.checkConfirmation(), 15000);
-        }
-    }
-
-    /**
-     * Promote the transaction
-     */
-    private async promote(): Promise<void> {
-        if (this.state.isPromotable && this.state.tailHash && this._mounted) {
-            this.setState({ isPromoting: true }, async () => {
-                if (this.state.tailHash) {
-                    await this._tangleCacheService.transactionPromote(this.state.tailHash, this.props.network);
-                }
-                if (this._mounted) {
-                    this.setState({ isPromoting: false });
-                }
-            });
         }
     }
 }

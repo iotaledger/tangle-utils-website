@@ -18,16 +18,6 @@ export interface ExploreViewState {
     hashType: HashType;
 
     /**
-     * Is the component valid.
-     */
-    isValid: boolean;
-
-    /**
-     * Is the component valid.
-     */
-    validMessage: string;
-
-    /**
      * Is the component busy.
      */
     isBusy: boolean;
@@ -66,4 +56,33 @@ export interface ExploreViewState {
      * The balance for an address.
      */
     balance: number;
+
+    /**
+     * Formatted value in currency.
+     */
+    balanceConverted?: string;
+
+    /**
+     * Formatted value in currency.
+     */
+    fiatCode?: string;
+
+    /**
+     * Formatted value in currency.
+     */
+    baseCurrencyRate?: number;
+
+    /**
+     * The loaded currencies.
+     */
+    currencies?: {
+        /**
+         * Id of the currency.
+         */
+        id: string;
+        /**
+         * The rate.
+         */
+        rate: number
+    }[];
 }

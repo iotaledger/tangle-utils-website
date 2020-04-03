@@ -1,4 +1,5 @@
 import { IAWSDynamoDbConfiguration } from "./IAWSDynamoDbConfiguration";
+import { INodeConfiguration } from "./INodeConfiguration";
 import { IZmqConfiguration } from "./IZmqConfiguration";
 
 /**
@@ -29,6 +30,21 @@ export interface IConfiguration {
      * The configuration for devnet zmq endpoint.
      */
     zmqDevNet: IZmqConfiguration;
+
+    /**
+     * The mainnet node.
+     */
+    nodeMainnet: INodeConfiguration;
+
+    /**
+     * The devnet node.
+     */
+    nodeDevnet: INodeConfiguration;
+
+    /**
+     * The permanode endpoint.
+     */
+    permaNodeEndpoint: string;
 
     /**
      * A list of domains allowed to access the api.

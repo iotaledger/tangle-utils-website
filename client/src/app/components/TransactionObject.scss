@@ -93,10 +93,10 @@
 
       &.yes,
       &.no {
-        padding: 10px;
+        padding: 4px;
         border-radius: 5px;
         color: var(--white);
-        font-weight: bold;
+        font-size: 14px;
       }
 
       &.yes {
@@ -137,6 +137,7 @@
       color: var(--blueberry);
       font-weight: normal;
       line-height: 1.5;
+      font-size: 14px;
 
       &.small {
         font-size: 12px;
@@ -171,22 +172,6 @@
       margin-right: 10px;
       padding-right: 30px;
       white-space: nowrap;
-    }
-
-    .select-wrapper {
-      width: 150px;
-      height: 40px;
-      margin-right: 10px;
-      border-color: var(--light-grey);
-
-      select {
-        height: 40px;
-        color: var(--black);
-      }
-
-      &::after {
-        color: var(--gunmetal-grey);
-      }
     }
   }
 

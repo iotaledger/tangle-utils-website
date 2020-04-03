@@ -1,29 +1,15 @@
 {
     "apiEndpoint": "ENDPOINT",
-    "nodesMainnet": [
-        {
-            "provider": "MYNODE1",
-            "depth": 3,
-            "mwm": 14
-        },
-        {
-            "provider": "MYNODE2",
-            "depth": 3,
-            "mwm": 14
-        }
-    ],
-    "nodesDevnet": [
-        {
-            "provider": "MYNODE1",
-            "depth": 3,
-            "mwm": 9
-        },
-        {
-            "provider": "MYNODE2",
-            "depth": 3,
-            "mwm": 9
-        }
-    ],
+    "nodeMainnet": {
+        "provider": "NODE_MAINNET",
+        "depth": 3,
+        "mwm": 14
+    },
+    "nodeDevnet": {
+        "provider": "NODE_DEVNET",
+        "depth": 3,
+        "mwm": 9
+    },
     "googleMapsKey": "GOOGLE-MAPS-KEY",
     "googleAnalyticsId": ""
 }

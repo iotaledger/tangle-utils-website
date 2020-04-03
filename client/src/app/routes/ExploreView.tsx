@@ -2,14 +2,15 @@ import { addChecksum } from "@iota/checksum";
 import { isHash, isTag, isTrytesOfExactLength } from "@iota/validators";
 import { Button, ClipboardHelper, Form, FormStatus, Heading } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { UnitsHelper } from "../../helpers/unitsHelper";
 import { HashType } from "../../models/hashType";
 import { NetworkType } from "../../models/services/networkType";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import BundleObject from "../components/BundleObject";
+import InlineCurrency from "../components/InlineCurrency";
 import TransactionObject from "../components/TransactionObject";
+import TransactionSummary from "../components/TransactionSummary";
 import "./ExploreView.scss";
 import { ExploreViewProps } from "./ExploreViewProps";
 import { ExploreViewState } from "./ExploreViewState";
@@ -51,7 +52,12 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                 paramHash = this.props.match.params.hash;
                 paramHashType = this.props.hashType;
                 if (paramHashType === "address") {
-                    paramHashChecksum = addChecksum(paramHash).substr(-9);
+                    if (paramHash.length === 90) {
+                        paramHashChecksum = paramHash.substr(-9);
+                        paramHash = paramHash.substr(0, 81);
+                    } else if (paramHash.length === 81) {
+                        paramHashChecksum = addChecksum(paramHash).substr(-9);
+                    }
                 }
             }
             if (this.props.match.params.network === "mainnet" ||
@@ -64,13 +70,12 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
             hash: paramHash,
             checksum: paramHashChecksum,
             hashType: paramHashType,
-            isValid: false,
-            validMessage: "",
             isBusy: false,
             status: "",
             isErrored: false,
             network: paramNetwork,
-            balance: 0
+            balance: 0,
+            currencies: []
         };
     }
 
@@ -102,8 +107,6 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
      * @returns The node to render.
      */
     public render(): ReactNode {
-        const network = this.state.network === "mainnet" ? "" : `/${this.state.network}`;
-
         return (
             <div className="explore">
                 {!this.state.transactionTrytes && !this.state.transactionHashes && (
@@ -115,16 +118,17 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                         />
                     </Form>
                 )}
-                {this.state.transactionTrytes && (
-                    <React.Fragment>
-                        <Heading level={1}>Transaction</Heading>
-                        <TransactionObject
-                            hash={this.state.hash}
-                            trytes={this.state.transactionTrytes}
-                            network={this.state.network}
-                        />
-                    </React.Fragment>
-                )}
+                {this.state.hashType === "transaction" &&
+                    this.state.transactionTrytes && (
+                        <React.Fragment>
+                            <Heading level={1}>Transaction</Heading>
+                            <TransactionObject
+                                hash={this.state.hash}
+                                trytes={this.state.transactionTrytes}
+                                network={this.state.network}
+                            />
+                        </React.Fragment>
+                    )}
                 {this.state.transactionHashes &&
                     (this.state.hashType === "tag" || this.state.hashType === "address") && (
                         <div className="list">
@@ -145,22 +149,32 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                                 </Button>
                             </div>
                             {this.state.hashType === "address" && (
-                                <div className="row">
-                                    <div className="label">Balance</div>
-                                    <div className="value">{UnitsHelper.formatBest(this.state.balance)}</div>
-                                </div>
+                                <React.Fragment>
+                                    <div className="row">
+                                        <div className="label">Balance</div>
+                                        <div className="value">{UnitsHelper.formatBest(this.state.balance)}</div>
+                                    </div>
+                                    <div className="row">
+                                        <div className="label">Currency</div>
+                                        <div className="value">
+                                            <InlineCurrency valueIota={this.state.balance} />
+                                        </div>
+                                    </div>
+                                </React.Fragment>
                             )}
-                            {this.state.transactionsCount && (
-                                <div className="row">
-                                    <div className="label">Number of Transactions</div>
-                                    <div className="value">{this.state.transactionsCount}</div>
-                                </div>
-                            )}
-                            <hr />
                             <div className="items">
-                                {this.state.transactionHashes.map((t, idx) => (
-                                    <Link className="nav-link" key={idx} to={`/transaction/${t}${network}`}>{t}</Link>
-                                ))}
+                                <React.Fragment>
+                                    <br />
+                                    <Heading level={1}>
+                                        Transactions
+                                        <span className="transactions-count">
+                                            [{this.state.transactionsCount}]
+                                        </span>
+                                    </Heading>
+                                    {this.state.transactionHashes.map((t, idx) => (
+                                        <TransactionSummary hash={t} key={idx} network={this.state.network} />
+                                    ))}
+                                </React.Fragment>
                             </div>
                         </div>
                     )}
@@ -203,7 +217,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
         }
 
         if (this._mounted) {
-            this.setState({ validMessage, isValid: validMessage.length === 0 });
+            this.setState({ status: validMessage, isErrored: validMessage.length === 0 });
         }
         return validMessage.length === 0;
     }
@@ -222,8 +236,9 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                 },
                 async () => {
                     try {
-                        let transactionTrytes;
-                        let transactionHashes;
+                        let transactionTrytes: string | undefined;
+                        let transactionHashes: string[] | undefined;
+                        let total = 0;
                         let checksum = "";
                         let status = "";
                         let balance = 0;
@@ -240,16 +255,24 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                             }
                         } else {
                             try {
-                                const response = await this._tangleCacheService.findTransactionHashes(
+                                const { hashes, totalCount } = await this._tangleCacheService.findTransactionHashes(
                                     this.state.hashType, this.state.hash, this.state.network);
 
-                                if (response && response.length > 0) {
-                                    transactionHashes = response;
+                                if (hashes && hashes.length > 0) {
+                                    transactionHashes = hashes as string[];
+                                    total = totalCount;
 
                                     if (this.state.hashType === "address") {
                                         balance = await this._tangleCacheService.getAddressBalance(
                                             this.state.hash, this.state.network);
                                         checksum = addChecksum(this.state.hash).substr(-9);
+
+                                        // No need to store the transactions, just
+                                        // triggering the request should be enough
+                                        // as the individual summary views retrieve
+                                        // the data from the tangle cache service.
+                                        await this._tangleCacheService.getTransactions(
+                                            transactionHashes, this.state.network);
                                     }
                                 } else {
                                     status = `Unable to find any transactions with the specified ${
@@ -265,13 +288,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                         }
 
                         if (transactionHashes) {
-                            if (transactionHashes.length > 250) {
-                                const all = transactionHashes.length;
-                                transactionHashes = transactionHashes.slice(0, 250);
-                                transactionsCount = `${transactionHashes.length} of ${all}`;
-                            } else {
-                                transactionsCount = `${transactionHashes.length}`;
-                            }
+                            transactionsCount = `${transactionHashes.length} of ${total}`;
                         }
 
                         if (this._mounted) {

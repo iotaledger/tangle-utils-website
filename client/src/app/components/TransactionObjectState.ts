@@ -44,35 +44,6 @@ export interface TransactionObjectState {
     valueIota: string;
 
     /**
-     * Formatted value in currency.
-     */
-    valueConverted?: string;
-
-    /**
-     * Formatted value in currency.
-     */
-    fiatCode?: string;
-
-    /**
-     * Formatted value in currency.
-     */
-    baseCurrencyRate?: number;
-
-    /**
-     * The loaded currencies.
-     */
-    currencies?: {
-        /**
-         * Id of the currency.
-         */
-        id: string;
-        /**
-         * The rate.
-         */
-        rate: number
-    }[];
-
-    /**
      * The message decoded.
      */
     message: string;
@@ -131,16 +102,6 @@ export interface TransactionObjectState {
      * What is the tail hash for the bundle.
      */
     tailHash?: string;
-
-    /**
-     * Is the bundle promotable.
-     */
-    isPromotable?: boolean;
-
-    /**
-     * Is the bundle being promoted.
-     */
-    isPromoting?: boolean;
 
     /**
      * Does the tag contain an area code.

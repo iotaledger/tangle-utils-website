@@ -90,7 +90,7 @@ export class CurrencyService {
             if (selectedFiatToBase) {
                 const miota = valueIota / 1000000;
                 const fiat = miota * (selectedFiatToBase.rate * currencyData.baseCurrencyRate);
-                converted = fiat.toFixed(2);
+                converted = fiat.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
                 if (saveFiat) {
                     await this.saveFiatCode(currencyData.fiatCode);
