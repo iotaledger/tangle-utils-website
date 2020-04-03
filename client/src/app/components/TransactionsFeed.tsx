@@ -48,8 +48,10 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
         this.state = {
             mainnetTransactions: [],
             devnetTransactions: [],
-            valueLimit: 1,
-            valueLimitUnits: Unit.Ti,
+            valueMinimum: "0",
+            valueMinimumUnits: Unit.i,
+            valueMaximum: "1",
+            valueMaximumUnits: Unit.Ti,
             valueFilter: "both"
         };
     }
@@ -64,8 +66,10 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
         if (settings) {
             if (this._mounted) {
                 this.setState({
-                    valueLimit: settings.valueLimit || 1,
-                    valueLimitUnits: settings.valueLimitUnits || Unit.Ti,
+                    valueMinimum: settings.valueMinimum || "0",
+                    valueMinimumUnits: settings.valueMinimumUnits || Unit.i,
+                    valueMaximum: settings.valueMaximum || "1",
+                    valueMaximumUnits: settings.valueMaximumUnits || Unit.Ti,
                     valueFilter: settings.valueFilter || "both"
                 });
             }
@@ -115,20 +119,41 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                         </Select>
                     </Fieldset>
                     <Fieldset>
-                        <label>Value Limit</label>
+                        <label>Limit</label>
                         <Input
                             type="text"
-                            value={this.state.valueLimit}
+                            value={this.state.valueMinimum}
                             placeholder="Enter limit for the values"
                             restrict="float"
                             inputSize="small"
-                            onChange={e => this.setState(
-                                { valueLimit: parseFloat(e.target.value) }, () => this.updateFeeds(true))}
+                            onChange={e => this.updateMinimum(e.target.value)}
                         />
                         <Select
-                            value={this.state.valueLimitUnits}
+                            value={this.state.valueMinimumUnits}
                             onChange={e => this.setState(
-                                { valueLimitUnits: e.target.value as Unit }, () => this.updateFeeds(true))}
+                                { valueMinimumUnits: e.target.value as Unit }, () => this.updateFeeds(true))}
+                            selectSize="small"
+                        >
+                            <option value="i">i</option>
+                            <option value="Ki">Ki</option>
+                            <option value="Mi">Mi</option>
+                            <option value="Gi">Gi</option>
+                            <option value="Ti">Ti</option>
+                            <option value="Pi">Pi</option>
+                        </Select>
+                        <span className="limit-label">To</span>
+                        <Input
+                            type="text"
+                            value={this.state.valueMaximum}
+                            placeholder="Enter limit for the values"
+                            restrict="float"
+                            inputSize="small"
+                            onChange={e => this.updateMaximum(e.target.value)}
+                        />
+                        <Select
+                            value={this.state.valueMaximumUnits}
+                            onChange={e => this.setState(
+                                { valueMaximumUnits: e.target.value as Unit }, () => this.updateFeeds(true))}
                             selectSize="small"
                         >
                             <option value="i">i</option>
@@ -169,18 +194,47 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
     }
 
     /**
+     * Update the minimum filter.
+     * @param min The min value from the form.
+     */
+    private updateMinimum(min: string): void {
+        const val = parseFloat(min);
+
+        if (!Number.isNaN(val)) {
+            this.setState({ valueMinimum: val.toString() }, () => this.updateFeeds(true));
+        } else {
+            this.setState({ valueMinimum: "" });
+        }
+    }
+
+    /**
+     * Update the maximum filter.
+     * @param max The max value from the form.
+     */
+    private updateMaximum(max: string): void {
+        const val = parseFloat(max);
+
+        if (!Number.isNaN(val)) {
+            this.setState({ valueMaximum: val.toString() }, () => this.updateFeeds(true));
+        } else {
+            this.setState({ valueMaximum: "" });
+        }
+    }
+
+    /**
      * Update the transaction feeds.
      * @param save Save the settings.
      */
     private async updateFeeds(save: boolean): Promise<void> {
         if (this._mounted) {
-            const limit = convertUnits(this.state.valueLimit, this.state.valueLimitUnits, Unit.i);
+            const minLimit = convertUnits(this.state.valueMinimum, this.state.valueMinimumUnits, Unit.i);
+            const maxLimit = convertUnits(this.state.valueMaximum, this.state.valueMaximumUnits, Unit.i);
 
             this.setState({
                 mainnetTransactions: this._transactionsClient.getMainNetTransactions()
                     .filter(t => this.state.mainnetTransactions.findIndex(t2 => t2.hash === t.hash) < 0)
                     .concat(this.state.mainnetTransactions)
-                    .filter(t => t.value >= -limit && t.value <= limit)
+                    .filter(t => Math.abs(t.value) >= minLimit && Math.abs(t.value) <= maxLimit)
                     .filter(t => this.state.valueFilter === "both" ? true :
                         this.state.valueFilter === "zeroOnly" ? t.value === 0 :
                             t.value !== 0)
@@ -188,7 +242,7 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                 devnetTransactions: this._transactionsClient.getDevNetTransactions()
                     .filter(t => this.state.devnetTransactions.findIndex(t2 => t2.hash === t.hash) < 0)
                     .concat(this.state.devnetTransactions)
-                    .filter(t => t.value >= -limit && t.value <= limit)
+                    .filter(t => Math.abs(t.value) >= minLimit && Math.abs(t.value) <= maxLimit)
                     .filter(t => this.state.valueFilter === "both" ? true :
                         this.state.valueFilter === "zeroOnly" ? t.value === 0 :
                             t.value !== 0)
@@ -199,8 +253,10 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                 const settings = await this._settingsService.get();
                 if (settings) {
                     settings.valueFilter = this.state.valueFilter;
-                    settings.valueLimit = this.state.valueLimit;
-                    settings.valueLimitUnits = this.state.valueLimitUnits;
+                    settings.valueMinimum = this.state.valueMinimum;
+                    settings.valueMinimumUnits = this.state.valueMinimumUnits;
+                    settings.valueMaximum = this.state.valueMaximum;
+                    settings.valueMaximumUnits = this.state.valueMaximumUnits;
 
                     await this._settingsService.save();
                 }

@@ -8,9 +8,14 @@
     padding-bottom: 10px;
   }
 
+  .limit-label {
+    margin: 20px;
+  }
+  
   .feed-wrapper {
     display: flex;
     flex-direction: row;
+    min-height: 600px;
 
     @media (max-width: 767px) {
       flex-direction: column;

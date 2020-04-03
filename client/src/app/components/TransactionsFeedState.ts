@@ -15,12 +15,22 @@ export interface TransactionsFeedState {
     /**
      * Limit the transactions by value.
      */
-    valueLimit: number;
+    valueMinimum: string;
 
     /**
      * The unit type.
      */
-    valueLimitUnits: Unit;
+    valueMinimumUnits: Unit;
+
+    /**
+     * Limit the transactions by value.
+     */
+    valueMaximum: string;
+
+    /**
+     * The unit type.
+     */
+    valueMaximumUnits: Unit;
 
     /**
      * Filter specific value types.

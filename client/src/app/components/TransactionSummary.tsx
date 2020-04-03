@@ -25,6 +25,11 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
     private _mounted: boolean;
 
     /**
+     * Timer for date counter;
+     */
+    private _dateTimer?: NodeJS.Timer;
+
+    /**
      * Create a new instance of TransactionSummary.
      * @param props The props.
      */
@@ -65,6 +70,14 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
                 timeHuman: `${timeMoment.format("LLLL")} - ${moment.duration(moment().diff(timeMoment)).humanize()} ${postDate}`,
                 valueIota: `${transactionObject.value} i`
             });
+
+            this._dateTimer = setInterval(
+                () => {
+                    this.setState({
+                        timeHuman: `${timeMoment.format("LLLL")} - ${moment.duration(moment().diff(timeMoment)).humanize()} ${postDate}`
+                    });
+                },
+                1000);
         }
     }
 
@@ -73,6 +86,10 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
      */
     public async componentWillUnmount(): Promise<void> {
         this._mounted = false;
+
+        if (this._dateTimer) {
+            clearInterval(this._dateTimer);
+        }
     }
 
     /**

@@ -33,6 +33,11 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
     private _confirmationTimerId?: NodeJS.Timer;
 
     /**
+     * Timer for date counter;
+     */
+    private readonly _dateTimer?: NodeJS.Timer;
+
+    /**
      * Is the component mounted.
      */
     private _mounted: boolean;
@@ -89,6 +94,16 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
             bundleResult: "",
             iac: IotaAreaCodes.isValid(iac) ? iac : ""
         };
+
+        this._dateTimer = setInterval(
+            () => {
+                this.setState({
+                    timeHuman: `${timeMoment.format("LLLL")} - ${moment.duration(moment().diff(timeMoment)).humanize()} ${postDate}`,
+                    attachmentTimeHuman: `${attachmentTimeMoment.format("LLLL")} - ${
+                        moment.duration(moment().diff(attachmentTimeMoment)).humanize()} ${postAttachmentDate}`
+                });
+            },
+            1000);
     }
 
     /**
@@ -96,6 +111,10 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
      */
     public async componentDidMount(): Promise<void> {
         this._mounted = true;
+
+        if (this._dateTimer) {
+            clearInterval(this._dateTimer);
+        }
 
         if (!this.props.hideInteractive && this._mounted) {
             const thisGroup: ReadonlyArray<Transaction> =
@@ -269,7 +288,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             </div>
                         )}
                         <hr />
-                        <Heading level={2}>Bundle</Heading>
+                        <Heading level={3}>Bundle</Heading>
                         {!this.props.hideInteractive && (
                             <div className="row">
                                 <div className="col">
@@ -335,7 +354,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             </div>
                         </div>
                         <hr />
-                        <Heading level={2}>Content</Heading>
+                        <Heading level={3}>Content</Heading>
                         <div className="row">
                             <div className="col">
                                 <div className="label">Tag</div>
@@ -437,7 +456,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             </div>
                         )}
                         <hr />
-                        <Heading level={2}>Parents</Heading>
+                        <Heading level={3}>Parents</Heading>
                         <div className="row">
                             <div className="col">
                                 <div className="label">Trunk</div>
@@ -465,7 +484,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             </div>
                         </div>
                         <hr />
-                        <Heading level={2}>PoW</Heading>
+                        <Heading level={3}>PoW</Heading>
                         <div className="row">
                             <div className="col">
                                 <div className="label">Timestamp</div>
@@ -501,7 +520,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         {!this.props.hideInteractive && (
                             <React.Fragment>
                                 <hr />
-                                <Heading level={2}>Raw</Heading>
+                                <Heading level={3}>Raw</Heading>
                                 <div className="row">
                                     <div className="col top">
                                         <div className="label">Trytes</div>

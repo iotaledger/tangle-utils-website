@@ -38,8 +38,6 @@ export async function getTrytes(config: IConfiguration, request: IGetTrytesReque
         const nodeConfig = request.network === "mainnet"
             ? config.nodeMainnet : config.nodeDevnet;
 
-        console.log("getTrytes", request.network);
-
         const api = composeAPI({
             provider: nodeConfig.provider
         });
@@ -51,7 +49,13 @@ export async function getTrytes(config: IConfiguration, request: IGetTrytesReque
                 allTrytes[i].trytes = response[i];
             }
 
-            const statesResponse = await api.getInclusionStates(request.hashes, []);
+            const nodeInfo = await api.getNodeInfo();
+            const tips = [];
+            if (nodeInfo) {
+                tips.push(nodeInfo.latestSolidSubtangleMilestone);
+            }
+
+            const statesResponse = await api.getInclusionStates(request.hashes, tips);
 
             if (statesResponse) {
                 for (let i = 0; i < statesResponse.length; i++) {
@@ -71,8 +75,6 @@ export async function getTrytes(config: IConfiguration, request: IGetTrytesReque
         try {
             const chronicleClient = new ChronicleClient(config.permaNodeEndpoint);
             const response = await chronicleClient.getTrytes({ hashes: missing.map(mh => mh.hash) });
-
-            console.log("Chronicle response", response.trytes);
 
             if (response && response.trytes) {
                 for (let i = 0; i < missing.length; i++) {

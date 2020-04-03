@@ -30,7 +30,6 @@ export class ChronicleClient {
         const ax = axios.create({ baseURL: this._endpoint });
 
         try {
-            console.log("chronicle::getTrytes");
             const axiosResponse = await ax.post<IGetTrytesResponse>(
                 "",
                 { ...{ command: "getTrytes" }, ...request },

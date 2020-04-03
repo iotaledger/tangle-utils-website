@@ -12,12 +12,22 @@ export interface ISettings extends ICurrencySettings, IMapSettings {
     /**
      * Value limit feeds.
      */
-    valueLimit?: number;
+    valueMinimum?: string;
 
     /**
      * Value limit units for feeds.
      */
-    valueLimitUnits?: Unit;
+    valueMinimumUnits?: Unit;
+
+    /**
+     * Value limit feeds.
+     */
+    valueMaximum?: string;
+
+    /**
+     * Value limit units for feeds.
+     */
+    valueMaximumUnits?: Unit;
 
     /**
      * Map expanded.

@@ -24,8 +24,6 @@ export async function findTransactions(config: IConfiguration, request: IFindTra
         const nodeConfig = request.network === "mainnet"
             ? config.nodeMainnet : config.nodeDevnet;
 
-        console.log("findTransactions", request.network);
-
         const api = composeAPI({
             provider: nodeConfig.provider
         });

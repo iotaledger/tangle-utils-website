@@ -1,9 +1,11 @@
 .transaction-object {
   display: flex;
   flex-direction: column;
+  font-size: 14px;
 
-  h2 {
+  h3 {
     color: var(--jade);
+    margin: 0px 0px 10px 0px;
   }
 
   .row {
@@ -13,6 +15,7 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 10px;
+    font-size: 14px;
 
     @media (max-width: 767px) {
       flex-direction: column;
@@ -28,7 +31,7 @@
       flex: 1;
       flex-direction: row;
       align-items: center;
-      min-height: 40px;
+      min-height: 30px;
 
       @media (max-width: 767px) {
         flex-direction: column;
