@@ -78,6 +78,10 @@ export class TangleCacheService {
                      */
                     transactionHashes: ReadonlyArray<string>;
                     /**
+                     * The total count of hashes.
+                     */
+                    totalCount: number;
+                    /**
                      * The time of cache.
                      */
                     cached: number;
@@ -185,8 +189,18 @@ export class TangleCacheService {
      * @returns The transactions hashes returned from the looked up type.
      */
     public async findTransactionHashes(
-        hashType: HashType, hash: string, network: NetworkType): Promise<ReadonlyArray<string>> {
+        hashType: HashType, hash: string, network: NetworkType): Promise<{
+            /**
+             * The lookup hashes.
+             */
+            hashes: ReadonlyArray<string>;
+            /**
+             * The total number of hashes.
+             */
+            totalCount: number;
+        }> {
         let transactionHashes: ReadonlyArray<string> = [];
+        let totalCount = 0;
         let doLookup = true;
 
         if (this._findCache[network][hashType][hash]) {
@@ -194,6 +208,7 @@ export class TangleCacheService {
             if (Date.now() - this._findCache[network][hashType][hash].cached < 60000) {
                 doLookup = false;
                 transactionHashes = this._findCache[network][hashType][hash].transactionHashes;
+                totalCount = this._findCache[network][hashType][hash].totalCount;
             }
         }
 
@@ -208,15 +223,20 @@ export class TangleCacheService {
 
             if (response.success && response.hashes && response.hashes.length > 0) {
                 transactionHashes = response.hashes;
+                totalCount = response.totalCount || totalCount;
 
                 this._findCache[network][hashType][hash] = {
                     transactionHashes,
+                    totalCount,
                     cached: Date.now()
                 };
             }
         }
 
-        return transactionHashes || [];
+        return {
+            hashes: transactionHashes || [],
+            totalCount
+        };
     }
 
     /**
@@ -472,9 +492,9 @@ export class TangleCacheService {
         } else {
             // Otherwise we have to grab the whole bundle.
             // and find which group this transaction is in
-            const bundleTransactionsHashes = await this.findTransactionHashes("bundle", transaction.bundle, network);
-            if (bundleTransactionsHashes.length > 0) {
-                const bundleGroups = await this.getBundleGroups(bundleTransactionsHashes, network);
+            const { hashes } = await this.findTransactionHashes("bundle", transaction.bundle, network);
+            if (hashes.length > 0) {
+                const bundleGroups = await this.getBundleGroups(hashes, network);
 
                 const bg = bundleGroups.find(group => group.findIndex(t => t.hash === transaction.hash) >= 0);
                 if (bg) {

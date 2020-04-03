@@ -29,6 +29,26 @@ export class AppHelper {
         // tslint:disable-next-line:non-literal-require
         const config: IConfiguration = require(`../data/config.${configId}.json`);
 
+        if (!config.nodeMainnet) {
+            config.nodeMainnet = {
+                provider: "https://nodes.iota.org:443",
+                depth: 3,
+                mwm: 14
+            };
+        }
+
+        if (!config.nodeMainnet) {
+            config.nodeMainnet = {
+                provider: "https://nodes.devnet.iota.org:443",
+                depth: 3,
+                mwm: 9
+            };
+        }
+
+        if (!config.permaNodeEndpoint) {
+            config.permaNodeEndpoint = "http://chronicle01.mainnet.iota.cafe:4000/api";
+        }
+
         const app: Application = express();
 
         const corsConfig = {

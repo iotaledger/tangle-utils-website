@@ -48,6 +48,7 @@ export async function findTransactions(config: IConfiguration, request: IFindTra
     return {
         success: true,
         message: "OK",
-        hashes: hashes || []
+        hashes: (hashes || []).slice(0, 100),
+        totalCount: hashes ? hashes.length : 0
     };
 }

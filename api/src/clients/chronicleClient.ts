@@ -43,6 +43,7 @@ export class ChronicleClient {
 
             return axiosResponse.data;
         } catch (err) {
+            console.error("Chronicle Error", err);
         }
 
         return undefined;
@@ -57,7 +58,6 @@ export class ChronicleClient {
         const ax = axios.create({ baseURL: this._endpoint });
 
         try {
-            console.log("chronicle::findTransactions");
             const axiosResponse = await ax.post<IFindTransactionsResponse>(
                 "",
                 { ...{ command: "findTransactions" }, ...request },
@@ -70,6 +70,7 @@ export class ChronicleClient {
 
             return axiosResponse.data;
         } catch (err) {
+            console.error("Chronicle Error", err);
         }
 
         return undefined;
