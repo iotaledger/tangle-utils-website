@@ -1,6 +1,7 @@
 import { asTransactionObject } from "@iota/transaction-converter";
 import moment from "moment";
 import React, { Component, ReactNode } from "react";
+import { FaChevronLeft } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { TangleCacheService } from "../../services/tangleCacheService";
@@ -84,6 +85,14 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
         return (
             <div className="transaction-summary">
                 <div className="transaction-summary--row">
+                    <div className="col1 time">
+                        {this.state.timeHuman}
+                    </div>
+                    <div className="col2">
+                        {this.state.valueIota}
+                    </div>
+                </div>
+                <div className="transaction-summary--row">
                     <Link
                         className="col1 nav-link"
                         to={`/transaction/${this.props.hash}${network}`}
@@ -91,17 +100,23 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
                         {this.props.hash}
                     </Link>
                     <div className="col2">
-                        {this.state.valueIota}
-                    </div>
-                </div>
-                <div className="transaction-summary--row">
-                    <div className="col1 time">
-                        {this.state.timeHuman}
-                    </div>
-                    <div className="col2">
                         <Confirmation state={this.state.confirmationState} />
                     </div>
                 </div>
+                {this.state.transactionObject && (
+                    <div className="transaction-summary--row">
+                        <FaChevronLeft />
+                        <Link
+                            className="col1 nav-link nav-link--small"
+                            to={`/bundle/${this.state.transactionObject?.bundle}${network}`}
+                        >
+                            {this.state.transactionObject?.bundle}
+                        </Link>
+                        <div className="col2">
+                            &nbsp;
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
