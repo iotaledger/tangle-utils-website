@@ -1,12 +1,12 @@
 {
     "apiEndpoint": "ENDPOINT",
     "nodeMainnet": {
-        "provider": "NODE_MAINNET",
+        "provider": "https://nodes.iota.org:443",
         "depth": 3,
         "mwm": 14
     },
     "nodeDevnet": {
-        "provider": "NODE_DEVNET",
+        "provider": "https://nodes.devnet.iota.org:443",
         "depth": 3,
         "mwm": 9
     },
