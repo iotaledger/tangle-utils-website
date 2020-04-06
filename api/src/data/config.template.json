@@ -14,16 +14,16 @@
         "endpoint": "ZMQ_ENDPOINT"
     },
     "nodeMainnet": {
-        "provider": "https://nodes.iota.org:443",
+        "provider": "https://NODE_MAINNET",
         "depth": 3,
         "mwm": 14
     },
     "nodeDevnet": {
-        "provider": "https://nodes.devnet.iota.org:443",
+        "provider": "https://NODE_DEVNET",
         "depth": 3,
         "mwm": 9
     },
-    "permaNodeEndpoint": "http://chronicle01.mainnet.iota.cafe:4000/api",
+    "permaNodeEndpoint": "https://NODE_CHRONICLE",
     "allowedDomains": [
         "https://utils.iota.works",
         "https://utils.iota.org"
