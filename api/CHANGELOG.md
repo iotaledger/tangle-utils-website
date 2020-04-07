@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.4.0
+
+* Added tps and history
+* Added milestones
+
 ## v1.3.0
 
 * Updated API to use permanode.
