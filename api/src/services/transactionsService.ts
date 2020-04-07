@@ -93,9 +93,9 @@ export class TransactionsService {
         this._devNetTransactions = [];
         this._lastSend = 0;
         this._mainNetTps = [];
-        this._mainNetTotal = -1;
+        this._mainNetTotal = 0;
         this._devNetTps = [];
-        this._devNetTotal = -1;
+        this._devNetTotal = 0;
         this._timerCounter = 0;
 
         this._subscriptions = {};
@@ -212,8 +212,8 @@ export class TransactionsService {
      * Stop the zmq services.
      */
     private stopZmq(): void {
-        this._mainNetTotal = -1;
-        this._devNetTotal = -1;
+        this._mainNetTotal = 0;
+        this._devNetTotal = 0;
         if (this._mainNetSubscriptionId) {
             this._zmqMainNet.unsubscribe(this._mainNetSubscriptionId);
             this._mainNetSubscriptionId = undefined;

@@ -243,7 +243,7 @@ export class ZmqService {
      */
     private connect(): void {
         try {
-            if (!this._connecting) {
+            if (!this._connecting && !this._socket) {
                 this._connecting = true;
 
                 const localSocket = zmq.socket("sub");
@@ -276,6 +276,11 @@ export class ZmqService {
         this._socket = undefined;
         if (localSocket) {
             try {
+                const keys = Object.keys(this._subscriptions);
+                for (let i = 0; i < keys.length; i++) {
+                    localSocket.unsubscribe(keys[i]);
+                }
+
                 localSocket.close();
             } catch { }
         }
@@ -310,7 +315,6 @@ export class ZmqService {
         const id = TrytesHelper.generateHash(27);
         this._subscriptions[event].push({ id, callback });
 
-        this.disconnect();
         this.connect();
 
         return id;
