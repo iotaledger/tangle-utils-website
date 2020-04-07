@@ -16,12 +16,12 @@ export class TransactionsService {
     /**
      * The main net zmq service.
      */
-    private readonly _zmqMainNet: ZmqService;
+    private _zmqMainNet: ZmqService;
 
     /**
      * The dev net zmq service.
      */
-    private readonly _zmqDevNet: ZmqService;
+    private _zmqDevNet: ZmqService;
 
     /**
      * The most recent main net transactions.
@@ -69,6 +69,16 @@ export class TransactionsService {
     private _devNetSubscriptionId: string;
 
     /**
+     * Timer id.
+     */
+    private _timerId?: NodeJS.Timer;
+
+    /**
+     * Timer counter.
+     */
+    private _timerCounter: number;
+
+    /**
      * The callback for different events.
      */
     private readonly _subscriptions: {
@@ -79,9 +89,6 @@ export class TransactionsService {
      * Create a new instance of TransactionsService.
      */
     constructor() {
-        this._zmqMainNet = ServiceFactory.get<ZmqService>("zmq-mainnet");
-        this._zmqDevNet = ServiceFactory.get<ZmqService>("zmq-devnet");
-
         this._mainNetTransactions = [];
         this._devNetTransactions = [];
         this._lastSend = 0;
@@ -89,10 +96,31 @@ export class TransactionsService {
         this._mainNetTotal = -1;
         this._devNetTps = [];
         this._devNetTotal = -1;
+        this._timerCounter = 0;
 
         this._subscriptions = {};
+    }
 
-        setInterval(() => this.handleTps(), TransactionsService.TPS_INTERVAL * 1000);
+    /**
+     * Initialise the service.
+     */
+    public async init(): Promise<void> {
+        this._zmqMainNet = ServiceFactory.get<ZmqService>("zmq-mainnet");
+        this._zmqDevNet = ServiceFactory.get<ZmqService>("zmq-devnet");
+
+        this.startTimer();
+        this.startZmq();
+    }
+
+    /**
+     * Reset the service.
+     */
+    public async reset(): Promise<void> {
+        this.stopTimer();
+        this.stopZmq();
+
+        this.startTimer();
+        this.startZmq();
     }
 
     /**
@@ -101,25 +129,6 @@ export class TransactionsService {
      * @returns An id to use for unsubscribe.
      */
     public subscribe(callback: (data: ITransactionsSubscriptionMessage) => void): string {
-        if (Object.keys(this._subscriptions).length === 0) {
-            this._mainNetSubscriptionId = this._zmqMainNet.subscribe(
-                "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                    if (!this._mainNetTransactions.includes(message.trytes)) {
-                        this._mainNetTotal++;
-                        this._mainNetTransactions.unshift(message.trytes);
-                        await this.updateSubscriptions();
-                    }
-                });
-            this._devNetSubscriptionId = this._zmqDevNet.subscribe(
-                "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                    if (!this._devNetTransactions.includes(message.trytes)) {
-                        this._devNetTotal++;
-                        this._devNetTransactions.unshift(message.trytes);
-                        await this.updateSubscriptions();
-                    }
-                });
-        }
-
         const id = TrytesHelper.generateHash(27);
         this._subscriptions[id] = callback;
 
@@ -132,13 +141,6 @@ export class TransactionsService {
      */
     public unsubscribe(subscriptionId: string): void {
         delete this._subscriptions[subscriptionId];
-
-        if (Object.keys(this._subscriptions).length === 0) {
-            this._mainNetTotal = -1;
-            this._devNetTotal = -1;
-            this._zmqMainNet.unsubscribe(this._mainNetSubscriptionId);
-            this._zmqDevNet.unsubscribe(this._devNetSubscriptionId);
-        }
     }
 
     /**
@@ -173,17 +175,77 @@ export class TransactionsService {
      * Handle the transactions per second calculations.
      */
     private handleTps(): void {
-        if (this._mainNetTotal >= 0 &&
-            this._devNetTotal >= 0) {
-            const lastMainNetTotal = this._mainNetTotal;
-            const lastDevNetTotal = this._devNetTotal;
-            this._mainNetTotal = 0;
-            this._devNetTotal = 0;
-            this._mainNetTps.push(lastMainNetTotal);
-            this._devNetTps.push(lastDevNetTotal);
+        const lastMainNetTotal = this._mainNetTotal;
+        const lastDevNetTotal = this._devNetTotal;
+        this._mainNetTotal = 0;
+        this._devNetTotal = 0;
+        this._mainNetTps.push(lastMainNetTotal);
+        this._devNetTps.push(lastDevNetTotal);
 
-            this._mainNetTps = this._mainNetTps.slice(0, 100);
-            this._devNetTps = this._devNetTps.slice(0, 100);
+        this._mainNetTps = this._mainNetTps.slice(0, 100);
+        this._devNetTps = this._devNetTps.slice(0, 100);
+    }
+
+    /**
+     * Start the zmq services.
+     */
+    private startZmq(): void {
+        this.stopZmq();
+
+        this._mainNetSubscriptionId = this._zmqMainNet.subscribe(
+            "tx_trytes", async (evnt: string, message: ITxTrytes) => {
+                if (!this._mainNetTransactions.includes(message.trytes)) {
+                    this._mainNetTotal++;
+                    this._mainNetTransactions.unshift(message.trytes);
+                }
+            });
+        this._devNetSubscriptionId = this._zmqDevNet.subscribe(
+            "tx_trytes", async (evnt: string, message: ITxTrytes) => {
+                if (!this._devNetTransactions.includes(message.trytes)) {
+                    this._devNetTotal++;
+                    this._devNetTransactions.unshift(message.trytes);
+                }
+            });
+    }
+
+    /**
+     * Stop the zmq services.
+     */
+    private stopZmq(): void {
+        this._mainNetTotal = -1;
+        this._devNetTotal = -1;
+        if (this._mainNetSubscriptionId) {
+            this._zmqMainNet.unsubscribe(this._mainNetSubscriptionId);
+            this._mainNetSubscriptionId = undefined;
+        }
+        if (this._devNetSubscriptionId) {
+            this._zmqDevNet.unsubscribe(this._devNetSubscriptionId);
+            this._devNetSubscriptionId = undefined;
+        }
+    }
+
+    /**
+     * Start the timer for tps.
+     */
+    private startTimer(): void {
+        this.stopTimer();
+        this._timerId = setInterval(
+            async () => {
+                if (this._timerCounter++ % TransactionsService.TPS_INTERVAL === 0) {
+                    this.handleTps();
+                }
+                await this.updateSubscriptions();
+            },
+            1000);
+    }
+
+    /**
+     * Stop the timer for tps.
+     */
+    private stopTimer(): void {
+        if (this._timerId) {
+            clearInterval(this._timerId);
+            this._timerId = undefined;
         }
     }
 }

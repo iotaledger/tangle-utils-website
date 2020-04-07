@@ -25,10 +25,11 @@ AppHelper.build(
     routes,
     async (app, config, port) => {
         const milestonesService = new MilestonesService();
+        const transactionService = new TransactionsService();
 
         ServiceFactory.register("zmq-mainnet", () => new ZmqService(config.zmqMainNet));
         ServiceFactory.register("zmq-devnet", () => new ZmqService(config.zmqDevNet));
-        ServiceFactory.register("transactions", () => new TransactionsService());
+        ServiceFactory.register("transactions", () => transactionService);
         ServiceFactory.register("milestones", () => milestonesService);
 
         if (config.dynamoDbConnection) {
@@ -44,6 +45,7 @@ AppHelper.build(
         });
 
         await milestonesService.init();
+        await transactionService.init();
 
         // Only perform currency lookups if api keys have been supplied
         if (config.dynamoDbConnection &&

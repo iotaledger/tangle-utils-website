@@ -277,7 +277,7 @@ export class ZmqService {
         if (localSocket) {
             try {
                 localSocket.close();
-            } catch {}
+            } catch { }
         }
     }
 
@@ -310,6 +310,7 @@ export class ZmqService {
         const id = TrytesHelper.generateHash(27);
         this._subscriptions[event].push({ id, callback });
 
+        this.disconnect();
         this.connect();
 
         return id;

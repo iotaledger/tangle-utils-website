@@ -56,6 +56,16 @@ export class MilestonesService {
     private _lastDevnet: number;
 
     /**
+     * Timer id.
+     */
+    private _timerId?: NodeJS.Timer;
+
+    /**
+     * Are we already updating.
+     */
+    private _updating: boolean;
+
+    /**
      * The most recent milestones.
      */
     private readonly _milestones: {
@@ -103,28 +113,21 @@ export class MilestonesService {
         this.initMainNet();
         this.initDevNet();
 
-        setInterval(
-            () => {
-                const now = Date.now();
-                try {
-                    if (now - this._lastMainnet > 5 * 60 * 1000) {
-                        this.closeMainNet();
-                        this.initMainNet();
-                    }
-                } catch (err) {
-                    console.error("Failed processing mainnet idle timeout", err);
-                }
+        this.startTimer();
+    }
 
-                try {
-                    if (now - this._lastDevnet > 5 * 60 * 1000) {
-                        this.closeDevNet();
-                        this.initDevNet();
-                    }
-                } catch (err) {
-                    console.error("Failed processing devnet idle timeout", err);
-                }
-            },
-            5000);
+    /**
+     * Reset the services.
+     */
+    public async reset(): Promise<void> {
+        this.stopTimer();
+        this.closeDevNet();
+        this.closeMainNet();
+
+        this.initMainNet();
+        this.initDevNet();
+
+        this.startTimer();
     }
 
     /**
@@ -224,6 +227,49 @@ export class MilestonesService {
         if (this._subscriptionIdDevNet) {
             this._zmqDevNet.unsubscribe(this._subscriptionIdDevNet);
             this._subscriptionIdDevNet = undefined;
+        }
+    }
+
+    /**
+     * Start the timer for idle timeout.
+     */
+    private startTimer(): void {
+        this.stopTimer();
+        this._timerId = setInterval(
+            () => {
+                if (!this._updating) {
+                    this._updating = true;
+                    const now = Date.now();
+                    try {
+                        if (now - this._lastMainnet > 5 * 60 * 1000) {
+                            this.closeMainNet();
+                            this.initMainNet();
+                        }
+                    } catch (err) {
+                        console.error("Failed processing mainnet idle timeout", err);
+                    }
+
+                    try {
+                        if (now - this._lastDevnet > 5 * 60 * 1000) {
+                            this.closeDevNet();
+                            this.initDevNet();
+                        }
+                    } catch (err) {
+                        console.error("Failed processing devnet idle timeout", err);
+                    }
+                    this._updating = false;
+                }
+            },
+            5000);
+    }
+
+    /**
+     * Stop the idle timer.
+     */
+    private stopTimer(): void {
+        if (this._timerId) {
+            clearInterval(this._timerId);
+            this._timerId = undefined;
         }
     }
 }
