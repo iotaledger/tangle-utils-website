@@ -30,6 +30,26 @@ export class MilestonesService {
     private _zmqDevNet: ZmqService;
 
     /**
+     * Subscription for mainnet.
+     */
+    private _subscriptionIdMainNet?: string;
+
+    /**
+     * Subscription for devnet.
+     */
+    private _subscriptionIdDevNet?: string;
+
+    /**
+     * Last mainnet
+     */
+    private _lastMainnet: number;
+
+    /**
+     * Last devnet
+     */
+    private _lastDevnet: number;
+
+    /**
      * The most recent milestones.
      */
     private readonly _milestones: {
@@ -56,41 +76,30 @@ export class MilestonesService {
     }
 
     /**
-     * Subscribe to transactions feed.
-     * @param callback The callback to call with data for the event.
+     * Initialise the milestones.
      */
     public init(): void {
         this._zmqMainNet = ServiceFactory.get<ZmqService>("zmq-mainnet");
         this._zmqDevNet = ServiceFactory.get<ZmqService>("zmq-devnet");
 
-        this._zmqMainNet.subscribeAddress(
-            MilestonesService.MAINNET_COORDINATOR,
-            async (evnt: string, message: IAddress) => {
-                console.log("mainnet", message);
-                if (message.address === MilestonesService.MAINNET_COORDINATOR) {
-                    if (!this._milestones.mainnet.find(m => m.milestoneIndex === message.milestoneIndex)) {
-                        this._milestones.mainnet.unshift({
-                            hash: message.transaction,
-                            milestoneIndex: message.milestoneIndex
-                        });
-                        this._milestones.mainnet = this._milestones.mainnet.slice(0, 100);
-                    }
+        this.initMainNet();
+        this.initDevNet();
+
+        setInterval(
+            () => {
+                const now = Date.now();
+
+                if (now - this._lastMainnet > 5 * 60 * 1000) {
+                    this.closeMainNet();
+                    this.initMainNet();
                 }
-            });
-        this._zmqDevNet.subscribeAddress(
-            MilestonesService.DEVNET_COORDINATOR,
-            async (evnt: string, message: IAddress) => {
-                console.log("devnet", message);
-                if (message.address === MilestonesService.DEVNET_COORDINATOR) {
-                    if (!this._milestones.devnet.find(m => m.milestoneIndex === message.milestoneIndex)) {
-                        this._milestones.devnet.unshift({
-                            hash: message.transaction,
-                            milestoneIndex: message.milestoneIndex
-                        });
-                        this._milestones.devnet = this._milestones.devnet.slice(0, 100);
-                    }
+
+                if (now - this._lastDevnet > 5 * 60 * 1000) {
+                    this.closeDevNet();
+                    this.initDevNet();
                 }
-            });
+            },
+            5000);
     }
 
     /**
@@ -109,5 +118,65 @@ export class MilestonesService {
         milestoneIndex: number;
     }[] {
         return this._milestones[network];
+    }
+
+    /**
+     * Initialise mainnet.
+     */
+    private initMainNet(): void {
+        this._subscriptionIdMainNet = this._zmqMainNet.subscribeAddress(
+            MilestonesService.MAINNET_COORDINATOR,
+            async (evnt: string, message: IAddress) => {
+                if (message.address === MilestonesService.MAINNET_COORDINATOR) {
+                    this._lastMainnet = Date.now();
+                    if (!this._milestones.mainnet.find(m => m.milestoneIndex === message.milestoneIndex)) {
+                        this._milestones.mainnet.unshift({
+                            hash: message.transaction,
+                            milestoneIndex: message.milestoneIndex
+                        });
+                        this._milestones.mainnet = this._milestones.mainnet.slice(0, 100);
+                    }
+                }
+            });
+    }
+
+    /**
+     * Closedown mainnet.
+     */
+    private closeMainNet(): void {
+        if (this._subscriptionIdMainNet) {
+            this._zmqMainNet.unsubscribe(this._subscriptionIdMainNet);
+            this._subscriptionIdMainNet = undefined;
+        }
+    }
+
+    /**
+     * Initialise devnet.
+     */
+    private initDevNet(): void {
+        this._subscriptionIdDevNet = this._zmqDevNet.subscribeAddress(
+            MilestonesService.DEVNET_COORDINATOR,
+            async (evnt: string, message: IAddress) => {
+                if (message.address === MilestonesService.DEVNET_COORDINATOR) {
+                    this._lastDevnet = Date.now();
+                    if (!this._milestones.devnet.find(m => m.milestoneIndex === message.milestoneIndex)) {
+                        this._milestones.devnet.unshift({
+                            hash: message.transaction,
+                            milestoneIndex: message.milestoneIndex
+                        });
+                        this._milestones.devnet = this._milestones.devnet.slice(0, 100);
+                    }
+                }
+            });
+    }
+
+    /**
+     * Closedown devnet.
+     */
+    private closeDevNet(): void {
+        if (this._subscriptionIdDevNet) {
+            this._zmqDevNet.unsubscribe(this._subscriptionIdDevNet);
+            this._subscriptionIdDevNet = undefined;
+        }
     }
 }
