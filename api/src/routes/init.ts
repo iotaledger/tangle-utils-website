@@ -1,4 +1,5 @@
 import { IConfiguration } from "../models/configuration/IConfiguration";
+import { MilestoneStoreService } from "../services/milestoneStoreService";
 import { StateService } from "../services/stateService";
 
 /**
@@ -12,6 +13,9 @@ export async function init(config: IConfiguration): Promise<string[]> {
     try {
         const stateService = new StateService(config.dynamoDbConnection);
         log += await stateService.createTable();
+
+        const milestoneStoreService = new MilestoneStoreService(config.dynamoDbConnection);
+        log += await milestoneStoreService.createTable();
 
         log += await stateService.updateCurrencies(config);
     } catch (err) {

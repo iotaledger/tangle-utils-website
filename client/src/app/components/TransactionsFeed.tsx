@@ -30,6 +30,11 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
     private _subscriptionId?: string;
 
     /**
+     * Timer id.
+     */
+    private _timerId?: NodeJS.Timer;
+
+    /**
      * Is the component mounted.
      */
     private _mounted: boolean;
@@ -52,7 +57,9 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
             valueMinimumUnits: Unit.i,
             valueMaximum: "1",
             valueMaximumUnits: Unit.Ti,
-            valueFilter: "both"
+            valueFilter: "both",
+            mainnetTps: "",
+            devnetTps: ""
         };
     }
 
@@ -84,6 +91,8 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
         }
 
         await this.updateFeeds(false);
+
+        this._timerId = setInterval(() => this.updateTps(), 2000);
     }
 
     /**
@@ -94,6 +103,11 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
 
         if (this._subscriptionId) {
             await this._transactionsClient.unsubscribe({ subscriptionId: this._subscriptionId });
+        }
+
+        if (this._timerId) {
+            clearInterval(this._timerId);
+            this._timerId = undefined;
         }
     }
 
@@ -167,7 +181,7 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                 </Form>
                 <div className="feed-wrapper">
                     <div className="feed">
-                        <Heading level={2}>MainNet</Heading>
+                        <Heading level={2}>MainNet {this.state.mainnetTps}</Heading>
                         {this.state.mainnetTransactions.length === 0 &&
                             ("There are no transactions with the current filters.")}
                         {this.state.mainnetTransactions.map((tx, idx) => (
@@ -178,7 +192,7 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                         ))}
                     </div>
                     <div className="feed">
-                        <Heading level={2}>DevNet</Heading>
+                        <Heading level={2}>DevNet {this.state.devnetTps}</Heading>
                         {this.state.devnetTransactions.length === 0 &&
                             ("There are no transactions with the current filters.")}
                         {this.state.devnetTransactions.map((tx, idx) => (
@@ -262,6 +276,19 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                 }
             }
         }
+    }
+
+    /**
+     * Update the transactions per second.
+     */
+    private updateTps(): void {
+        const mainnetTps = this._transactionsClient.getMainNetTps();
+        const devnetTps = this._transactionsClient.getDevNetTps();
+
+        this.setState({
+            mainnetTps: mainnetTps >= 0 ? `[${mainnetTps.toFixed(2)} TPS]` : "",
+            devnetTps: devnetTps >= 0 ? `[${devnetTps.toFixed(2)} TPS]` : ""
+        });
     }
 }
 

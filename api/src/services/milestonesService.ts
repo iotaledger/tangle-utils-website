@@ -1,6 +1,7 @@
 import { ServiceFactory } from "../factories/serviceFactory";
 import { Network } from "../models/api/network";
 import { IAddress } from "../models/zmq/IAddress";
+import { MilestoneStoreService } from "./milestoneStoreService";
 import { ZmqService } from "./zmqService";
 
 /**
@@ -28,6 +29,11 @@ export class MilestonesService {
      * The dev net zmq service.
      */
     private _zmqDevNet: ZmqService;
+
+    /**
+     * The milestone store service.
+     */
+    private _milestoneStoreService: MilestoneStoreService;
 
     /**
      * Subscription for mainnet.
@@ -78,9 +84,21 @@ export class MilestonesService {
     /**
      * Initialise the milestones.
      */
-    public init(): void {
+    public async init(): Promise<void> {
         this._zmqMainNet = ServiceFactory.get<ZmqService>("zmq-mainnet");
         this._zmqDevNet = ServiceFactory.get<ZmqService>("zmq-devnet");
+        this._milestoneStoreService = ServiceFactory.get<MilestoneStoreService>("milestone-store");
+
+        if (this._milestoneStoreService) {
+            const msStoreMain = await this._milestoneStoreService.get("mainnet");
+            if (msStoreMain && msStoreMain.indexes) {
+                this._milestones.mainnet = msStoreMain.indexes;
+            }
+            const msStoreDev = await this._milestoneStoreService.get("devnet");
+            if (msStoreDev && msStoreDev.indexes) {
+                this._milestones.devnet = msStoreDev.indexes;
+            }
+        }
 
         this.initMainNet();
         this.initDevNet();
@@ -88,15 +106,22 @@ export class MilestonesService {
         setInterval(
             () => {
                 const now = Date.now();
-
-                if (now - this._lastMainnet > 5 * 60 * 1000) {
-                    this.closeMainNet();
-                    this.initMainNet();
+                try {
+                    if (now - this._lastMainnet > 5 * 60 * 1000) {
+                        this.closeMainNet();
+                        this.initMainNet();
+                    }
+                } catch (err) {
+                    console.error("Failed processing mainnet idle timeout", err);
                 }
 
-                if (now - this._lastDevnet > 5 * 60 * 1000) {
-                    this.closeDevNet();
-                    this.initDevNet();
+                try {
+                    if (now - this._lastDevnet > 5 * 60 * 1000) {
+                        this.closeDevNet();
+                        this.initDevNet();
+                    }
+                } catch (err) {
+                    console.error("Failed processing devnet idle timeout", err);
                 }
             },
             5000);
@@ -135,6 +160,17 @@ export class MilestonesService {
                             milestoneIndex: message.milestoneIndex
                         });
                         this._milestones.mainnet = this._milestones.mainnet.slice(0, 100);
+
+                        if (this._milestoneStoreService) {
+                            try {
+                                await this._milestoneStoreService.set({
+                                    network: "mainnet",
+                                    indexes: this._milestones.mainnet
+                                });
+                            } catch (err) {
+                                console.error("Failed writing mainnet milestone store", err);
+                            }
+                        }
                     }
                 }
             });
@@ -165,6 +201,17 @@ export class MilestonesService {
                             milestoneIndex: message.milestoneIndex
                         });
                         this._milestones.devnet = this._milestones.devnet.slice(0, 100);
+
+                        if (this._milestoneStoreService) {
+                            try {
+                                await this._milestoneStoreService.set({
+                                    network: "devnet",
+                                    indexes: this._milestones.devnet
+                                });
+                            } catch (err) {
+                                console.error("Failed writing devnet milestone store", err);
+                            }
+                        }
                     }
                 }
             });

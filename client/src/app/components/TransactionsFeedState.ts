@@ -8,9 +8,19 @@ export interface TransactionsFeedState {
     mainnetTransactions: Transaction[];
 
     /**
+     * The mainnet tps.
+     */
+    mainnetTps: string;
+
+    /**
      * The transactions from devNet.
      */
     devnetTransactions: Transaction[];
+
+    /**
+     * The devnet tps.
+     */
+    devnetTps: string;
 
     /**
      * Limit the transactions by value.

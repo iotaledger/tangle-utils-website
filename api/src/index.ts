@@ -6,6 +6,7 @@ import { ISchedule } from "./models/app/ISchedule";
 import { transactionsSubscribe } from "./routes/transactions/transactionsSubscribe";
 import { transactionsUnsubscribe } from "./routes/transactions/transactionsUnsubscribe";
 import { MilestonesService } from "./services/milestonesService";
+import { MilestoneStoreService } from "./services/milestoneStoreService";
 import { StateService } from "./services/stateService";
 import { TransactionsService } from "./services/transactionsService";
 import { ZmqService } from "./services/zmqService";
@@ -24,10 +25,15 @@ AppHelper.build(
     routes,
     async (app, config, port) => {
         const milestonesService = new MilestonesService();
+
         ServiceFactory.register("zmq-mainnet", () => new ZmqService(config.zmqMainNet));
         ServiceFactory.register("zmq-devnet", () => new ZmqService(config.zmqDevNet));
         ServiceFactory.register("transactions", () => new TransactionsService());
         ServiceFactory.register("milestones", () => milestonesService);
+
+        if (config.dynamoDbConnection) {
+            ServiceFactory.register("milestone-store", () => new MilestoneStoreService(config.dynamoDbConnection));
+        }
 
         const server = new Server(app);
         const socketServer = SocketIO(server);
@@ -37,7 +43,7 @@ AppHelper.build(
             socket.on("unsubscribe", data => socket.emit("unsubscribe", transactionsUnsubscribe(config, socket, data)));
         });
 
-        milestonesService.init();
+        await milestonesService.init();
 
         // Only perform currency lookups if api keys have been supplied
         if (config.dynamoDbConnection &&

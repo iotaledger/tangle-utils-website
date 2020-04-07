@@ -32,6 +32,21 @@ export class TransactionsClient {
     private _devnetTransactions: Transaction[];
 
     /**
+     * The mainnet tps.
+     */
+    private _mainnetTps: number[];
+
+    /**
+     * The devnet tps.
+     */
+    private _devnetTps: number[];
+
+    /**
+     * The tps interval.
+     */
+    private _tspInterval: number;
+
+    /**
      * The tangle cache service.
      */
     private readonly _tangleCacheService: TangleCacheService;
@@ -48,6 +63,9 @@ export class TransactionsClient {
         this._socket = SocketIOClient(this._endpoint);
         this._mainnetTransactions = [];
         this._devnetTransactions = [];
+        this._mainnetTps = [];
+        this._devnetTps = [];
+        this._tspInterval = 1;
     }
 
     /**
@@ -67,6 +85,10 @@ export class TransactionsClient {
                         trytes => asTransactionObject(trytes, undefined));
                     let newDevNet = transactionsResponse.devnetTransactions.map(
                         trytes => asTransactionObject(trytes, undefined));
+
+                    this._mainnetTps = transactionsResponse.mainnetTps;
+                    this._devnetTps = transactionsResponse.devnetTps;
+                    this._tspInterval = transactionsResponse.tpsInterval;
 
                     newMainNet = newMainNet.filter(tx =>
                         this._mainnetTransactions.findIndex(tx2 => tx2.hash === tx.hash) === -1);
@@ -136,5 +158,31 @@ export class TransactionsClient {
      */
     public getDevNetTransactions(): Transaction[] {
         return this._devnetTransactions;
+    }
+
+    /**
+     * Calculate the main net tps.
+     * @returns The tps.
+     */
+    public getMainNetTps(): number {
+        if (this._mainnetTps.length > 0) {
+            const total = this._mainnetTps.reduce((a, b) => a + b, 0);
+            return total / this._mainnetTps.length / this._tspInterval;
+        } else {
+            return -1;
+        }
+    }
+
+    /**
+     * Calculate the dev net tps.
+     * @returns The tps.
+     */
+    public getDevNetTps(): number {
+        if (this._devnetTps.length > 0) {
+            const total = this._devnetTps.reduce((a, b) => a + b, 0);
+            return total / this._devnetTps.length / this._tspInterval;
+        } else {
+            return -1;
+        }
     }
 }

@@ -9,6 +9,11 @@ import { ZmqService } from "./zmqService";
  */
 export class TransactionsService {
     /**
+     * The transaction per second interval.
+     */
+    private static readonly TPS_INTERVAL: number = 5;
+
+    /**
      * The main net zmq service.
      */
     private readonly _zmqMainNet: ZmqService;
@@ -24,9 +29,29 @@ export class TransactionsService {
     private _mainNetTransactions: string[];
 
     /**
+     * The tps history for main net.
+     */
+    private _mainNetTps: number[];
+
+    /**
      * The most recent dev net transactions.
      */
     private _devNetTransactions: string[];
+
+    /**
+     * The tps history for dev net.
+     */
+    private _devNetTps: number[];
+
+    /**
+     * The current mainnet total since last timestamp.
+     */
+    private _mainNetTotal: number;
+
+    /**
+     * The current devnet total since last timestamp.
+     */
+    private _devNetTotal: number;
 
     /**
      * The last time we sent any data.
@@ -60,8 +85,14 @@ export class TransactionsService {
         this._mainNetTransactions = [];
         this._devNetTransactions = [];
         this._lastSend = 0;
+        this._mainNetTps = [];
+        this._mainNetTotal = -1;
+        this._devNetTps = [];
+        this._devNetTotal = -1;
 
         this._subscriptions = {};
+
+        setInterval(() => this.handleTps(), TransactionsService.TPS_INTERVAL * 1000);
     }
 
     /**
@@ -73,13 +104,19 @@ export class TransactionsService {
         if (Object.keys(this._subscriptions).length === 0) {
             this._mainNetSubscriptionId = this._zmqMainNet.subscribe(
                 "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                    this._mainNetTransactions.unshift(message.trytes);
-                    await this.updateSubscriptions();
+                    if (!this._mainNetTransactions.includes(message.trytes)) {
+                        this._mainNetTotal++;
+                        this._mainNetTransactions.unshift(message.trytes);
+                        await this.updateSubscriptions();
+                    }
                 });
             this._devNetSubscriptionId = this._zmqDevNet.subscribe(
                 "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                    this._devNetTransactions.unshift(message.trytes);
-                    await this.updateSubscriptions();
+                    if (!this._devNetTransactions.includes(message.trytes)) {
+                        this._devNetTotal++;
+                        this._devNetTransactions.unshift(message.trytes);
+                        await this.updateSubscriptions();
+                    }
                 });
         }
 
@@ -97,6 +134,8 @@ export class TransactionsService {
         delete this._subscriptions[subscriptionId];
 
         if (Object.keys(this._subscriptions).length === 0) {
+            this._mainNetTotal = -1;
+            this._devNetTotal = -1;
             this._zmqMainNet.unsubscribe(this._mainNetSubscriptionId);
             this._zmqDevNet.unsubscribe(this._devNetSubscriptionId);
         }
@@ -114,7 +153,10 @@ export class TransactionsService {
 
             const data: ITransactionsSubscriptionMessage = {
                 mainnetTransactions: this._mainNetTransactions.slice(),
-                devnetTransactions: this._devNetTransactions.slice()
+                devnetTransactions: this._devNetTransactions.slice(),
+                mainnetTps: this._mainNetTps,
+                devnetTps: this._devNetTps,
+                tpsInterval: TransactionsService.TPS_INTERVAL
             };
 
             this._mainNetTransactions = [];
@@ -124,6 +166,24 @@ export class TransactionsService {
             for (const subscriptionId in this._subscriptions) {
                 this._subscriptions[subscriptionId](data);
             }
+        }
+    }
+
+    /**
+     * Handle the transactions per second calculations.
+     */
+    private handleTps(): void {
+        if (this._mainNetTotal >= 0 &&
+            this._devNetTotal >= 0) {
+            const lastMainNetTotal = this._mainNetTotal;
+            const lastDevNetTotal = this._devNetTotal;
+            this._mainNetTotal = 0;
+            this._devNetTotal = 0;
+            this._mainNetTps.push(lastMainNetTotal);
+            this._devNetTps.push(lastDevNetTotal);
+
+            this._mainNetTps = this._mainNetTps.slice(0, 100);
+            this._devNetTps = this._devNetTps.slice(0, 100);
         }
     }
 }
