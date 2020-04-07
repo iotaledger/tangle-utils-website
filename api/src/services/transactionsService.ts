@@ -179,11 +179,11 @@ export class TransactionsService {
         const lastDevNetTotal = this._devNetTotal;
         this._mainNetTotal = 0;
         this._devNetTotal = 0;
-        this._mainNetTps.push(lastMainNetTotal);
-        this._devNetTps.push(lastDevNetTotal);
+        this._mainNetTps.unshift(lastMainNetTotal);
+        this._devNetTps.unshift(lastDevNetTotal);
 
-        this._mainNetTps = this._mainNetTps.slice(-100);
-        this._devNetTps = this._devNetTps.slice(-100);
+        this._mainNetTps = this._mainNetTps.slice(0, 100);
+        this._devNetTps = this._devNetTps.slice(0, 100);
     }
 
     /**
