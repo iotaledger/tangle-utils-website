@@ -2,6 +2,8 @@ import axios from "axios";
 import { ICurrenciesResponse } from "../models/api/ICurrenciesResponse";
 import { IFindTransactionsRequest } from "../models/api/IFindTransactionsRequest";
 import { IFindTransactionsResponse } from "../models/api/IFindTransactionsResponse";
+import { IGetMilestonesRequest } from "../models/api/IGetMilestonesRequest";
+import { IGetMilestonesResponse } from "../models/api/IGetMilestonesResponse";
 import { IGetTrytesRequest } from "../models/api/IGetTrytesRequest";
 import { IGetTrytesResponse } from "../models/api/IGetTrytesResponse";
 
@@ -81,6 +83,30 @@ export class ApiClient {
         try {
             const axiosResponse = await ax.post<IGetTrytesResponse>(
                 `get-trytes`, request);
+
+            response = axiosResponse.data;
+        } catch (err) {
+            response = {
+                success: false,
+                message: `There was a problem communicating with the API.\n${err}`
+            };
+        }
+
+        return response;
+    }
+
+    /**
+     * Get milestones from the tangle.
+     * @param request The request to send.
+     * @returns The response from the request.
+     */
+    public async getMilestones(request: IGetMilestonesRequest): Promise<IGetMilestonesResponse> {
+        const ax = axios.create({ baseURL: this._endpoint });
+        let response: IGetMilestonesResponse;
+
+        try {
+            const axiosResponse = await ax.get<IGetMilestonesResponse>(
+                `get-milestones/${request.network}`);
 
             response = axiosResponse.data;
         } catch (err) {

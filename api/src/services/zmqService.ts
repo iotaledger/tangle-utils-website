@@ -465,11 +465,11 @@ export class ZmqService {
 
                 default: {
                     // Is this an address event
-                    if (!/^[A-Z9]{81}$/.test(event)) {
+                    if (/^[A-Z9]{81}$/.test(event)) {
                         data = <IAddress>{
-                            address: messageParams[1],
-                            transaction: messageParams[2],
-                            milestoneIndex: parseInt(messageParams[3], 10)
+                            address: messageParams[0],
+                            transaction: messageParams[1],
+                            milestoneIndex: parseInt(messageParams[2], 10)
                         };
                     }
                 }

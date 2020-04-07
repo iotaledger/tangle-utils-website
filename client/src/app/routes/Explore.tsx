@@ -3,6 +3,7 @@ import { Button, Fieldrow, Fieldset, Form, FormActions, Heading, Input, Select }
 import React, { Component, ReactNode } from "react";
 import { HashType } from "../../models/hashType";
 import { NetworkType } from "../../models/services/networkType";
+import Milestones from "../components/Milestones";
 import TransactionsFeed from "../components/TransactionsFeed";
 import "./Explore.scss";
 import { ExploreProps } from "./ExploreProps";
@@ -86,6 +87,9 @@ class Explore extends Component<ExploreProps, ExploreState> {
                 <hr />
                 <Heading level={2}>Feeds</Heading>
                 <TransactionsFeed />
+                <br />
+                <Heading level={2}>Milestones</Heading>
+                <Milestones />
             </div>
         );
     }
