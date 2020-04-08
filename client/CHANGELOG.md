@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.2
+
+* Reduce load on zmq feed
+
 ## v1.4.0
 
 * Added tps and history

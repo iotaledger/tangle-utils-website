@@ -2,7 +2,7 @@ export interface ITransactionsSubscriptionMessage {
     /**
      * The latest transactions for mainnet.
      */
-    mainnetTransactions: string[];
+    mainnetTransactions: { [hash: string]: number };
 
     /**
      * The mainnet tps counts.
@@ -12,7 +12,7 @@ export interface ITransactionsSubscriptionMessage {
     /**
      * The latest transactions for devnet.
      */
-    devnetTransactions: string[];
+    devnetTransactions: { [hash: string]: number };
 
     /**
      * The devnet tps counts.

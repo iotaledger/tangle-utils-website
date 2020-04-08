@@ -1,4 +1,3 @@
-import { asTransactionObject, Transaction } from "@iota/transaction-converter";
 import SocketIOClient from "socket.io-client";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { IResponse } from "../models/api/IResponse";
@@ -24,12 +23,30 @@ export class TransactionsClient {
     /**
      * The latest transactions for mainnet.
      */
-    private _mainnetTransactions: Transaction[];
+    private _mainnetTransactions: {
+        /**
+         * The tx hash.
+         */
+        hash: string;
+        /**
+         * The tx value.
+         */
+        value: number
+    }[];
 
     /**
      * The latest transactions for devnet.
      */
-    private _devnetTransactions: Transaction[];
+    private _devnetTransactions: {
+        /**
+         * The tx hash.
+         */
+        hash: string;
+        /**
+         * The tx value.
+         */
+        value: number
+    }[];
 
     /**
      * The mainnet tps.
@@ -81,36 +98,41 @@ export class TransactionsClient {
                     resolve(subscribeResponse);
                 });
                 this._socket.on("transactions", (transactionsResponse: ITransactionsSubscriptionMessage) => {
-                    let newMainNet = transactionsResponse.mainnetTransactions.map(
-                        trytes => asTransactionObject(trytes, undefined));
-                    let newDevNet = transactionsResponse.devnetTransactions.map(
-                        trytes => asTransactionObject(trytes, undefined));
-
                     this._mainnetTps = transactionsResponse.mainnetTps;
                     this._devnetTps = transactionsResponse.devnetTps;
                     this._tspInterval = transactionsResponse.tpsInterval;
 
-                    newMainNet = newMainNet.filter(tx =>
-                        this._mainnetTransactions.findIndex(tx2 => tx2.hash === tx.hash) === -1);
-                    newDevNet = newDevNet.filter(tx =>
-                        this._devnetTransactions.findIndex(tx2 => tx2.hash === tx.hash) === -1);
+                    const newMainNet = [];
+                    const newDevNet = [];
 
-                    this._tangleCacheService.addTransactions(
-                        newMainNet.map(tx => tx.hash), transactionsResponse.mainnetTransactions, "mainnet");
+                    const mainHashes = Object.keys(transactionsResponse.mainnetTransactions);
+                    for (const mainHash of mainHashes) {
+                        if (this._mainnetTransactions.findIndex(t => t.hash === mainHash) === -1) {
+                            newMainNet.push({
+                                hash: mainHash,
+                                value: transactionsResponse.mainnetTransactions[mainHash]
+                            });
+                        }
+                    }
 
-                    this._tangleCacheService.addTransactions(
-                        newDevNet.map(tx => tx.hash), transactionsResponse.devnetTransactions, "devnet");
+                    const devHashes = Object.keys(transactionsResponse.devnetTransactions);
+                    for (const devHash of devHashes) {
+                        if (this._devnetTransactions.findIndex(t => t.hash === devHash) === -1) {
+                            newDevNet.push({
+                                hash: devHash,
+                                value: transactionsResponse.devnetTransactions[devHash]
+                            });
+                        }
+                    }
 
                     this._mainnetTransactions = newMainNet.concat(this._mainnetTransactions);
                     this._devnetTransactions = newDevNet.concat(this._devnetTransactions);
 
                     if (this._mainnetTransactions.length > 200) {
-                        const toRemove = this._mainnetTransactions.splice(200, this._mainnetTransactions.length - 200);
-                        this._tangleCacheService.removeTransactions(toRemove.map(tx => tx.hash), "mainnet");
+                        this._mainnetTransactions.splice(200, this._mainnetTransactions.length - 200);
                     }
                     if (this._devnetTransactions.length > 200) {
-                        const toRemove = this._devnetTransactions.splice(200, this._devnetTransactions.length - 200);
-                        this._tangleCacheService.removeTransactions(toRemove.map(tx => tx.hash), "devnet");
+                        this._devnetTransactions.splice(200, this._devnetTransactions.length - 200);
                     }
                     callback();
                 });
@@ -148,7 +170,16 @@ export class TransactionsClient {
      * Get the main net transactions as trytes.
      * @returns The trytes.
      */
-    public getMainNetTransactions(): Transaction[] {
+    public getMainNetTransactions(): {
+        /**
+         * The tx hash.
+         */
+        hash: string;
+        /**
+         * The tx value.
+         */
+        value: number
+    }[] {
         return this._mainnetTransactions;
     }
 
@@ -156,7 +187,16 @@ export class TransactionsClient {
      * Get the dev net transactions as trytes.
      * @returns The trytes.
      */
-    public getDevNetTransactions(): Transaction[] {
+    public getDevNetTransactions(): {
+        /**
+         * The tx hash.
+         */
+        hash: string;
+        /**
+         * The tx value.
+         */
+        value: number
+    }[] {
         return this._devnetTransactions;
     }
 

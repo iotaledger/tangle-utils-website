@@ -5,7 +5,16 @@ export interface TransactionsFeedState {
     /**
      * The transactions from mainNet.
      */
-    mainnetTransactions: Transaction[];
+    mainnetTransactions: {
+        /**
+         * The tx hash.
+         */
+        hash: string;
+        /**
+         * The tx value.
+         */
+        value: number
+    }[];
 
     /**
      * The mainnet tps.
@@ -15,7 +24,16 @@ export interface TransactionsFeedState {
     /**
      * The transactions from devNet.
      */
-    devnetTransactions: Transaction[];
+    devnetTransactions: {
+        /**
+         * The tx hash.
+         */
+        hash: string;
+        /**
+         * The tx value.
+         */
+        value: number
+    }[];
 
     /**
      * The devnet tps.

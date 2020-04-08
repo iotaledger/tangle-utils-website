@@ -1,3 +1,4 @@
+import { asTransactionObject } from "@iota/transaction-converter";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { ITransactionsSubscriptionMessage } from "../models/api/ITransactionsSubscriptionMessage";
 import { ITxTrytes } from "../models/zmq/ITxTrytes";
@@ -26,12 +27,7 @@ export class TransactionsService {
     /**
      * The most recent main net transactions.
      */
-    private _mainNetTransactions: string[];
-
-    /**
-     * The most recent main net transactions.
-     */
-    private _mainNetTransactionsHashes: string[];
+    private _mainNetTransactions: { [hash: string]: number };
 
     /**
      * The tps history for main net.
@@ -41,12 +37,7 @@ export class TransactionsService {
     /**
      * The most recent dev net transactions.
      */
-    private _devNetTransactions: string[];
-
-    /**
-     * The most recent dev net transactions.
-     */
-    private _devNetTransactionsHashes: string[];
+    private _devNetTransactions: { [hash: string]: number };
 
     /**
      * The tps history for dev net.
@@ -99,10 +90,8 @@ export class TransactionsService {
      * Create a new instance of TransactionsService.
      */
     constructor() {
-        this._mainNetTransactions = [];
-        this._mainNetTransactionsHashes = [];
-        this._devNetTransactions = [];
-        this._devNetTransactionsHashes = [];
+        this._mainNetTransactions = {};
+        this._devNetTransactions = {};
         this._lastSend = 0;
         this._mainNetTps = [];
         this._mainNetTotal = 0;
@@ -160,23 +149,23 @@ export class TransactionsService {
      */
     private async updateSubscriptions(): Promise<void> {
         const now = Date.now();
-        if (this._mainNetTransactions.length >= 5 ||
-            this._devNetTransactions.length >= 5 ||
+        const mainCount = Object.keys(this._mainNetTransactions).length;
+        const devCount = Object.keys(this._devNetTransactions).length;
+        if (mainCount >= 5 ||
+            devCount >= 5 ||
             (now - this._lastSend > 15000 &&
-                (this._mainNetTransactions.length >= 0 || this._devNetTransactions.length >= 0))) {
+                (mainCount >= 0 || devCount >= 0))) {
 
             const data: ITransactionsSubscriptionMessage = {
-                mainnetTransactions: this._mainNetTransactions.slice(),
-                devnetTransactions: this._devNetTransactions.slice(),
+                mainnetTransactions: this._mainNetTransactions,
+                devnetTransactions: this._devNetTransactions,
                 mainnetTps: this._mainNetTps,
                 devnetTps: this._devNetTps,
                 tpsInterval: TransactionsService.TPS_INTERVAL
             };
 
-            this._mainNetTransactionsHashes = this._mainNetTransactionsHashes.slice(0, 5000);
-            this._devNetTransactionsHashes = this._devNetTransactionsHashes.slice(0, 5000);
-            this._mainNetTransactions = [];
-            this._devNetTransactions = [];
+            this._mainNetTransactions = {};
+            this._devNetTransactions = {};
             this._lastSend = now;
 
             for (const subscriptionId in this._subscriptions) {
@@ -208,20 +197,18 @@ export class TransactionsService {
 
         this._mainNetSubscriptionId = await this._zmqMainNet.subscribe(
             "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                if (!this._mainNetTransactions.includes(message.trytes) &&
-                    !this._mainNetTransactionsHashes.includes(message.hash)) {
+                if (!this._mainNetTransactions[message.hash]) {
                     this._mainNetTotal++;
-                    this._mainNetTransactions.unshift(message.trytes);
-                    this._mainNetTransactionsHashes.unshift(message.hash);
+                    const tx = asTransactionObject(message.trytes);
+                    this._mainNetTransactions[message.hash] = tx.value;
                 }
             });
         this._devNetSubscriptionId = await this._zmqDevNet.subscribe(
             "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                if (!this._devNetTransactions.includes(message.trytes) &&
-                    !this._devNetTransactionsHashes.includes(message.hash)) {
+                if (!this._devNetTransactions[message.hash]) {
                     this._devNetTotal++;
-                    this._devNetTransactions.unshift(message.trytes);
-                    this._devNetTransactionsHashes.unshift(message.hash);
+                    const tx = asTransactionObject(message.trytes);
+                    this._devNetTransactions[message.hash] = tx.value;
                 }
             });
     }
