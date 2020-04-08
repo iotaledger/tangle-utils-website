@@ -1,7 +1,7 @@
 import * as IotaAreaCodes from "@iota/area-codes";
 import isBundle from "@iota/bundle-validator";
 import { addChecksum } from "@iota/checksum";
-import { trytesToTrits } from "@iota/converter";
+import { trytesToTrits, value } from "@iota/converter";
 import { asTransactionObject, Transaction } from "@iota/transaction-converter";
 import { isEmpty } from "@iota/validators";
 import { Button, ClipboardHelper, Heading, Spinner } from "iota-react-components";
@@ -23,6 +23,18 @@ import { TransactionObjectState } from "./TransactionObjectState";
  */
 class TransactionObject extends Component<TransactionObjectProps, TransactionObjectState> {
     /**
+     * The address of the mainnet coordinator.
+     */
+    private static readonly MAINNET_COORDINATOR: string =
+        "EQSAUZXULTTYZCLNJNTXQTQHOMOFZERHTCGTXOLTVAHKSA9OGAZDEKECURBRIXIJWNPFCQIOVFVVXJVD9";
+
+    /**
+     * The address of the devnet coordinator.
+     */
+    private static readonly DEVNET_COORDINATOR: string =
+        "EQQFCZBIHRHWPXKMTOLMYUYPCN9XLMJPYZVFJSAY9FQHCCLWTOLLUGKKMXYFDBOOYFBLBI9WUEILGECYM";
+
+    /**
      * The tangle cache service.
      */
     private readonly _tangleCacheService: TangleCacheService;
@@ -35,7 +47,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
     /**
      * Timer for date counter;
      */
-    private readonly _dateTimer?: NodeJS.Timer;
+    private _dateTimer?: NodeJS.Timer;
 
     /**
      * Is the component mounted.
@@ -92,7 +104,8 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                 moment.duration(moment().diff(attachmentTimeMoment)).humanize()} ${postAttachmentDate}`,
             addressChecksum: addChecksum(transactionObject.address).substr(-9),
             bundleResult: "",
-            iac: IotaAreaCodes.isValid(iac) ? iac : ""
+            iac: IotaAreaCodes.isValid(iac) ? iac : "",
+            milestoneIndex: -1
         };
 
         this._dateTimer = setInterval(
@@ -112,10 +125,6 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
     public async componentDidMount(): Promise<void> {
         this._mounted = true;
 
-        if (this._dateTimer) {
-            clearInterval(this._dateTimer);
-        }
-
         if (!this.props.hideInteractive && this._mounted) {
             const thisGroup: ReadonlyArray<Transaction> =
                 await this._tangleCacheService.getTransactionBundleGroup(
@@ -123,6 +132,22 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
 
             if (thisGroup && thisGroup.length > 0) {
                 const thisIndex = thisGroup.findIndex(t => t.hash === this.state.transactionObject.hash);
+
+                let milestoneIndex = -1;
+
+                if (thisGroup.length >= 2) {
+                    const coordAddress = this.props.network === "mainnet"
+                        ? TransactionObject.MAINNET_COORDINATOR :
+                        TransactionObject.DEVNET_COORDINATOR;
+
+                    if (thisGroup[0].address === coordAddress &&
+                        /^[9]+$/.test(thisGroup[thisGroup.length - 1].address)) {
+                        const mi = value(trytesToTrits(thisGroup[0].tag));
+                        if (!Number.isNaN(mi)) {
+                            milestoneIndex = mi;
+                        }
+                    }
+                }
 
                 const pos = thisGroup.filter(t => t.value > 0).length;
                 const neg = thisGroup.filter(t => t.value < 0).length;
@@ -171,7 +196,8 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                             nextTransactionHash:
                                 this.state.transactionObject.currentIndex < this.state.transactionObject.lastIndex ?
                                     this.state.transactionObject.trunkTransaction : undefined,
-                            prevTransactionHash: thisIndex > 0 ? thisGroup[thisIndex - 1].hash : undefined
+                            prevTransactionHash: thisIndex > 0 ? thisGroup[thisIndex - 1].hash : undefined,
+                            milestoneIndex
                         },
                         () => this.checkConfirmation());
                 }
@@ -184,6 +210,11 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
      */
     public async componentWillUnmount(): Promise<void> {
         this._mounted = false;
+
+        if (this._dateTimer) {
+            clearInterval(this._dateTimer);
+            this._dateTimer = undefined;
+        }
 
         if (this._confirmationTimerId) {
             clearTimeout(this._confirmationTimerId);
@@ -279,12 +310,22 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                         </div>
                         {!this.props.hideInteractive && (
                             <div className="row">
-                                <div className="col">
-                                    <div className="label">Status</div>
-                                    <div className="value">
-                                        <Confirmation state={this.state.confirmationState} />
+                                {this.state.milestoneIndex !== -1 && (
+                                    <div className="col">
+                                        <div className="label">Milestone</div>
+                                        <div className="value milestone">
+                                            {this.state.milestoneIndex}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
+                                {this.state.milestoneIndex === -1 && (
+                                    <div className="col">
+                                        <div className="label">Status</div>
+                                        <div className="value">
+                                            <Confirmation state={this.state.confirmationState} />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                         <hr />

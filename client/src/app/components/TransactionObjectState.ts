@@ -107,4 +107,9 @@ export interface TransactionObjectState {
      * Does the tag contain an area code.
      */
     iac?: string;
+
+    /**
+     * The milestone index if it is one.
+     */
+    milestoneIndex: number;
 }

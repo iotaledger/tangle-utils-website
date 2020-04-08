@@ -3,6 +3,7 @@
 ## v1.4.2
 
 * Reduce load on zmq feed
+* Milestone indicator in transaction view
 
 ## v1.4.0
 
