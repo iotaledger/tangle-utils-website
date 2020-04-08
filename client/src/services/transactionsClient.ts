@@ -206,8 +206,9 @@ export class TransactionsClient {
      */
     public getMainNetTps(): number {
         if (this._mainnetTps.length > 0) {
-            const total = this._mainnetTps.reduce((a, b) => a + b, 0);
-            return total / this._mainnetTps.length / this._tspInterval;
+            const oneMinuteCount = Math.min(60 / this._tspInterval, this._mainnetTps.length);
+            const total = this._mainnetTps.slice(0, oneMinuteCount).reduce((a, b) => a + b, 0);
+            return total / oneMinuteCount / this._tspInterval;
         } else {
             return -1;
         }
@@ -219,8 +220,9 @@ export class TransactionsClient {
      */
     public getDevNetTps(): number {
         if (this._devnetTps.length > 0) {
-            const total = this._devnetTps.reduce((a, b) => a + b, 0);
-            return total / this._devnetTps.length / this._tspInterval;
+            const oneMinuteCount = Math.min(60 / this._tspInterval, this._devnetTps.length);
+            const total = this._devnetTps.slice(0, oneMinuteCount).reduce((a, b) => a + b, 0);
+            return total / oneMinuteCount / this._tspInterval;
         } else {
             return -1;
         }
