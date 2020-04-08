@@ -29,6 +29,11 @@ export class TransactionsService {
     private _mainNetTransactions: string[];
 
     /**
+     * The most recent main net transactions.
+     */
+    private _mainNetTransactionsHashes: string[];
+
+    /**
      * The tps history for main net.
      */
     private _mainNetTps: number[];
@@ -37,6 +42,11 @@ export class TransactionsService {
      * The most recent dev net transactions.
      */
     private _devNetTransactions: string[];
+
+    /**
+     * The most recent dev net transactions.
+     */
+    private _devNetTransactionsHashes: string[];
 
     /**
      * The tps history for dev net.
@@ -90,7 +100,9 @@ export class TransactionsService {
      */
     constructor() {
         this._mainNetTransactions = [];
+        this._mainNetTransactionsHashes = [];
         this._devNetTransactions = [];
+        this._devNetTransactionsHashes = [];
         this._lastSend = 0;
         this._mainNetTps = [];
         this._mainNetTotal = 0;
@@ -109,7 +121,7 @@ export class TransactionsService {
         this._zmqDevNet = ServiceFactory.get<ZmqService>("zmq-devnet");
 
         this.startTimer();
-        this.startZmq();
+        await this.startZmq();
     }
 
     /**
@@ -120,7 +132,7 @@ export class TransactionsService {
         this.stopZmq();
 
         this.startTimer();
-        this.startZmq();
+        await this.startZmq();
     }
 
     /**
@@ -161,6 +173,8 @@ export class TransactionsService {
                 tpsInterval: TransactionsService.TPS_INTERVAL
             };
 
+            this._mainNetTransactionsHashes = this._mainNetTransactionsHashes.slice(0, 5000);
+            this._devNetTransactionsHashes = this._devNetTransactionsHashes.slice(0, 5000);
             this._mainNetTransactions = [];
             this._devNetTransactions = [];
             this._lastSend = now;
@@ -189,21 +203,25 @@ export class TransactionsService {
     /**
      * Start the zmq services.
      */
-    private startZmq(): void {
+    private async startZmq(): Promise<void> {
         this.stopZmq();
 
-        this._mainNetSubscriptionId = this._zmqMainNet.subscribe(
+        this._mainNetSubscriptionId = await this._zmqMainNet.subscribe(
             "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                if (!this._mainNetTransactions.includes(message.trytes)) {
+                if (!this._mainNetTransactions.includes(message.trytes) &&
+                    !this._mainNetTransactionsHashes.includes(message.hash)) {
                     this._mainNetTotal++;
                     this._mainNetTransactions.unshift(message.trytes);
+                    this._mainNetTransactionsHashes.unshift(message.hash);
                 }
             });
-        this._devNetSubscriptionId = this._zmqDevNet.subscribe(
+        this._devNetSubscriptionId = await this._zmqDevNet.subscribe(
             "tx_trytes", async (evnt: string, message: ITxTrytes) => {
-                if (!this._devNetTransactions.includes(message.trytes)) {
+                if (!this._devNetTransactions.includes(message.trytes) &&
+                    !this._devNetTransactionsHashes.includes(message.hash)) {
                     this._devNetTotal++;
                     this._devNetTransactions.unshift(message.trytes);
+                    this._devNetTransactionsHashes.unshift(message.hash);
                 }
             });
     }

@@ -110,8 +110,8 @@ export class MilestonesService {
             }
         }
 
-        this.initMainNet();
-        this.initDevNet();
+        await this.initMainNet();
+        await this.initDevNet();
 
         this.startTimer();
     }
@@ -124,8 +124,8 @@ export class MilestonesService {
         this.closeDevNet();
         this.closeMainNet();
 
-        this.initMainNet();
-        this.initDevNet();
+        await this.initMainNet();
+        await this.initDevNet();
 
         this.startTimer();
     }
@@ -151,8 +151,8 @@ export class MilestonesService {
     /**
      * Initialise mainnet.
      */
-    private initMainNet(): void {
-        this._subscriptionIdMainNet = this._zmqMainNet.subscribeAddress(
+    private async initMainNet(): Promise<void> {
+        this._subscriptionIdMainNet = await this._zmqMainNet.subscribeAddress(
             MilestonesService.MAINNET_COORDINATOR,
             async (evnt: string, message: IAddress) => {
                 if (message.address === MilestonesService.MAINNET_COORDINATOR) {
@@ -192,8 +192,8 @@ export class MilestonesService {
     /**
      * Initialise devnet.
      */
-    private initDevNet(): void {
-        this._subscriptionIdDevNet = this._zmqDevNet.subscribeAddress(
+    private async initDevNet(): Promise<void> {
+        this._subscriptionIdDevNet = await this._zmqDevNet.subscribeAddress(
             MilestonesService.DEVNET_COORDINATOR,
             async (evnt: string, message: IAddress) => {
                 if (message.address === MilestonesService.DEVNET_COORDINATOR) {
@@ -236,14 +236,14 @@ export class MilestonesService {
     private startTimer(): void {
         this.stopTimer();
         this._timerId = setInterval(
-            () => {
+            async () => {
                 if (!this._updating) {
                     this._updating = true;
                     const now = Date.now();
                     try {
                         if (now - this._lastMainnet > 5 * 60 * 1000) {
                             this.closeMainNet();
-                            this.initMainNet();
+                            await this.initMainNet();
                         }
                     } catch (err) {
                         console.error("Failed processing mainnet idle timeout", err);
@@ -252,7 +252,7 @@ export class MilestonesService {
                     try {
                         if (now - this._lastDevnet > 5 * 60 * 1000) {
                             this.closeDevNet();
-                            this.initDevNet();
+                            await this.initDevNet();
                         }
                     } catch (err) {
                         console.error("Failed processing devnet idle timeout", err);

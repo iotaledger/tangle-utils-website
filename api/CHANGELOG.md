@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.1
+
+* Updated ZMQ
+
 ## v1.4.0
 
 * Added tps and history

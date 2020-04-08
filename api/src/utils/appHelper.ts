@@ -126,7 +126,7 @@ export class AppHelper {
                     response = { success: false, message: err.message };
                 }
                 console.log(`<=== duration: ${Date.now() - start}ms`);
-                console.log(inspect(response, false, null, true));
+                //console.log(inspect(response, false, null, true));
                 if (route.dataResponse) {
                     const dataResponse = response as IDataResponse;
                     if (!dataResponse.success) {
