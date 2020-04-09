@@ -21,7 +21,7 @@ export class AppHelper {
      */
     public static build(
         routes: IRoute[],
-        onComplete?: (app: Application, config: IConfiguration, port: number) => void,
+        onComplete?: (app: Application, config: IConfiguration, port: number) => Promise<void>,
         customListener: boolean = false): Application {
         // tslint:disable:no-var-requires no-require-imports
         const packageJson = require("../../package.json");
@@ -66,7 +66,7 @@ export class AppHelper {
 
                 if (onComplete) {
                     try {
-                        onComplete(app, config, port);
+                        await onComplete(app, config, port);
                     } catch (err) {
                         console.error("Failed running startup", err);
                     }
@@ -74,11 +74,9 @@ export class AppHelper {
             });
         } else {
             if (onComplete) {
-                try {
-                    onComplete(app, config, port);
-                } catch (err) {
+                onComplete(app, config, port).catch(err => {
                     console.error("Failed running startup", err);
-                }
+                });
             }
         }
 

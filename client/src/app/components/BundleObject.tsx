@@ -1,10 +1,13 @@
-import { Transaction } from "@iota/transaction-converter";
+import { Transaction } from "@iota/core";
 import { Button, ClipboardHelper, StatusMessage } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { UnitsHelper } from "../../helpers/unitsHelper";
+import { IConfiguration } from "../../models/config/IConfiguration";
+import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { ConfirmationState } from "../../models/confirmationState";
+import { ConfigurationService } from "../../services/configurationService";
 import { CurrencyService } from "../../services/currencyService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import "./BundleObject.scss";
@@ -23,7 +26,12 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
     private readonly _tangleCacheService: TangleCacheService;
 
     /**
-     * The network to use for transaction requests.
+     * Networks.
+     */
+    private readonly _networks: INetworkConfiguration[];
+
+    /**
+     * The currency service.
      */
     private readonly _currencyService: CurrencyService;
 
@@ -36,6 +44,9 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
         this._currencyService = ServiceFactory.get<CurrencyService>("currency");
+
+        const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration");
+        this._networks = configService.get().networks;
 
         this.state = {
             bundleGroups: [],
@@ -50,10 +61,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
         const bundleGroupsPlain = await this._tangleCacheService.getBundleGroups(
             this.props.transactionHashes, this.props.network);
 
-        const confirmationStates = await this._tangleCacheService.getTransactionConfirmationStates(
-            bundleGroupsPlain.map(group => group[0].hash),
-            this.props.network
-        );
+        const confirmationStates = bundleGroupsPlain.map(bg => bg[0].confirmationState);
 
         const confirmedIndex = confirmationStates.indexOf("confirmed");
 
@@ -69,7 +77,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                 /**
                  * The transaction.
                  */
-                tx: Transaction;
+                transaction: Transaction;
                 /**
                  * The value converted.
                  */
@@ -80,7 +88,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
         for (let i = 0; i < confirmationStates.length; i++) {
             bundleGroups.push({
                 transactions: bundleGroupsPlain[i].map(t => ({
-                    tx: t,
+                    transaction: t.tx,
                     currencyConverted: ""
                 })),
                 confirmationState: confirmedIndex === i ? confirmationStates[i] :
@@ -95,11 +103,13 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                 this.setState({ currencyData }, async () => {
                     for (let i = 0; i < bundleGroups.length; i++) {
                         for (let k = 0; k < bundleGroups[i].transactions.length; k++) {
+                            const tx = bundleGroups[i].transactions[k].transaction;
                             const converted = await this._currencyService.currencyConvert(
-                                bundleGroups[i].transactions[k].tx.value,
+                                tx.value,
                                 currencyData,
                                 false);
-                            bundleGroups[i].transactions[k].currencyConverted = `${currencyData.fiatCode} ${converted}`;
+                            bundleGroups[i].transactions[k].currencyConverted =
+                                `${currencyData.fiatCode} ${converted}`;
                         }
                     }
                     this.setState({ bundleGroups });
@@ -113,7 +123,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
      * @returns The node to render.
      */
     public render(): ReactNode {
-        const network = this.props.network === "mainnet" ? "" : `/${this.props.network}`;
+        const network = this.props.network === this._networks[0].network ? "" : `/${this.props.network}`;
 
         return (
             <div className="transaction-object bundle-object">
@@ -140,24 +150,24 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                             <div
                                 className="caption"
                             >
-                                Inputs [{group.transactions.filter(f => f.tx.value < 0).length}]
+                                Inputs [{group.transactions.filter(f => f.transaction.value < 0).length}]
                             </div>
-                            {group.transactions.filter(f => f.tx.value < 0).map((t, idx2) => (
+                            {group.transactions.filter(f => f.transaction.value < 0).map((t, idx2) => (
                                 <div className="transaction" key={idx2}>
                                     <div className="row top">
                                         <div className="label">Hash</div>
                                         <div className="value">
                                             <Link
                                                 className="nav-link small"
-                                                to={`/transaction/${t.tx.hash}${network}`}
+                                                to={`/transaction/${t.transaction.hash}${network}`}
                                             >
-                                                {t.tx.hash}
+                                                {t.transaction.hash}
                                             </Link>
                                         </div>
                                     </div>
                                     <div className="row top">
                                         <div className="label">Value</div>
-                                        <div className="value">{UnitsHelper.formatBest(t.tx.value)}</div>
+                                        <div className="value">{UnitsHelper.formatBest(t.transaction.value)}</div>
                                     </div>
                                     {t.currencyConverted && (
                                         <div className="row top">
@@ -167,7 +177,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                                     )}
                                 </div>
                             ))}
-                            {group.transactions.filter(f => f.tx.value > 0).length === 0 && (
+                            {group.transactions.filter(f => f.transaction.value > 0).length === 0 && (
                                 <div>None</div>
                             )}
                         </div>
@@ -176,26 +186,26 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                                 <div
                                     className="caption"
                                 >
-                                    Outputs [{group.transactions.filter(f => f.tx.value >= 0).length}]
+                                    Outputs [{group.transactions.filter(f => f.transaction.value >= 0).length}]
                                 </div>
                                 <Confirmation state={group.confirmationState} />
                             </div>
-                            {group.transactions.filter(f => f.tx.value >= 0).map((t, idx2) => (
+                            {group.transactions.filter(f => f.transaction.value >= 0).map((t, idx2) => (
                                 <div className="transaction" key={idx2}>
                                     <div className="row top">
                                         <div className="label">Hash</div>
                                         <div className="value">
                                             <Link
                                                 className="nav-link small"
-                                                to={`/transaction/${t.tx.hash}${network}`}
+                                                to={`/transaction/${t.transaction.hash}${network}`}
                                             >
-                                                {t.tx.hash}
+                                                {t.transaction.hash}
                                             </Link>
                                         </div>
                                     </div>
                                     <div className="row top">
                                         <div className="label">Value</div>
-                                        <div className="value">{UnitsHelper.formatBest(t.tx.value)}</div>
+                                        <div className="value">{UnitsHelper.formatBest(t.transaction.value)}</div>
                                     </div>
                                     {t.currencyConverted && (
                                         <div className="row top">
@@ -205,7 +215,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                                     )}
                                 </div>
                             ))}
-                            {group.transactions.filter(f => f.tx.value <= 0).length === 0 && (
+                            {group.transactions.filter(f => f.transaction.value <= 0).length === 0 && (
                                 <div>None</div>
                             )}
                         </div>

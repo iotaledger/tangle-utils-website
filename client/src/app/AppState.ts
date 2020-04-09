@@ -1,5 +1,4 @@
 import { StatusMessageColor } from "iota-react-components";
-import { NetworkType} from "../models/services/networkType";
 
 export interface AppState {
     /**

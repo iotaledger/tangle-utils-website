@@ -1,5 +1,6 @@
 import { ServiceFactory } from "../factories/serviceFactory";
-import { Network } from "../models/api/network";
+import { INetworkConfiguration } from "../models/configuration/INetworkConfiguration";
+import { Network } from "../models/network";
 import { IAddress } from "../models/zmq/IAddress";
 import { MilestoneStoreService } from "./milestoneStoreService";
 import { ZmqService } from "./zmqService";
@@ -9,26 +10,16 @@ import { ZmqService } from "./zmqService";
  */
 export class MilestonesService {
     /**
-     * The address of the mainnet coordinator.
+     * The network configurations.
      */
-    private static readonly MAINNET_COORDINATOR: string =
-        "EQSAUZXULTTYZCLNJNTXQTQHOMOFZERHTCGTXOLTVAHKSA9OGAZDEKECURBRIXIJWNPFCQIOVFVVXJVD9";
+    private readonly _networkConfigurations: INetworkConfiguration[];
 
     /**
-     * The address of the devnet coordinator.
+     * The zmq service.
      */
-    private static readonly DEVNET_COORDINATOR: string =
-        "EQQFCZBIHRHWPXKMTOLMYUYPCN9XLMJPYZVFJSAY9FQHCCLWTOLLUGKKMXYFDBOOYFBLBI9WUEILGECYM";
-
-    /**
-     * The main net zmq service.
-     */
-    private _zmqMainNet: ZmqService;
-
-    /**
-     * The dev net zmq service.
-     */
-    private _zmqDevNet: ZmqService;
+    private readonly _zmqServices: {
+        [key in Network]?: ZmqService
+    };
 
     /**
      * The milestone store service.
@@ -36,24 +27,18 @@ export class MilestonesService {
     private _milestoneStoreService: MilestoneStoreService;
 
     /**
-     * Subscription for mainnet.
+     * Subscription ids.
      */
-    private _subscriptionIdMainNet?: string;
+    private readonly _subscriptionIds: {
+        [key in Network]?: string
+    };
 
     /**
-     * Subscription for devnet.
+     * Last updates
      */
-    private _subscriptionIdDevNet?: string;
-
-    /**
-     * Last mainnet
-     */
-    private _lastMainnet: number;
-
-    /**
-     * Last devnet
-     */
-    private _lastDevnet: number;
+    private readonly _lastUpdates: {
+        [key in Network]?: number
+    };
 
     /**
      * Timer id.
@@ -69,7 +54,7 @@ export class MilestonesService {
      * The most recent milestones.
      */
     private readonly _milestones: {
-        [network: string]: {
+        [key in Network]?: {
             /**
              * The transaction hash.
              */
@@ -83,35 +68,44 @@ export class MilestonesService {
 
     /**
      * Create a new instance of MilestoneService.
+     * @param networkConfigurations The network configurations.
      */
-    constructor() {
-        this._milestones = {
-            mainnet: [],
-            devnet: []
-        };
+    constructor(networkConfigurations: INetworkConfiguration[]) {
+        this._networkConfigurations = networkConfigurations;
+
+        this._zmqServices = {};
+        this._milestones = {};
+        this._subscriptionIds = {};
+        this._lastUpdates = {};
     }
 
     /**
      * Initialise the milestones.
      */
     public async init(): Promise<void> {
-        this._zmqMainNet = ServiceFactory.get<ZmqService>("zmq-mainnet");
-        this._zmqDevNet = ServiceFactory.get<ZmqService>("zmq-devnet");
-        this._milestoneStoreService = ServiceFactory.get<MilestoneStoreService>("milestone-store");
+        for (const networkConfig of this._networkConfigurations) {
+            const zmqService = ServiceFactory.get<ZmqService>(`zmq-${networkConfig.network}`);
 
-        if (this._milestoneStoreService) {
-            const msStoreMain = await this._milestoneStoreService.get("mainnet");
-            if (msStoreMain && msStoreMain.indexes) {
-                this._milestones.mainnet = msStoreMain.indexes;
-            }
-            const msStoreDev = await this._milestoneStoreService.get("devnet");
-            if (msStoreDev && msStoreDev.indexes) {
-                this._milestones.devnet = msStoreDev.indexes;
+            if (zmqService) {
+                this._zmqServices[networkConfig.network] = zmqService;
+                this._milestones[networkConfig.network] = [];
             }
         }
 
-        await this.initMainNet();
-        await this.initDevNet();
+        this._milestoneStoreService = ServiceFactory.get<MilestoneStoreService>("milestone-store");
+
+        if (this._milestoneStoreService) {
+            for (const network in this._zmqServices) {
+                const store = await this._milestoneStoreService.get(network);
+                if (store && store.indexes) {
+                    this._milestones[network] = store.indexes;
+                }
+            }
+        }
+
+        for (const network in this._zmqServices) {
+            await this.initNetwork(network as Network);
+        }
 
         this.startTimer();
     }
@@ -121,11 +115,14 @@ export class MilestonesService {
      */
     public async reset(): Promise<void> {
         this.stopTimer();
-        this.closeDevNet();
-        this.closeMainNet();
 
-        await this.initMainNet();
-        await this.initDevNet();
+        for (const network in this._zmqServices) {
+            this.closeNetwork(network as Network);
+        }
+
+        for (const network in this._zmqServices) {
+            await this.initNetwork(network as Network);
+        }
 
         this.startTimer();
     }
@@ -149,29 +146,33 @@ export class MilestonesService {
     }
 
     /**
-     * Initialise mainnet.
+     * Initialise network.
+     * @param network The network to initialise.
      */
-    private async initMainNet(): Promise<void> {
-        this._subscriptionIdMainNet = await this._zmqMainNet.subscribeAddress(
-            MilestonesService.MAINNET_COORDINATOR,
+    private async initNetwork(network: Network): Promise<void> {
+        const conf = this._networkConfigurations.find(nc => nc.network === network);
+
+        this._subscriptionIds[network] = await this._zmqServices[network].subscribeAddress(
+            conf.coordinatorAddress,
             async (evnt: string, message: IAddress) => {
-                if (message.address === MilestonesService.MAINNET_COORDINATOR) {
-                    this._lastMainnet = Date.now();
-                    if (!this._milestones.mainnet.find(m => m.milestoneIndex === message.milestoneIndex)) {
-                        this._milestones.mainnet.unshift({
+                if (message.address === conf.coordinatorAddress) {
+                    this._lastUpdates[network] = Date.now();
+
+                    if (!this._milestones[network].find(m => m.milestoneIndex === message.milestoneIndex)) {
+                        this._milestones[network].unshift({
                             hash: message.transaction,
                             milestoneIndex: message.milestoneIndex
                         });
-                        this._milestones.mainnet = this._milestones.mainnet.slice(0, 100);
+                        this._milestones[network] = this._milestones[network].slice(0, 100);
 
                         if (this._milestoneStoreService) {
                             try {
                                 await this._milestoneStoreService.set({
-                                    network: "mainnet",
-                                    indexes: this._milestones.mainnet
+                                    network,
+                                    indexes: this._milestones[network]
                                 });
                             } catch (err) {
-                                console.error("Failed writing mainnet milestone store", err);
+                                console.error(`Failed writing ${network} milestone store`, err);
                             }
                         }
                     }
@@ -180,53 +181,13 @@ export class MilestonesService {
     }
 
     /**
-     * Closedown mainnet.
+     * Closedown network.
+     * @param network The network to closedown.
      */
-    private closeMainNet(): void {
-        if (this._subscriptionIdMainNet) {
-            this._zmqMainNet.unsubscribe(this._subscriptionIdMainNet);
-            this._subscriptionIdMainNet = undefined;
-        }
-    }
-
-    /**
-     * Initialise devnet.
-     */
-    private async initDevNet(): Promise<void> {
-        this._subscriptionIdDevNet = await this._zmqDevNet.subscribeAddress(
-            MilestonesService.DEVNET_COORDINATOR,
-            async (evnt: string, message: IAddress) => {
-                if (message.address === MilestonesService.DEVNET_COORDINATOR) {
-                    this._lastDevnet = Date.now();
-                    if (!this._milestones.devnet.find(m => m.milestoneIndex === message.milestoneIndex)) {
-                        this._milestones.devnet.unshift({
-                            hash: message.transaction,
-                            milestoneIndex: message.milestoneIndex
-                        });
-                        this._milestones.devnet = this._milestones.devnet.slice(0, 100);
-
-                        if (this._milestoneStoreService) {
-                            try {
-                                await this._milestoneStoreService.set({
-                                    network: "devnet",
-                                    indexes: this._milestones.devnet
-                                });
-                            } catch (err) {
-                                console.error("Failed writing devnet milestone store", err);
-                            }
-                        }
-                    }
-                }
-            });
-    }
-
-    /**
-     * Closedown devnet.
-     */
-    private closeDevNet(): void {
-        if (this._subscriptionIdDevNet) {
-            this._zmqDevNet.unsubscribe(this._subscriptionIdDevNet);
-            this._subscriptionIdDevNet = undefined;
+    private closeNetwork(network: Network): void {
+        if (this._subscriptionIds[network]) {
+            this._zmqServices[network].unsubscribe(this._subscriptionIds[network]);
+            delete this._subscriptionIds[network];
         }
     }
 
@@ -240,23 +201,19 @@ export class MilestonesService {
                 if (!this._updating) {
                     this._updating = true;
                     const now = Date.now();
-                    try {
-                        if (now - this._lastMainnet > 5 * 60 * 1000) {
-                            this.closeMainNet();
-                            await this.initMainNet();
+
+                    for (const network in this._zmqServices) {
+                        try {
+
+                            if (now - this._lastUpdates[network] > 5 * 60 * 1000) {
+                                this.closeNetwork(network as Network);
+                                await this.initNetwork(network as Network);
+                            }
+                        } catch (err) {
+                            console.error(`Failed processing ${network} idle timeout`, err);
                         }
-                    } catch (err) {
-                        console.error("Failed processing mainnet idle timeout", err);
                     }
 
-                    try {
-                        if (now - this._lastDevnet > 5 * 60 * 1000) {
-                            this.closeDevNet();
-                            await this.initDevNet();
-                        }
-                    } catch (err) {
-                        console.error("Failed processing devnet idle timeout", err);
-                    }
                     this._updating = false;
                 }
             },

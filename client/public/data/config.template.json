@@ -1,15 +1,27 @@
 {
     "apiEndpoint": "ENDPOINT",
-    "nodeMainnet": {
-        "provider": "https://NODE_MAINNET",
-        "depth": 3,
-        "mwm": 14
-    },
-    "nodeDevnet": {
-        "provider": "https://NODE_DEVNET",
-        "depth": 3,
-        "mwm": 9
-    },
+    "networks": [
+        {
+            "network": "mainnet",
+            "label": "MainNet",
+            "node": {
+                "provider": "https://nodes.iota.cafe:443",
+                "depth": 3,
+                "mwm": 14
+            },
+            "coordinatorAddress": "EQSAUZXULTTYZCLNJNTXQTQHOMOFZERHTCGTXOLTVAHKSA9OGAZDEKECURBRIXIJWNPFCQIOVFVVXJVD9"
+        },
+        {
+            "network": "devnet",
+            "label": "DevNet",
+            "node": {
+                "provider": "https://nodes.devnet.iota.org:443",
+                "depth": 3,
+                "mwm": 9
+            },
+            "coordinatorAddress": "EQQFCZBIHRHWPXKMTOLMYUYPCN9XLMJPYZVFJSAY9FQHCCLWTOLLUGKKMXYFDBOOYFBLBI9WUEILGECYM"
+        }
+    ],
     "googleMapsKey": "GOOGLE-MAPS-KEY",
     "googleAnalyticsId": ""
 }

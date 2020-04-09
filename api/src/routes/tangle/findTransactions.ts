@@ -3,6 +3,7 @@ import { ChronicleClient } from "../../clients/chronicleClient";
 import { IFindTransactionsRequest } from "../../models/api/IFindTransactionsRequest";
 import { IFindTransactionsResponse } from "../../models/api/IFindTransactionsResponse";
 import { IConfiguration } from "../../models/configuration/IConfiguration";
+import { ValidationHelper } from "../../utils/validationHelper";
 
 /**
  * Find transactions hashes on a network.
@@ -13,6 +14,10 @@ import { IConfiguration } from "../../models/configuration/IConfiguration";
 export async function findTransactions(config: IConfiguration, request: IFindTransactionsRequest)
     : Promise<IFindTransactionsResponse> {
 
+    ValidationHelper.oneOf(request.network, config.networks.map(n => n.network), "network");
+
+    const networkConfig = config.networks.find(n => n.network === request.network);
+
     let hashes: string[];
 
     const findReq = request.mode === "tag"
@@ -21,11 +26,8 @@ export async function findTransactions(config: IConfiguration, request: IFindTra
             : { bundles: [request.hash] };
 
     try {
-        const nodeConfig = request.network === "mainnet"
-            ? config.nodeMainnet : config.nodeDevnet;
-
         const api = composeAPI({
-            provider: nodeConfig.provider
+            provider: networkConfig.node.provider
         });
 
         hashes = await api.findTransactions(findReq);
@@ -34,10 +36,9 @@ export async function findTransactions(config: IConfiguration, request: IFindTra
     }
 
     if ((!hashes || hashes.length === 0) &&
-        request.network === "mainnet" &&
-        config.permaNodeEndpoint) {
+        networkConfig.permaNodeEndpoint) {
         try {
-            const chronicleClient = new ChronicleClient(config.permaNodeEndpoint);
+            const chronicleClient = new ChronicleClient(networkConfig.permaNodeEndpoint);
             const response = await chronicleClient.findTransactions(findReq);
             hashes = response.hashes;
         } catch { }

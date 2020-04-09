@@ -1,6 +1,6 @@
 import { RouteComponentProps } from "react-router-dom";
 import { HashType } from "../../models/hashType";
-import { NetworkType } from "../../models/services/networkType";
+import { Network } from "../../models/network";
 
 export interface ExploreViewProps extends RouteComponentProps<{
     /**
@@ -11,7 +11,7 @@ export interface ExploreViewProps extends RouteComponentProps<{
     /**
      * The network.
      */
-    network?: NetworkType;
+    network?: Network;
 }> {
     /**
      * The type of the hash.

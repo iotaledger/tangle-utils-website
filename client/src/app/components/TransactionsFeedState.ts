@@ -1,44 +1,29 @@
-import { Transaction } from "@iota/transaction-converter";
 import { Unit } from "@iota/unit-converter";
+import { Network } from "../../models/network";
 
 export interface TransactionsFeedState {
     /**
-     * The transactions from mainNet.
+     * The transactions.
      */
-    mainnetTransactions: {
-        /**
-         * The tx hash.
-         */
-        hash: string;
-        /**
-         * The tx value.
-         */
-        value: number
-    }[];
+    transactions: {
+        [id: string]: {
+            /**
+             * The tx hash.
+             */
+            hash: string;
+            /**
+             * The tx value.
+             */
+            value: number
+        }[]
+     };
 
     /**
-     * The mainnet tps.
+     * The tps.
      */
-    mainnetTps: string;
-
-    /**
-     * The transactions from devNet.
-     */
-    devnetTransactions: {
-        /**
-         * The tx hash.
-         */
-        hash: string;
-        /**
-         * The tx value.
-         */
-        value: number
-    }[];
-
-    /**
-     * The devnet tps.
-     */
-    devnetTps: string;
+    tps: {
+        [id: string]: string
+    };
 
     /**
      * Limit the transactions by value.

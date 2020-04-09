@@ -1,5 +1,5 @@
-import { FindTransactionsMode} from "./findTransactionsMode";
-import { Network } from "./network";
+import { Network } from "../network";
+import { FindTransactionsMode } from "./findTransactionsMode";
 
 export interface IFindTransactionsRequest {
     /**

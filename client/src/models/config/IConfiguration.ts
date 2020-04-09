@@ -1,20 +1,15 @@
-import { INodeConfiguration } from "./INodeConfiguration";
+import { INetworkConfiguration } from "./INetworkConfiguration";
 
 export interface IConfiguration {
+    /**
+     * The networks.
+     */
+    networks: INetworkConfiguration[];
+
     /**
      * The api endpoint for the utils.
      */
     apiEndpoint: string;
-
-    /**
-     * The mainnet node.
-     */
-    nodeMainnet: INodeConfiguration;
-
-    /**
-     * The devnet nodes to load balance.
-     */
-    nodeDevnet: INodeConfiguration;
 
     /**
      * The google maps key.

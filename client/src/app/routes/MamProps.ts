@@ -1,6 +1,4 @@
-import { MamMode } from "@iota/mam.js";
 import { RouteComponentProps } from "react-router-dom";
-import { NetworkType } from "../../models/services/networkType";
 
 export interface MamProps extends RouteComponentProps<{
     /**

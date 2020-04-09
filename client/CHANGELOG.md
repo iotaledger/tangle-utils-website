@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.3
+
+* Refactored to simplify code for additional networks
+* Improved lookup speed
+* Added bundle description
+
 ## v1.4.2
 
 * Reduce load on zmq feed

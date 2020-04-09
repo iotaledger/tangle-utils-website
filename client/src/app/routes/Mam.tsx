@@ -4,7 +4,10 @@ import { Button, Fieldrow, Fieldset, Form, FormActions, Heading, Input, Select, 
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { TrytesHelper } from "../../helpers/trytesHelper";
-import { NetworkType } from "../../models/services/networkType";
+import { IConfiguration } from "../../models/config/IConfiguration";
+import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
+import { Network } from "../../models/network";
+import { ConfigurationService } from "../../services/configurationService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import "./Mam.scss";
 import { MamProps } from "./MamProps";
@@ -18,6 +21,11 @@ class Mam extends Component<MamProps, MamState> {
      * The tangle cache service.
      */
     private readonly _tangleCacheService: TangleCacheService;
+
+    /**
+     * Networks.
+     */
+    private readonly _networks: INetworkConfiguration[];
 
     /**
      * Update timer.
@@ -43,14 +51,19 @@ class Mam extends Component<MamProps, MamState> {
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
 
+        const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration");
+        this._networks = configService.get().networks;
+
         this._timeout = 500;
 
         let paramRoot = "";
         let paramMode: MamMode = "public";
         let paramKey = "";
-        let paramNetwork: NetworkType = "mainnet";
+        let paramNetwork: Network = this._networks[0].network;
 
         if (this.props.match && this.props.match.params) {
+            const netNames = this._networks.map(n => n.network);
+
             if (this.props.match.params.root) {
                 paramRoot = this.props.match.params.root.toUpperCase();
             }
@@ -72,9 +85,8 @@ class Mam extends Component<MamProps, MamState> {
                     paramProps[i] === "private" ||
                     paramProps[i] === "restricted") {
                     paramMode = paramProps[i] as MamMode;
-                } else if (paramProps[i] === "mainnet" ||
-                    paramProps[i] === "devnet") {
-                    paramNetwork = paramProps[i] as NetworkType;
+                } else if (netNames.includes(paramProps[i] as Network)) {
+                    paramNetwork = paramProps[i] as Network;
                 } else if (isTrytes(paramProps[i])) {
                     possibleKey = paramProps[i];
                 }
@@ -173,12 +185,18 @@ class Mam extends Component<MamProps, MamState> {
                         <label>Network</label>
                         <Select
                             value={this.state.network}
-                            onChange={e => this.setState({ network: e.target.value as NetworkType })}
+                            onChange={e => this.setState({ network: e.target.value as Network })}
                             selectSize="small"
                             disabled={this.state.isBusy}
                         >
-                            <option value="mainnet">MainNet</option>
-                            <option value="devnet">DevNet</option>
+                            {this._networks.map(networkConfig => (
+                                <option
+                                    value={networkConfig.network}
+                                    key={networkConfig.network}
+                                >
+                                    {networkConfig.label}
+                                </option>
+                            ))}
                         </Select>
                     </Fieldset>
                     <FormActions>

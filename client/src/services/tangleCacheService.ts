@@ -1,12 +1,13 @@
-import { composeAPI, Transaction } from "@iota/core";
+import { composeAPI } from "@iota/core";
 import { mamFetch, MamMode } from "@iota/mam.js";
-import { asTransactionObject, asTransactionObjects } from "@iota/transaction-converter";
+import { asTransactionObject } from "@iota/transaction-converter";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { FindTransactionsMode } from "../models/api/findTransactionsMode";
 import { IConfiguration } from "../models/config/IConfiguration";
-import { ConfirmationState } from "../models/confirmationState";
+import { INetworkConfiguration } from "../models/config/INetworkConfiguration";
 import { HashType } from "../models/hashType";
-import { NetworkType } from "../models/services/networkType";
+import { ICachedTransaction } from "../models/ICachedTransaction";
+import { Network } from "../models/network";
 import { ApiClient } from "./apiClient";
 import { ApiMamClient } from "./apiMamClient";
 
@@ -31,28 +32,11 @@ export class TangleCacheService {
         /**
          * Network.
          */
-        [id: string]: {
+        [key in Network]?: {
             /**
              * Transaction hash.
              */
-            [id: string]: {
-                /**
-                 * The trytes for the transaction.
-                 */
-                trytes?: string;
-                /**
-                 * The confirmation state.
-                 */
-                confirmedState: ConfirmationState;
-                /**
-                 * The time of cache.
-                 */
-                cached: number;
-                /**
-                 * Did we manualy add this transaction.
-                 */
-                manual: boolean;
-            }
+            [id: string]: ICachedTransaction
         }
     };
 
@@ -63,11 +47,11 @@ export class TangleCacheService {
         /**
          * Network.
          */
-        [id: string]: {
+        [networkKey in Network]?: {
             /**
              * The hash type.
              */
-            [id: string]: {
+            [hashKey in HashType]?: {
 
                 /**
                  * The hash.
@@ -97,7 +81,7 @@ export class TangleCacheService {
         /**
          * Network.
          */
-        [id: string]: {
+        [key in Network]?: {
             /**
              * The address hash.
              */
@@ -121,7 +105,7 @@ export class TangleCacheService {
         /**
          * Network.
          */
-        [id: string]: {
+        [key in Network]?: {
             /**
              * The root.
              */
@@ -149,33 +133,23 @@ export class TangleCacheService {
     constructor(config: IConfiguration) {
         this._configuration = config;
 
-        this._transactionCache = {
-            mainnet: {},
-            devnet: {}
-        };
+        this._transactionCache = {};
+        this._findCache = {};
+        this._addressBalances = {};
+        this._mam = {};
 
-        this._findCache = {
-            mainnet: {
+        for (const networkConfig of config.networks) {
+            this._transactionCache[networkConfig.network] = {};
+
+            this._findCache[networkConfig.network] = {
                 tag: {},
                 address: {},
                 bundle: {}
-            },
-            devnet: {
-                tag: {},
-                address: {},
-                bundle: {}
-            }
-        };
+            };
 
-        this._addressBalances = {
-            mainnet: {},
-            devnet: {}
-        };
-
-        this._mam = {
-            mainnet: {},
-            devnet: {}
-        };
+            this._addressBalances[networkConfig.network] = {};
+            this._mam[networkConfig.network] = {};
+        }
 
         // Check for stale cache items every minute
         setInterval(() => this.staleCheck(), 60000);
@@ -189,7 +163,7 @@ export class TangleCacheService {
      * @returns The transactions hashes returned from the looked up type.
      */
     public async findTransactionHashes(
-        hashType: HashType, hash: string, network: NetworkType): Promise<{
+        hashType: HashType, hash: string, network: Network): Promise<{
             /**
              * The lookup hashes.
              */
@@ -203,12 +177,18 @@ export class TangleCacheService {
         let totalCount = 0;
         let doLookup = true;
 
-        if (this._findCache[network][hashType][hash]) {
-            // If the cache item was added less than a minute ago then use it.
-            if (Date.now() - this._findCache[network][hashType][hash].cached < 60000) {
-                doLookup = false;
-                transactionHashes = this._findCache[network][hashType][hash].transactionHashes;
-                totalCount = this._findCache[network][hashType][hash].totalCount;
+        const findCache = this._findCache[network];
+
+        if (findCache) {
+            const cacheHashType = findCache[hashType];
+            if (cacheHashType &&
+                cacheHashType[hash]) {
+                // If the cache item was added less than a minute ago then use it.
+                if (Date.now() - cacheHashType[hash].cached < 60000) {
+                    doLookup = false;
+                    transactionHashes = cacheHashType[hash].transactionHashes;
+                    totalCount = cacheHashType[hash].totalCount;
+                }
             }
         }
 
@@ -225,11 +205,16 @@ export class TangleCacheService {
                 transactionHashes = response.hashes;
                 totalCount = response.totalCount || totalCount;
 
-                this._findCache[network][hashType][hash] = {
-                    transactionHashes,
-                    totalCount,
-                    cached: Date.now()
-                };
+                if (findCache) {
+                    const cacheHashType = findCache[hashType];
+                    if (cacheHashType) {
+                        cacheHashType[hash] = {
+                            transactionHashes,
+                            totalCount,
+                            cached: Date.now()
+                        };
+                    }
+                }
             }
         }
 
@@ -245,49 +230,72 @@ export class TangleCacheService {
      * @param network Which network are we getting the transactions for.
      * @returns The trytes for the hashes.
      */
-    public async getTransactions(hashes: ReadonlyArray<string>, network: NetworkType): Promise<ReadonlyArray<string>> {
-        const now = Date.now();
-        const unknownHashes = hashes.filter(h =>
-            !this._transactionCache[network][h] ||
-            this._transactionCache[network][h].trytes === undefined ||
-            this._transactionCache[network][h].confirmedState === "unknown" ||
-            now - this._transactionCache[network][h].cached > 60000);
+    public async getTransactions(hashes: ReadonlyArray<string>, network: Network):
+        Promise<ICachedTransaction[]> {
+        let cachedTransactions: ICachedTransaction[] | undefined;
+        const tranCache = this._transactionCache[network];
 
-        if (unknownHashes.length > 0) {
-            try {
-                const apiClient = ServiceFactory.get<ApiClient>("api-client");
+        if (tranCache) {
+            const now = Date.now();
 
-                const response = await apiClient.getTrytes({
-                    network,
-                    hashes: unknownHashes
-                });
+            const unknownHashes = hashes.filter(h =>
+                !tranCache[h] ||
+                tranCache[h].tx === undefined ||
+                tranCache[h].confirmationState === "unknown" ||
+                now - tranCache[h].cached > 60000);
 
-                if (response &&
-                    response.success &&
-                    response.trytes &&
-                    response.confirmationStates) {
-                    for (let i = 0; i < response.trytes.length; i++) {
-                        this._transactionCache[network][unknownHashes[i]] =
-                            this._transactionCache[network][unknownHashes[i]] || {};
-                        this._transactionCache[network][unknownHashes[i]].trytes =
-                            response.trytes[i];
-                        this._transactionCache[network][unknownHashes[i]].confirmedState =
-                            response.confirmationStates[i];
+            if (unknownHashes.length > 0) {
+                try {
+                    const apiClient = ServiceFactory.get<ApiClient>("api-client");
+
+                    const response = await apiClient.getTrytes({
+                        network,
+                        hashes: unknownHashes
+                    });
+
+                    if (response &&
+                        response.success &&
+                        response.trytes &&
+                        response.confirmationStates) {
+                        for (let i = 0; i < response.trytes.length; i++) {
+                            tranCache[unknownHashes[i]] =
+                                tranCache[unknownHashes[i]] || {};
+                            tranCache[unknownHashes[i]].tx =
+                                asTransactionObject(response.trytes[i], unknownHashes[i]);
+                            tranCache[unknownHashes[i]].confirmationState =
+                                response.confirmationStates[i];
+                        }
                     }
+                } catch (err) {
                 }
-            } catch (err) {
             }
+
+            for (let i = 0; i < hashes.length; i++) {
+                if (tranCache[hashes[i]]) {
+                    tranCache[hashes[i]].cached = now;
+                    tranCache[hashes[i]].manual = false;
+                }
+            }
+
+            cachedTransactions = hashes.map(h =>
+                tranCache[h] || {
+                    tx: asTransactionObject("9".repeat(2673)),
+                    confirmationState: "unknown",
+                    cached: 0,
+                    manual: false
+                });
         }
 
-        for (let i = 0; i < hashes.length; i++) {
-            if (this._transactionCache[network][hashes[i]]) {
-                this._transactionCache[network][hashes[i]].cached = now;
-                this._transactionCache[network][hashes[i]].manual = false;
-            }
+        if (!cachedTransactions) {
+            cachedTransactions = hashes.map(h => ({
+                tx: asTransactionObject("9".repeat(2673)),
+                confirmationState: "unknown",
+                cached: 0,
+                manual: false
+            }));
         }
 
-        return hashes.map(h => (
-            this._transactionCache[network][h] && this._transactionCache[network][h].trytes) || "9".repeat(2673));
+        return cachedTransactions;
     }
 
     /**
@@ -296,16 +304,20 @@ export class TangleCacheService {
      * @param trytes The trytes of the transactions to cache.
      * @param network Which network are we getting the transactions for.
      */
-    public addTransactions(hashes: ReadonlyArray<string>, trytes: ReadonlyArray<string>, network: NetworkType): void {
-        const now = Date.now();
+    public addTransactions(hashes: ReadonlyArray<string>, trytes: ReadonlyArray<string>, network: Network): void {
+        const tranCache = this._transactionCache[network];
 
-        for (let i = 0; i < hashes.length; i++) {
-            this._transactionCache[network][hashes[i]] = {
-                trytes: trytes[i],
-                cached: now,
-                confirmedState: "unknown",
-                manual: true
-            };
+        if (tranCache) {
+            const now = Date.now();
+
+            for (let i = 0; i < hashes.length; i++) {
+                tranCache[hashes[i]] = {
+                    tx: asTransactionObject(trytes[i], hashes[i]),
+                    cached: now,
+                    confirmationState: "unknown",
+                    manual: true
+                };
+            }
         }
     }
 
@@ -314,36 +326,16 @@ export class TangleCacheService {
      * @param hashes The hashes of the transactions to cache.
      * @param network Which network are we getting the transactions for.
      */
-    public removeTransactions(hashes: ReadonlyArray<string>, network: NetworkType): void {
-        for (let i = 0; i < hashes.length; i++) {
-            if (this._transactionCache[network][hashes[i]] && this._transactionCache[network][hashes[i]].manual) {
-                delete this._transactionCache[network][hashes[i]];
+    public removeTransactions(hashes: ReadonlyArray<string>, network: Network): void {
+        const tranCache = this._transactionCache[network];
+
+        if (tranCache) {
+            for (let i = 0; i < hashes.length; i++) {
+                if (tranCache[hashes[i]] && tranCache[hashes[i]].manual) {
+                    delete tranCache[hashes[i]];
+                }
             }
         }
-    }
-
-    /**
-     * Get the include state for the transaction.
-     * @param hashes The hashes to get the inclusion state.
-     * @param network Which network are we getting the transactions for.
-     * @returns The confirmation states for the transactions.
-     */
-    public async getTransactionConfirmationStates(
-        hashes: ReadonlyArray<string>, network: NetworkType): Promise<ReadonlyArray<ConfirmationState>> {
-        const now = Date.now();
-        const unknownStates = hashes.filter(h =>
-            !this._transactionCache[network][h] ||
-            this._transactionCache[network][h].confirmedState === "unknown" ||
-            now - this._transactionCache[network][h].cached > 15000);
-
-        if (unknownStates.length > 0) {
-            await this.getTransactions(unknownStates, network);
-        }
-
-        return hashes.map(h =>
-            this._transactionCache[network] &&
-                this._transactionCache[network][h] ?
-                this._transactionCache[network][h].confirmedState : "unknown");
     }
 
     /**
@@ -354,34 +346,39 @@ export class TangleCacheService {
      */
     public async getBundleGroups(
         transactionHashes: ReadonlyArray<string>,
-        network: NetworkType): Promise<ReadonlyArray<ReadonlyArray<Transaction>>> {
-        const transactions = await this.getTransactions(transactionHashes, network);
+        network: Network): Promise<ICachedTransaction[][]> {
+        const cachedTransactions
+            = await this.getTransactions(transactionHashes, network);
 
-        const transactionObjects = asTransactionObjects(transactionHashes)(transactions);
-
-        const byHash: { [id: string]: Transaction } = {};
-        const bundleGroups: Transaction[][] = [];
+        const byHash: { [id: string]: ICachedTransaction } = {};
+        const bundleGroups: ICachedTransaction[][] = [];
 
         const trunkTransactions = [];
 
-        for (let i = 0; i < transactionObjects.length; i++) {
-            byHash[transactionObjects[i].hash] = transactionObjects[i];
-            if (transactionObjects[i].currentIndex === 0) {
-                bundleGroups.push([transactionObjects[i]]);
+        for (let i = 0; i < cachedTransactions.length; i++) {
+            const tx = cachedTransactions[i].tx;
+            if (tx) {
+                byHash[tx.hash] = cachedTransactions[i];
+                if (tx.currentIndex === 0) {
+                    bundleGroups.push([cachedTransactions[i]]);
+                }
             }
         }
 
         for (let i = 0; i < bundleGroups.length; i++) {
-            let trunk = bundleGroups[i][0].trunkTransaction;
-            trunkTransactions.push(trunk);
-            const txCount = bundleGroups[i][0].lastIndex;
-            for (let j = 0; j < txCount; j++) {
-                const tx = byHash[trunk];
-                if (!tx) {
-                    break;
+            const txTrunk = bundleGroups[i][0].tx;
+            if (txTrunk) {
+                let trunk = txTrunk.trunkTransaction;
+                trunkTransactions.push(trunk);
+                const txCount = txTrunk.lastIndex;
+                for (let j = 0; j < txCount; j++) {
+                    const nextTx = byHash[trunk].tx;
+                    if (!nextTx) {
+                        break;
+                    }
+                    bundleGroups[i].push(byHash[trunk]);
+                    trunk = nextTx.trunkTransaction;
                 }
-                bundleGroups[i].push(tx);
-                trunk = tx.trunkTransaction;
             }
         }
 
@@ -394,36 +391,44 @@ export class TangleCacheService {
      * @param network Which network are we getting the transactions for.
      * @returns The balance for the address.
      */
-    public async getAddressBalance(addressHash: string, network: NetworkType): Promise<number> {
-        const now = Date.now();
+    public async getAddressBalance(addressHash: string, network: Network): Promise<number> {
+        const addrBalance = this._addressBalances[network];
 
-        if (!this._addressBalances[network][addressHash] ||
-            now - this._addressBalances[network][addressHash].balance > 30000) {
-            try {
-                const nodeConfig = network === "mainnet"
-                    ? this._configuration.nodeMainnet : this._configuration.nodeDevnet;
+        if (addrBalance) {
+            const now = Date.now();
 
-                const api = composeAPI({
-                    provider: nodeConfig.provider
-                });
+            if (!addrBalance[addressHash] ||
+                now - addrBalance[addressHash].balance > 30000) {
+                try {
+                    const networkConfigs = ServiceFactory.get<INetworkConfiguration[]>("network-config");
+                    const networkConfig = networkConfigs.find(n => n.network === network);
 
-                const response = await api.getBalances([addressHash], 100);
-                if (response && response.balances) {
-                    let balance = 0;
-                    for (let i = 0; i < response.balances.length; i++) {
-                        balance += response.balances[i];
+                    if (networkConfig) {
+                        const api = composeAPI({
+                            provider: networkConfig.node.provider
+                        });
+
+                        const response = await api.getBalances([addressHash], 100);
+                        if (response && response.balances) {
+                            let balance = 0;
+                            for (let i = 0; i < response.balances.length; i++) {
+                                balance += response.balances[i];
+                            }
+                            addrBalance[addressHash] = {
+                                balance,
+                                cached: now
+                            };
+                        }
                     }
-                    this._addressBalances[network][addressHash] = {
-                        balance,
-                        cached: now
-                    };
+                } catch (err) {
+                    console.error(err);
                 }
-            } catch (err) {
-                console.error(err);
             }
+
+            return addrBalance[addressHash] ? addrBalance[addressHash].balance : 0;
         }
 
-        return this._addressBalances[network][addressHash] ? this._addressBalances[network][addressHash].balance : 0;
+        return 0;
     }
 
     /**
@@ -434,7 +439,7 @@ export class TangleCacheService {
      * @param network Which network are we getting the transactions for.
      * @returns The balance for the address.
      */
-    public async getMamPacket(root: string, mode: MamMode, key: string, network: NetworkType): Promise<{
+    public async getMamPacket(root: string, mode: MamMode, key: string, network: Network): Promise<{
         /**
          * The payload at the given root.
          */
@@ -444,25 +449,29 @@ export class TangleCacheService {
          */
         nextRoot: string;
     } | undefined> {
-        if (!this._mam[network][root]) {
-            try {
-                const api = new ApiMamClient(this._configuration.apiEndpoint, network);
+        const mamCache = this._mam[network];
 
-                const result = await mamFetch(api as any, root, mode, key);
+        if (mamCache) {
+            if (!mamCache[root]) {
+                try {
+                    const api = new ApiMamClient(this._configuration.apiEndpoint, network);
 
-                if (result) {
-                    this._mam[network][root] = {
-                        payload: result.message,
-                        nextRoot: result.nextRoot,
-                        cached: Date.now()
-                    };
+                    const result = await mamFetch(api as any, root, mode, key);
+
+                    if (result) {
+                        mamCache[root] = {
+                            payload: result.message,
+                            nextRoot: result.nextRoot,
+                            cached: Date.now()
+                        };
+                    }
+                } catch (err) {
+                    console.error(err);
                 }
-            } catch (err) {
-                console.error(err);
             }
-        }
 
-        return this._mam[network][root];
+            return mamCache[root];
+        }
     }
 
     /**
@@ -472,31 +481,34 @@ export class TangleCacheService {
      * @returns The transactions bundle group.
      */
     public async getTransactionBundleGroup(
-        transaction: Transaction, network: NetworkType): Promise<ReadonlyArray<Transaction>> {
-        let thisGroup: Transaction[] = [];
-        if (transaction.lastIndex === 0) {
+        transaction: ICachedTransaction, network: Network): Promise<ICachedTransaction[]> {
+        let thisGroup: ICachedTransaction[] = [];
+        if (transaction.tx.lastIndex === 0) {
             thisGroup = [transaction];
-        } else if (transaction.currentIndex === 0) {
+        } else if (transaction.tx.currentIndex === 0) {
             // If this current index then we can just traverse the tree
             // to get the other transactions in this bundle group
-            let trunk = transaction.trunkTransaction;
+            let trunk = transaction.tx.trunkTransaction;
             thisGroup = [transaction];
-            for (let i = 1; i <= transaction.lastIndex; i++) {
-                const txs = await this.getTransactions([trunk], network);
-                if (txs && txs.length > 0) {
-                    const txo = asTransactionObject(txs[0]);
-                    thisGroup.push(txo);
-                    trunk = txo.trunkTransaction;
+            for (let i = 1; i <= transaction.tx.lastIndex; i++) {
+                const cachedTransactions
+                    = await this.getTransactions([trunk], network);
+                if (cachedTransactions.length > 0) {
+                    const txo = cachedTransactions[0];
+                    if (txo) {
+                        thisGroup.push(txo);
+                        trunk = txo.tx.trunkTransaction;
+                    }
                 }
             }
         } else {
             // Otherwise we have to grab the whole bundle.
             // and find which group this transaction is in
-            const { hashes } = await this.findTransactionHashes("bundle", transaction.bundle, network);
+            const { hashes } = await this.findTransactionHashes("bundle", transaction.tx.bundle, network);
             if (hashes.length > 0) {
                 const bundleGroups = await this.getBundleGroups(hashes, network);
 
-                const bg = bundleGroups.find(group => group.findIndex(t => t.hash === transaction.hash) >= 0);
+                const bg = bundleGroups.find(group => group.findIndex(t => t.tx.hash === transaction.tx.hash) >= 0);
                 if (bg) {
                     thisGroup = Array.from(bg);
                 }
@@ -512,35 +524,51 @@ export class TangleCacheService {
         const now = Date.now();
 
         for (const net in this._transactionCache) {
-            for (const tx in this._transactionCache[net]) {
-                if (now - this._transactionCache[net][tx].cached >= this.STALE_TIME) {
-                    delete this._transactionCache[net][tx];
+            const tranCache = this._transactionCache[net as Network];
+            if (tranCache) {
+                for (const tx in tranCache) {
+                    if (now - tranCache[tx].cached >= this.STALE_TIME) {
+                        delete tranCache[tx];
+                    }
                 }
             }
         }
 
         for (const net in this._findCache) {
-            for (const hashType in this._findCache[net]) {
-                for (const hash in this._findCache[net][hashType]) {
-                    if (now - this._findCache[net][hashType][hash].cached >= this.STALE_TIME) {
-                        delete this._findCache[net][hashType][hash];
+            const findCache = this._findCache[net as Network];
+            if (findCache) {
+                for (const hashType in findCache) {
+                    const hashCache = findCache[hashType as HashType];
+
+                    if (hashCache) {
+                        for (const hash in hashCache) {
+                            if (now - hashCache[hash].cached >= this.STALE_TIME) {
+                                delete hashCache[hash];
+                            }
+                        }
                     }
                 }
             }
         }
 
         for (const net in this._addressBalances) {
-            for (const address in this._addressBalances[net]) {
-                if (now - this._addressBalances[net][address].cached >= this.STALE_TIME) {
-                    delete this._addressBalances[net][address];
+            const addrBalance = this._addressBalances[net as Network];
+            if (addrBalance) {
+                for (const address in addrBalance) {
+                    if (now - addrBalance[address].cached >= this.STALE_TIME) {
+                        delete addrBalance[address];
+                    }
                 }
             }
         }
 
         for (const net in this._mam) {
-            for (const root in this._mam[net]) {
-                if (now - this._mam[net][root].cached >= this.STALE_TIME) {
-                    delete this._mam[net][root];
+            const mamCache = this._mam[net as Network];
+            if (mamCache) {
+                for (const root in mamCache) {
+                    if (now - mamCache[root].cached >= this.STALE_TIME) {
+                        delete mamCache[root];
+                    }
                 }
             }
         }

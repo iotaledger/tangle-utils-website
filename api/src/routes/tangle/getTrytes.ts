@@ -5,6 +5,7 @@ import { ConfirmationState } from "../../models/api/confirmationState";
 import { IGetTrytesRequest } from "../../models/api/IGetTrytesRequest";
 import { IGetTrytesResponse } from "../../models/api/IGetTrytesResponse";
 import { IConfiguration } from "../../models/configuration/IConfiguration";
+import { ValidationHelper } from "../../utils/validationHelper";
 
 /**
  * Get transactions for the requested hashes.
@@ -34,12 +35,12 @@ export async function getTrytes(config: IConfiguration, request: IGetTrytesReque
         confirmation?: ConfirmationState
     }[] = request.hashes.map((h, idx) => ({ index: idx, hash: h }));
 
-    try {
-        const nodeConfig = request.network === "mainnet"
-            ? config.nodeMainnet : config.nodeDevnet;
+    ValidationHelper.oneOf(request.network, config.networks.map(n => n.network), "network");
+    const networkConfig = config.networks.find(n => n.network === request.network);
 
+    try {
         const api = composeAPI({
-            provider: nodeConfig.provider
+            provider: networkConfig.node.provider
         });
 
         const response = await api.getTrytes(allTrytes.map(a => a.hash));
@@ -70,10 +71,9 @@ export async function getTrytes(config: IConfiguration, request: IGetTrytesReque
     const missing = allTrytes.filter(a => !a.trytes || /^[9]+$/.test(a.trytes));
 
     if (missing.length > 0 &&
-        request.network === "mainnet" &&
-        config.permaNodeEndpoint) {
+        networkConfig.permaNodeEndpoint) {
         try {
-            const chronicleClient = new ChronicleClient(config.permaNodeEndpoint);
+            const chronicleClient = new ChronicleClient(networkConfig.permaNodeEndpoint);
             const response = await chronicleClient.getTrytes({ hashes: missing.map(mh => mh.hash) });
 
             if (response && response.trytes) {

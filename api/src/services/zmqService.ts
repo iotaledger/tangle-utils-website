@@ -1,5 +1,4 @@
 import { Subscriber } from "zeromq";
-import { IZmqConfiguration } from "../models/configuration/IZmqConfiguration";
 import { IAddress } from "../models/zmq/IAddress";
 import { IAntn } from "../models/zmq/IAntn";
 import { IDnscc } from "../models/zmq/IDnscc";
@@ -26,7 +25,7 @@ export class ZmqService {
     /**
      * The configuration for the service.
      */
-    private readonly _config: IZmqConfiguration;
+    private readonly _endpoint: string;
 
     /**
      * The connected socket.
@@ -63,10 +62,10 @@ export class ZmqService {
 
     /**
      * Create a new instance of ZmqService.
-     * @param config The gateway for the zmq service.
+     * @param endpoint The gateway for the zmq service.
      */
-    constructor(config: IZmqConfiguration) {
-        this._config = config;
+    constructor(endpoint: string) {
+        this._endpoint = endpoint;
         this._subscriptions = {};
         this._lastMessageTime = 0;
         this._connecting = false;
@@ -228,7 +227,7 @@ export class ZmqService {
                     this._subscriptions[eventKey].splice(j, 1);
                     if (this._subscriptions[eventKey].length === 0) {
                         if (this._socket) {
-                            console.log("Unsubscribe", keys[i], this._config.endpoint);
+                            console.log("Unsubscribe", keys[i], this._endpoint);
                             this._socket.unsubscribe(eventKey);
                         }
 
@@ -253,13 +252,13 @@ export class ZmqService {
                 this._connecting = true;
 
                 const localSocket = new Subscriber();
-                localSocket.connect(this._config.endpoint);
+                localSocket.connect(this._endpoint);
 
-                console.log("Connect", this._config.endpoint);
+                console.log("Connect", this._endpoint);
 
                 const keys = Object.keys(this._subscriptions);
                 for (let i = 0; i < keys.length; i++) {
-                    console.log("Subscribe", keys[i], this._config.endpoint);
+                    console.log("Subscribe", keys[i], this._endpoint);
                     localSocket.subscribe(keys[i]);
                 }
 
@@ -296,14 +295,14 @@ export class ZmqService {
             try {
                 const keys = Object.keys(this._subscriptions);
                 for (let i = 0; i < keys.length; i++) {
-                    console.log("Unsubscribe", keys[i], this._config.endpoint);
+                    console.log("Unsubscribe", keys[i], this._endpoint);
                     localSocket.unsubscribe(keys[i]);
                 }
 
-                console.log("Close", this._config.endpoint);
+                console.log("Close", this._endpoint);
                 localSocket.close();
             } catch (err) {
-                console.log("Error on close", err, this._config.endpoint);
+                console.log("Error on close", err, this._endpoint);
             }
         }
     }
@@ -315,7 +314,7 @@ export class ZmqService {
         if (!this._connecting) {
             if (Object.keys(this._subscriptions).length > 0) {
                 if (Date.now() - this._lastMessageTime > 15000) {
-                    console.log("Idle disconnect", this._config.endpoint);
+                    console.log("Idle disconnect", this._endpoint);
                     this._lastMessageTime = Date.now();
                     this.disconnect();
                     await this.connect();
@@ -335,7 +334,7 @@ export class ZmqService {
         if (!this._subscriptions[event]) {
             this._subscriptions[event] = [];
             if (this._socket) {
-                console.log("Subscribe", event, this._config.endpoint);
+                console.log("Subscribe", event, this._endpoint);
                 this._socket.subscribe(event);
             }
         }
@@ -508,7 +507,11 @@ export class ZmqService {
             }
 
             for (let i = 0; i < this._subscriptions[event].length; i++) {
-                this._subscriptions[event][i].callback(event, data);
+                try {
+                    this._subscriptions[event][i].callback(event, data);
+                } catch (err) {
+                    console.error(`Exceptionin ZMQ callback`, event, data, err);
+                }
             }
         }
     }

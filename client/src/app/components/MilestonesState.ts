@@ -1,30 +1,19 @@
+import { Network } from "../../models/network";
 
 export interface MilestonesState {
     /**
-     * The milestones from mainNet.
+     * The milestones.
      */
-    mainnetMilestones: {
-        /**
-         * The transaction hash.
-         */
-        hash: string;
-        /**
-         * The milestone index.
-         */
-        milestoneIndex: number;
-    }[];
-
-    /**
-     * The milestones from devNet.
-     */
-    devnetMilestones: {
-        /**
-         * The transaction hash.
-         */
-        hash: string;
-        /**
-         * The milestone index.
-         */
-        milestoneIndex: number;
-    }[];
+    milestones: {
+        [id: string]: {
+            /**
+             * The transaction hash.
+             */
+            hash: string;
+            /**
+             * The milestone index.
+             */
+            milestoneIndex: number;
+        }[]
+    };
 }

@@ -1,5 +1,5 @@
 import { HashType } from "../../models/hashType";
-import { NetworkType } from "../../models/services/networkType";
+import { Network } from "../../models/network";
 
 export interface ExploreState {
     /**
@@ -15,7 +15,7 @@ export interface ExploreState {
     /**
      * The network.
      */
-    network: NetworkType;
+    network: Network;
 
     /**
      * Is the component valid.

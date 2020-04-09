@@ -8,7 +8,8 @@ import { ServiceFactory } from "../../factories/serviceFactory";
 import { PowHelper } from "../../helpers/powHelper";
 import { TextHelper } from "../../helpers/textHelper";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { NetworkType } from "../../models/services/networkType";
+import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
+import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
 import { SettingsService } from "../../services/settingsService";
 import { TangleCacheService } from "../../services/tangleCacheService";
@@ -26,6 +27,11 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
     private readonly _tangleCacheService: TangleCacheService;
 
     /**
+     * Networks.
+     */
+    private readonly _networks: INetworkConfiguration[];
+
+    /**
      * The service to store settings.
      */
     private readonly _settingsService: SettingsService;
@@ -40,6 +46,9 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
         this._settingsService = ServiceFactory.get<SettingsService>("settings");
 
+        const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration");
+        this._networks = configService.get().networks;
+
         this.state = {
             tag: "",
             tagValidation: "",
@@ -47,7 +56,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
             transactionCount: 1,
             address: "",
             addressValidation: "",
-            network: "mainnet",
+            network: this._networks[0].network,
             errorMessage: "",
             transactionHash: "",
             status: "",
@@ -78,7 +87,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
      * @returns The node to render.
      */
     public render(): ReactNode {
-        const network = this.state.network === "mainnet" ? "" : `/${this.state.network}`;
+        const network = this.state.network === this._networks[0].network ? "" : `/${this.state.network}`;
 
         return (
             <div className="simple-transaction">
@@ -165,12 +174,18 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                 <label>Network</label>
                                 <Select
                                     value={this.state.network}
-                                    onChange={e => this.setState({ network: e.target.value as NetworkType })}
+                                    onChange={e => this.setState({ network: e.target.value as Network })}
                                     selectSize="small"
                                     disabled={this.state.isBusy}
                                 >
-                                    <option value="mainnet">MainNet</option>
-                                    <option value="devnet">DevNet</option>
+                                    {this._networks.map(networkConfig => (
+                                        <option
+                                            value={networkConfig.network}
+                                            key={networkConfig.network}
+                                        >
+                                            {networkConfig.label}
+                                        </option>
+                                    ))}
                                 </Select>
                             </Fieldset>
                             <FormActions>
@@ -243,45 +258,45 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
             },
             async () => {
                 try {
-                    const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>
-                        ("configuration");
+                    const networkConfigs = ServiceFactory.get<INetworkConfiguration[]>("network-config");
+                    const networkConfig = networkConfigs.find(n => n.network === this.props.network);
 
-                    const config = configService.get();
+                    if (networkConfig) {
+                        const api = composeAPI({
+                            provider: networkConfig.node.provider,
+                            attachToTangle: PowHelper.localPow as any
+                        });
 
-                    const nodeConfig = this.state.network === "mainnet"
-                        ? config.nodeMainnet : config.nodeDevnet;
+                        const preparedTrytes = await api.prepareTransfers(
+                            "9".repeat(81),
+                            [
+                                {
+                                    value: 0,
+                                    address: this.state.address.toUpperCase(),
+                                    tag: this.state.tag.toUpperCase(),
+                                    message: TextHelper.toTrytes(this.state.message)
+                                }
+                            ]
+                        );
 
-                    const api = composeAPI({
-                        provider: nodeConfig.provider,
-                        attachToTangle: PowHelper.localPow as any
-                    });
+                        const txs = await api.sendTrytes(
+                            preparedTrytes,
+                            networkConfig.node.depth,
+                            networkConfig.node.mwm
+                        );
 
-                    const preparedTrytes = await api.prepareTransfers(
-                        "9".repeat(81),
-                        [
+                        this._tangleCacheService.addTransactions(
+                            txs.map(t => t.hash), asTransactionTrytes(txs), this.state.network);
+
+                        this.setState(
                             {
-                                value: 0,
-                                address: this.state.address.toUpperCase(),
-                                tag: this.state.tag.toUpperCase(),
-                                message: TextHelper.toTrytes(this.state.message)
+                                isBusy: false,
+                                status: "",
+                                isErrored: false,
+                                transactionHash: txs[0].hash
                             }
-                        ]
-                    );
-
-                    const txs = await api.sendTrytes(preparedTrytes, nodeConfig.depth, nodeConfig.mwm);
-
-                    this._tangleCacheService.addTransactions(
-                        txs.map(t => t.hash), asTransactionTrytes(txs), this.state.network);
-
-                    this.setState(
-                        {
-                            isBusy: false,
-                            status: "",
-                            isErrored: false,
-                            transactionHash: txs[0].hash
-                        }
-                    );
-
+                        );
+                    }
                 } catch (err) {
                     this.setState(
                         {

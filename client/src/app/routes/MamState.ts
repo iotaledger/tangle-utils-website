@@ -1,5 +1,5 @@
 import { MamMode } from "@iota/mam.js";
-import { NetworkType } from "../../models/services/networkType";
+import { Network } from "../../models/network";
 
 export interface MamState {
     /**
@@ -30,7 +30,7 @@ export interface MamState {
     /**
      * The network.
      */
-    network: NetworkType;
+    network: Network;
 
     /**
      * Is the component valid.

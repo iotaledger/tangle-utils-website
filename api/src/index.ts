@@ -24,11 +24,17 @@ const routes: IRoute[] = [
 AppHelper.build(
     routes,
     async (app, config, port) => {
-        const milestonesService = new MilestonesService();
-        const transactionService = new TransactionsService();
+        const milestonesService = new MilestonesService(config.networks);
+        const transactionService = new TransactionsService(config.networks);
 
-        ServiceFactory.register("zmq-mainnet", () => new ZmqService(config.zmqMainNet));
-        ServiceFactory.register("zmq-devnet", () => new ZmqService(config.zmqDevNet));
+        for (const networkConfig of config.networks) {
+            if (networkConfig.zmqEndpoint) {
+                ServiceFactory.register(
+                    `zmq-${networkConfig.network}`,
+                    () => new ZmqService(networkConfig.zmqEndpoint)
+                );
+            }
+        }
         ServiceFactory.register("transactions", () => transactionService);
         ServiceFactory.register("milestones", () => milestonesService);
 

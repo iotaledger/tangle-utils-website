@@ -1,10 +1,16 @@
-import { NetworkType } from "../../models/services/networkType";
+import { ICachedTransaction } from "../../models/ICachedTransaction";
+import { Network } from "../../models/network";
 
 export interface TransactionObjectProps {
     /**
-     * The trytes for the object.
+     * The transaction object.
      */
-    trytes: string;
+    cached?: ICachedTransaction;
+
+    /**
+     * The trytes.
+     */
+    trytes?: string;
 
     /**
      * The hash for the object.
@@ -19,5 +25,5 @@ export interface TransactionObjectProps {
     /**
      * The network to use.
      */
-    network: NetworkType;
+    network: Network;
 }

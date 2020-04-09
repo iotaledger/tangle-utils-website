@@ -1,7 +1,11 @@
 import { asTransactionObject } from "@iota/transaction-converter";
 import { Fieldrow, Fieldset, Form, Heading, TextArea } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
-import { NetworkType } from "../../models/services/networkType";
+import { ServiceFactory } from "../../factories/serviceFactory";
+import { IConfiguration } from "../../models/config/IConfiguration";
+import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
+import { Network } from "../../models/network";
+import { ConfigurationService } from "../../services/configurationService";
 import TransactionObject from "../components/TransactionObject";
 import { TransactionDecoderProps } from "./TransactionDecoderProps";
 import { TransactionDecoderState } from "./TransactionDecoderState";
@@ -11,22 +15,30 @@ import { TransactionDecoderState } from "./TransactionDecoderState";
  */
 class TransactionDecoder extends Component<TransactionDecoderProps, TransactionDecoderState> {
     /**
+     * Networks.
+     */
+    private readonly _networks: INetworkConfiguration[];
+
+    /**
      * Create a new instance of TransactionDecoder.
      * @param props The props.
      */
     constructor(props: TransactionDecoderProps) {
         super(props);
 
+        const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration");
+        this._networks = configService.get().networks;
+
         let paramTrytes = "";
-        let paramNetwork: NetworkType = "mainnet";
+        let paramNetwork: Network = this._networks[0].network;
 
         if (this.props.match && this.props.match.params) {
+            const netNames = this._networks.map(n => n.network);
             if (this.props.match.params.trytes) {
                 paramTrytes = this.props.match.params.trytes.toUpperCase();
             }
-            if (this.props.match.params.network === "mainnet" ||
-                this.props.match.params.network === "devnet") {
-                paramNetwork = this.props.match.params.network;
+            if (netNames.includes(this.props.match.params.network as Network)) {
+                paramNetwork = this.props.match.params.network as Network;
             }
         }
 

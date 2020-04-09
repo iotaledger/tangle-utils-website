@@ -94,12 +94,19 @@
         width: 100%;
       }
 
+      &.unknown,
       &.yes,
       &.no {
         padding: 4px;
         border-radius: 5px;
         color: var(--white);
         font-size: 14px;
+        margin-right: 10px;
+      }
+
+      &.unknown {
+        background-color: #ffffff;
+        color: #aaaaaa;
       }
 
       &.yes {

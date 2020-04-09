@@ -1,4 +1,4 @@
-import { Network } from "./network";
+import { Network } from "../network";
 
 export interface IGetMilestonesRequest {
     /**

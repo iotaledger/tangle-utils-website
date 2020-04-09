@@ -1,6 +1,6 @@
 import { Transaction, Transfer } from "@iota/core";
 import { asTransactionObject } from "@iota/transaction-converter";
-import { NetworkType } from "../models/services/networkType";
+import { Network } from "../models/network";
 import { ApiClient } from "./apiClient";
 
 /**
@@ -15,14 +15,14 @@ export class ApiMamClient {
     /**
      * The network.
      */
-    private readonly _network: NetworkType;
+    private readonly _network: Network;
 
     /**
      * Create a new instance of ApiMamClient.
      * @param endpoint The endpoint for the api.
      * @param network The network to use.
      */
-    constructor(endpoint: string, network: NetworkType) {
+    constructor(endpoint: string, network: Network) {
         this._apiClient = new ApiClient(endpoint);
         this._network = network;
     }

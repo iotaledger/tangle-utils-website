@@ -4,7 +4,11 @@ import React, { Component, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { UnitsHelper } from "../../helpers/unitsHelper";
+import { IConfiguration } from "../../models/config/IConfiguration";
+import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
+import { Network } from "../../models/network";
 import { ValueFilter } from "../../models/services/valueFilter";
+import { ConfigurationService } from "../../services/configurationService";
 import { SettingsService } from "../../services/settingsService";
 import { TransactionsClient } from "../../services/transactionsClient";
 import "./TransactionsFeed.scss";
@@ -40,6 +44,11 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
     private _mounted: boolean;
 
     /**
+     * Networks.
+     */
+    private readonly _networks: INetworkConfiguration[];
+
+    /**
      * Create a new instance of TransactionsFeed.
      * @param props The props.
      */
@@ -48,18 +57,41 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
 
         this._transactionsClient = ServiceFactory.get<TransactionsClient>("transactions");
         this._settingsService = ServiceFactory.get<SettingsService>("settings");
+
+        const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration");
+        this._networks = configService.get().networks;
+
+        const transactions: {
+            [id: string]: {
+                /**
+                 * The tx hash.
+                 */
+                hash: string;
+                /**
+                 * The tx value.
+                 */
+                value: number
+            }[]
+        } = {};
+        const tps: {
+            [id: string]: string
+        } = {};
+
+        for (const networkConfig of this._networks) {
+            transactions[networkConfig.network] = [];
+            tps[networkConfig.network] = "";
+        }
+
         this._mounted = false;
 
         this.state = {
-            mainnetTransactions: [],
-            devnetTransactions: [],
+            transactions,
+            tps,
             valueMinimum: "0",
             valueMinimumUnits: Unit.i,
             valueMaximum: "1",
             valueMaximumUnits: Unit.Ti,
-            valueFilter: "both",
-            mainnetTps: "",
-            devnetTps: ""
+            valueFilter: "both"
         };
     }
 
@@ -180,28 +212,26 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
                     </Fieldset>
                 </Form>
                 <div className="feed-wrapper">
-                    <div className="feed">
-                        <Heading level={2}>MainNet {this.state.mainnetTps}</Heading>
-                        {this.state.mainnetTransactions.length === 0 &&
-                            ("There are no transactions with the current filters.")}
-                        {this.state.mainnetTransactions.map((tx, idx) => (
-                            <div className="row" key={idx}>
-                                <Link className="small" to={`/transaction/${tx.hash}`}>{tx.hash}</Link>
-                                <div className="value">{UnitsHelper.formatBest(tx.value, false)}</div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="feed">
-                        <Heading level={2}>DevNet {this.state.devnetTps}</Heading>
-                        {this.state.devnetTransactions.length === 0 &&
-                            ("There are no transactions with the current filters.")}
-                        {this.state.devnetTransactions.map((tx, idx) => (
-                            <div className="row" key={idx}>
-                                <Link className="small" to={`/transaction/${tx.hash}/devnet`}>{tx.hash}</Link>
-                                <div className="value">{UnitsHelper.formatBest(tx.value, false)}</div>
-                            </div>
-                        ))}
-                    </div>
+                    {this._networks.map((netConfig, idxNetwork) => (
+                        <div className="feed" key={netConfig.network}>
+                            <Heading level={2}>{netConfig.label} {this.state.tps[netConfig.network]}</Heading>
+                            {this.state.transactions[netConfig.network].length === 0 &&
+                                ("There are no transactions with the current filters.")}
+                            {this.state.transactions[netConfig.network].map((tx, idx) => (
+                                <div className="row" key={idx}>
+                                    <Link
+                                        className="small"
+                                        to={`/transaction/${tx.hash}${
+                                            idxNetwork === 0 ? "" : `/${netConfig.network}`}`
+                                        }
+                                    >
+                                        {tx.hash}
+                                    </Link>
+                                    <div className="value">{UnitsHelper.formatBest(tx.value, false)}</div>
+                                </div>
+                            ))}
+                        </div>
+                    ))}
                 </div>
             </div>
         );
@@ -244,23 +274,23 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
             const minLimit = convertUnits(this.state.valueMinimum, this.state.valueMinimumUnits, Unit.i);
             const maxLimit = convertUnits(this.state.valueMaximum, this.state.valueMaximumUnits, Unit.i);
 
+            const transactions: { [key in Network]?: any } = {};
+
+            for (const networkConfig of this._networks) {
+                transactions[networkConfig.network] =
+                    this._transactionsClient.getTransactions(networkConfig.network)
+                        .filter(t => this.state.transactions[networkConfig.network]
+                            .findIndex(t2 => t2.hash === t.hash) < 0)
+                        .concat(this.state.transactions[networkConfig.network])
+                        .filter(t => Math.abs(t.value) >= minLimit && Math.abs(t.value) <= maxLimit)
+                        .filter(t => this.state.valueFilter === "both" ? true :
+                            this.state.valueFilter === "zeroOnly" ? t.value === 0 :
+                                t.value !== 0)
+                        .slice(0, 10);
+            }
+
             this.setState({
-                mainnetTransactions: this._transactionsClient.getMainNetTransactions()
-                    .filter(t => this.state.mainnetTransactions.findIndex(t2 => t2.hash === t.hash) < 0)
-                    .concat(this.state.mainnetTransactions)
-                    .filter(t => Math.abs(t.value) >= minLimit && Math.abs(t.value) <= maxLimit)
-                    .filter(t => this.state.valueFilter === "both" ? true :
-                        this.state.valueFilter === "zeroOnly" ? t.value === 0 :
-                            t.value !== 0)
-                    .slice(0, 10),
-                devnetTransactions: this._transactionsClient.getDevNetTransactions()
-                    .filter(t => this.state.devnetTransactions.findIndex(t2 => t2.hash === t.hash) < 0)
-                    .concat(this.state.devnetTransactions)
-                    .filter(t => Math.abs(t.value) >= minLimit && Math.abs(t.value) <= maxLimit)
-                    .filter(t => this.state.valueFilter === "both" ? true :
-                        this.state.valueFilter === "zeroOnly" ? t.value === 0 :
-                            t.value !== 0)
-                    .slice(0, 10)
+                transactions
             });
 
             if (save) {
@@ -282,12 +312,15 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
      * Update the transactions per second.
      */
     private updateTps(): void {
-        const mainnetTps = this._transactionsClient.getMainNetTps();
-        const devnetTps = this._transactionsClient.getDevNetTps();
+        const tps: { [id: string]: string } = {};
+
+        for (const networkConfig of this._networks) {
+            const t = this._transactionsClient.getTps(networkConfig.network);
+            tps[networkConfig.network] = t >= 0 ? `[${t.toFixed(2)} TPS]` : "";
+        }
 
         this.setState({
-            mainnetTps: mainnetTps >= 0 ? `[${mainnetTps.toFixed(2)} TPS]` : "",
-            devnetTps: devnetTps >= 0 ? `[${devnetTps.toFixed(2)} TPS]` : ""
+            tps
         });
     }
 }

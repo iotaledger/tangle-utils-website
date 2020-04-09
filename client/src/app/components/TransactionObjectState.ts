@@ -1,12 +1,17 @@
-import { Transaction } from "@iota/transaction-converter";
+import { Transaction } from "@iota/core";
 import moment from "moment";
 import { ConfirmationState } from "../../models/confirmationState";
 
 export interface TransactionObjectState {
     /**
-     * The transaction from the tangle.
+     * The transaction object.
      */
-    transactionObject: Transaction;
+    tx: Transaction;
+
+    /**
+     * The trytes.
+     */
+    trytes: string;
 
     /**
      * The time of the transaction.
@@ -97,11 +102,6 @@ export interface TransactionObjectState {
      * The result of the bundle transactions.
      */
     bundleResult: string;
-
-    /**
-     * What is the tail hash for the bundle.
-     */
-    tailHash?: string;
 
     /**
      * Does the tag contain an area code.

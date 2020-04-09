@@ -1,4 +1,4 @@
-import { NetworkType } from "../../models/services/networkType";
+import { Network } from "../../models/network";
 
 export interface BundleObjectProps {
     /**
@@ -14,5 +14,5 @@ export interface BundleObjectProps {
     /**
      * The network to use.
      */
-    network: NetworkType;
+    network: Network;
 }

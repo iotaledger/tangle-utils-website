@@ -1,8 +1,12 @@
 import { isHash, isTag, isTrytesOfExactLength } from "@iota/validators";
 import { Button, Fieldrow, Fieldset, Form, FormActions, Heading, Input, Select } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
+import { ServiceFactory } from "../../factories/serviceFactory";
+import { IConfiguration } from "../../models/config/IConfiguration";
+import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { HashType } from "../../models/hashType";
-import { NetworkType } from "../../models/services/networkType";
+import { Network } from "../../models/network";
+import { ConfigurationService } from "../../services/configurationService";
 import Milestones from "../components/Milestones";
 import TransactionsFeed from "../components/TransactionsFeed";
 import "./Explore.scss";
@@ -14,16 +18,24 @@ import { ExploreState } from "./ExploreState";
  */
 class Explore extends Component<ExploreProps, ExploreState> {
     /**
+     * Networks.
+     */
+    private readonly _networks: INetworkConfiguration[];
+
+    /**
      * Create a new instance of Explore.
      * @param props The props.
      */
     constructor(props: ExploreProps) {
         super(props);
 
+        const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration");
+        this._networks = configService.get().networks;
+
         this.state = {
             hash: "",
             hashType: "transaction",
-            network: "mainnet",
+            network: this._networks[0].network,
             isValid: false,
             validMessage: ""
         };
@@ -73,11 +85,17 @@ class Explore extends Component<ExploreProps, ExploreState> {
                         <Select
                             value={this.state.network}
                             onChange={e => this.setState(
-                                { network: e.target.value as NetworkType }, () => this.validate())}
+                                { network: e.target.value as Network }, () => this.validate())}
                             selectSize="small"
                         >
-                            <option value="mainnet">MainNet</option>
-                            <option value="devnet">DevNet</option>
+                            {this._networks.map(networkConfig => (
+                                <option
+                                    value={networkConfig.network}
+                                    key={networkConfig.network}
+                                >
+                                    {networkConfig.label}
+                                </option>
+                            ))}
                         </Select>
                     </Fieldset>
                     <FormActions>
@@ -126,7 +144,7 @@ class Explore extends Component<ExploreProps, ExploreState> {
      * Load the data from the tangle.
      */
     private async navigate(): Promise<void> {
-        const network = this.state.network === "mainnet" ? "" : `/${this.state.network}`;
+        const network = this.state.network === this._networks[0].network ? "" : `/${this.state.network}`;
 
         this.props.history.push(`/${this.state.hashType}/${this.state.hash.toUpperCase()}${network}`);
     }

@@ -1,4 +1,5 @@
-import { NetworkType } from "../../models/services/networkType";
+import { Transaction } from "@iota/core";
+import { Network } from "../../models/network";
 
 export interface TransactionDecoderState {
     /**
@@ -19,5 +20,5 @@ export interface TransactionDecoderState {
     /**
      * The network.
      */
-    network: NetworkType;
+    network: Network;
 }

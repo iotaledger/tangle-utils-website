@@ -1,9 +1,11 @@
-import { asTransactionObject } from "@iota/transaction-converter";
 import moment from "moment";
 import React, { Component, ReactNode } from "react";
 import { FaChevronLeft } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
+import { IConfiguration } from "../../models/config/IConfiguration";
+import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
+import { ConfigurationService } from "../../services/configurationService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import Confirmation from "./Confirmation";
 import "./TransactionSummary.scss";
@@ -18,6 +20,11 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
      * The tangle cache service.
      */
     private readonly _tangleCacheService: TangleCacheService;
+
+    /**
+     * Networks.
+     */
+    private readonly _networks: INetworkConfiguration[];
 
     /**
      * Is the component mounted.
@@ -37,6 +44,9 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
         super(props);
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
+        const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration");
+        this._networks = configService.get().networks;
+
         this._mounted = false;
 
         this.state = {
@@ -50,25 +60,22 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
     public async componentDidMount(): Promise<void> {
         this._mounted = true;
 
-        const trytes = await this._tangleCacheService.getTransactions([this.props.hash], this.props.network);
+        const cachedTransactions =
+            await this._tangleCacheService.getTransactions([this.props.hash], this.props.network);
 
-        if (this._mounted && trytes && trytes.length > 0) {
-            const confirmationStates =
-                await this._tangleCacheService.getTransactionConfirmationStates(
-                    [this.props.hash], this.props.network);
+        if (this._mounted && cachedTransactions.length > 0) {
+            const tx = cachedTransactions[0].tx;
 
-            const transactionObject = asTransactionObject(trytes[0]);
+            const timeMoment = moment(tx.timestamp * 1000);
 
-            const timeMoment = moment(transactionObject.timestamp * 1000);
-
-            const postDate = (transactionObject.timestamp * 1000) > Date.now() ? "in the future" : "ago";
+            const postDate = (tx.timestamp * 1000) > Date.now() ? "in the future" : "ago";
 
             this.setState({
-                transactionObject,
-                confirmationState: confirmationStates[0],
+                transactionObject: tx,
+                confirmationState: cachedTransactions[0].confirmationState,
                 time: timeMoment,
                 timeHuman: `${timeMoment.format("LLLL")} - ${moment.duration(moment().diff(timeMoment)).humanize()} ${postDate}`,
-                valueIota: `${transactionObject.value} i`
+                valueIota: `${tx.value} i`
             });
 
             this._dateTimer = setInterval(
@@ -97,7 +104,7 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
      * @returns The node to render.
      */
     public render(): ReactNode {
-        const network = this.props.network === "mainnet" ? "" : `/${this.props.network}`;
+        const network = this.props.network === this._networks[0].network ? "" : `/${this.props.network}`;
 
         return (
             <div className="transaction-summary">

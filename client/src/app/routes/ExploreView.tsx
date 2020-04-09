@@ -4,8 +4,12 @@ import { Button, ClipboardHelper, Form, FormStatus, Heading } from "iota-react-c
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { UnitsHelper } from "../../helpers/unitsHelper";
+import { IConfiguration } from "../../models/config/IConfiguration";
+import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { HashType } from "../../models/hashType";
-import { NetworkType } from "../../models/services/networkType";
+import { ICachedTransaction } from "../../models/ICachedTransaction";
+import { Network } from "../../models/network";
+import { ConfigurationService } from "../../services/configurationService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import BundleObject from "../components/BundleObject";
 import InlineCurrency from "../components/InlineCurrency";
@@ -25,6 +29,11 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
     private readonly _tangleCacheService: TangleCacheService;
 
     /**
+     * Networks.
+     */
+    private readonly _networks: INetworkConfiguration[];
+
+    /**
      * Is the component mounted.
      */
     private _mounted: boolean;
@@ -37,14 +46,20 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
         super(props);
 
         this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
+
+        const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration");
+        this._networks = configService.get().networks;
+
         this._mounted = false;
 
         let paramHash = "";
         let paramHashChecksum = "";
         let paramHashType: HashType = "transaction";
-        let paramNetwork: NetworkType = "mainnet";
+        let paramNetwork: Network = this._networks[0].network;
 
         if (this.props.match && this.props.match.params) {
+            const netNames = this._networks.map(n => n.network);
+
             if (this.props.match.params.hash &&
                 this.props.match.params.hash.length > 0 &&
                 this.props.hashType &&
@@ -60,9 +75,8 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                     }
                 }
             }
-            if (this.props.match.params.network === "mainnet" ||
-                this.props.match.params.network === "devnet") {
-                paramNetwork = this.props.match.params.network;
+            if (netNames.includes(this.props.match.params.network as Network)) {
+                paramNetwork = this.props.match.params.network as Network;
             }
         }
 
@@ -109,7 +123,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
     public render(): ReactNode {
         return (
             <div className="explore">
-                {!this.state.transactionTrytes && !this.state.transactionHashes && (
+                {!this.state.cachedTransaction && !this.state.transactionHashes && (
                     <Form>
                         <FormStatus
                             message={this.state.status}
@@ -119,12 +133,12 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                     </Form>
                 )}
                 {this.state.hashType === "transaction" &&
-                    this.state.transactionTrytes && (
+                    this.state.cachedTransaction && (
                         <React.Fragment>
                             <Heading level={1}>Transaction</Heading>
                             <TransactionObject
                                 hash={this.state.hash}
-                                trytes={this.state.transactionTrytes}
+                                cached={this.state.cachedTransaction}
                                 network={this.state.network}
                             />
                         </React.Fragment>
@@ -236,7 +250,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                 },
                 async () => {
                     try {
-                        let transactionTrytes: string | undefined;
+                        let cachedTransaction: ICachedTransaction | undefined;
                         let transactionHashes: string[] | undefined;
                         let total = 0;
                         let checksum = "";
@@ -246,10 +260,11 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                         let transactionsCount = "";
 
                         if (this.state.hashType === "transaction") {
-                            const response = await this._tangleCacheService.getTransactions(
-                                [this.state.hash], this.state.network);
-                            if (response && response.length > 0) {
-                                transactionTrytes = response[0];
+                            const cachedTransactions =
+                                await this._tangleCacheService.getTransactions(
+                                    [this.state.hash], this.state.network);
+                            if (cachedTransactions.length > 0) {
+                                cachedTransaction = cachedTransactions[0];
                             } else {
                                 status = "Unable to find transaction on the tangle.";
                             }
@@ -295,7 +310,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                             this.setState({
                                 isBusy: false,
                                 status,
-                                transactionTrytes,
+                                cachedTransaction,
                                 transactionHashes,
                                 transactionsCount,
                                 balance,

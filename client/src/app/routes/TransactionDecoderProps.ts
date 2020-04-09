@@ -1,5 +1,5 @@
 import { RouteComponentProps } from "react-router-dom";
-import { NetworkType } from "../../models/services/networkType";
+import { Network } from "../../models/network";
 
 export interface TransactionDecoderProps extends RouteComponentProps<{
     /**
@@ -10,7 +10,7 @@ export interface TransactionDecoderProps extends RouteComponentProps<{
     /**
      * The network.
      */
-    network?: NetworkType;
+    network?: Network;
 }> {
     /**
      * Bust

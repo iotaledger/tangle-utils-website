@@ -1,5 +1,7 @@
+import { ConfirmationState } from "../../models/api/confirmationState";
 import { HashType } from "../../models/hashType";
-import { NetworkType } from "../../models/services/networkType";
+import { ICachedTransaction } from "../../models/ICachedTransaction";
+import { Network } from "../../models/network";
 
 export interface ExploreViewState {
     /**
@@ -35,7 +37,7 @@ export interface ExploreViewState {
     /**
      * The transaction from the tangle.
      */
-    transactionTrytes?: string;
+    cachedTransaction?: ICachedTransaction;
 
     /**
      * The transaction hashes from the tangle.
@@ -50,7 +52,7 @@ export interface ExploreViewState {
     /**
      * The network.
      */
-    network: NetworkType;
+    network: Network;
 
     /**
      * The balance for an address.

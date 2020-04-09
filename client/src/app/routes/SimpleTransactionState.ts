@@ -1,4 +1,4 @@
-import { NetworkType } from "../../models/services/networkType";
+import { Network } from "../../models/network";
 
 export interface SimpleTransactionState {
     /**
@@ -34,7 +34,7 @@ export interface SimpleTransactionState {
     /**
      * Trytes version of the text.
      */
-    network: NetworkType;
+    network: Network;
 
     /**
      * The transaction hash for the attached message.

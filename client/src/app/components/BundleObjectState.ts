@@ -1,4 +1,4 @@
-import { Transaction } from "@iota/transaction-converter";
+import { Transaction } from "@iota/core";
 import { ConfirmationState } from "../../models/confirmationState";
 import { ICurrencySettings } from "../../models/services/ICurrencySettings";
 
@@ -18,7 +18,7 @@ export interface BundleObjectState {
             /**
              * The transaction.
              */
-            tx: Transaction;
+            transaction: Transaction;
             /**
              * The value converted.
              */

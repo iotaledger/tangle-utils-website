@@ -72,31 +72,17 @@ class App extends Component<RouteComponentProps, AppState> {
             const configId = process.env.REACT_APP_CONFIG_ID || "local";
             const config = await configService.load(`/data/config.${configId}.json`);
 
-            if (!config.nodeMainnet) {
-                config.nodeMainnet = {
-                    provider: "https://nodes.iota.org:443",
-                    depth: 3,
-                    mwm: 14
-                };
-            }
-
-            if (!config.nodeMainnet) {
-                config.nodeMainnet = {
-                    provider: "https://nodes.devnet.iota.org:443",
-                    depth: 3,
-                    mwm: 9
-                };
-            }
-
             ServiceFactory.register("configuration", () => configService);
             ServiceFactory.register("local-storage", () => new LocalStorageService());
             ServiceFactory.register("tangle-cache", () => new TangleCacheService(config));
-            ServiceFactory.register("transactions", () => new TransactionsClient(config.apiEndpoint));
+            ServiceFactory.register("transactions", () => new TransactionsClient(config.apiEndpoint, config.networks));
             ServiceFactory.register("api-client", () => new ApiClient(config.apiEndpoint));
 
             this._settingsService = new SettingsService();
             ServiceFactory.register("settings", () => this._settingsService);
             ServiceFactory.register("currency", () => new CurrencyService(config.apiEndpoint));
+
+            ServiceFactory.register("network-config", () => config.networks);
 
             this._configuration = config;
 

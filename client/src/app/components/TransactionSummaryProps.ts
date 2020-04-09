@@ -1,4 +1,4 @@
-import { NetworkType } from "../../models/services/networkType";
+import { Network } from "../../models/network";
 
 export interface TransactionSummaryProps {
     /**
@@ -9,5 +9,5 @@ export interface TransactionSummaryProps {
     /**
      * The network to use.
      */
-    network: NetworkType;
+    network: Network;
 }
