@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.4
+
+* Added support for customizing zmq transaction message
+
 ## v1.4.3
 
 * Refactored to simplify code for additional networks
