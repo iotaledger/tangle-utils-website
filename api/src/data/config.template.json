@@ -9,6 +9,7 @@
                 "mwm": 14
             },
             "zmqEndpoint": "tcp://zmq.iota.org:5556",
+            "zmqTransactionMessage": "tx_trytes",
             "permaNodeEndpoint": "http://chronicle01.mainnet.iota.cafe:4000/api",
             "coordinatorAddress": "EQSAUZXULTTYZCLNJNTXQTQHOMOFZERHTCGTXOLTVAHKSA9OGAZDEKECURBRIXIJWNPFCQIOVFVVXJVD9"
         },
@@ -21,6 +22,7 @@
                 "mwm": 9
             },
             "zmqEndpoint": "tcp://zmq.devnet.iota.org:5556",
+            "zmqTransactionMessage": "trytes",
             "coordinatorAddress": "EQQFCZBIHRHWPXKMTOLMYUYPCN9XLMJPYZVFJSAY9FQHCCLWTOLLUGKKMXYFDBOOYFBLBI9WUEILGECYM"
         }
     ],

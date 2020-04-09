@@ -32,6 +32,11 @@ export interface INetworkConfiguration {
     zmqEndpoint?: string;
 
     /**
+     * The zmq message to monitor.
+     */
+    zmqTransactionMessage?: string;
+
+    /**
      * The address of the coordinator.
      */
     coordinatorAddress: string;

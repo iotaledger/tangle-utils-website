@@ -201,8 +201,10 @@ export class TransactionsService {
         this.stopZmq();
 
         for (const network in this._zmqServices) {
+            const config = this._networkConfigurations.find(n => n.network === network);
+            const txMessage = config.zmqTransactionMessage || "tx_trytes";
             this._subscriptionIds[network] = await this._zmqServices[network].subscribe(
-                "tx_trytes", async (evnt: string, message: ITxTrytes) => {
+                txMessage, async (evnt: string, message: ITxTrytes) => {
                     if (!this._transactions[network][message.hash]) {
                         this._totals[network]++;
                         const tx = asTransactionObject(message.trytes);
