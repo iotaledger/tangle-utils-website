@@ -1,19 +1,18 @@
-import { Network } from "../network";
-
 export interface ITransactionsSubscriptionMessage {
+    /**
+     * The subscription id created.
+     */
+    subscriptionId: string;
+
     /**
      * The latest transactions.
      */
-    transactions: {
-        [key in Network]?: { [hash: string]: number }
-    };
+    transactions: { [hash: string]: number };
 
     /**
      * The tps counts.
      */
-    tps: {
-        [key in Network]?: number[];
-    };
+    tps: number[];
 
     /**
      * The interval for the tps data.

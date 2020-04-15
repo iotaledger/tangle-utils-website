@@ -75,7 +75,20 @@ class App extends Component<RouteComponentProps, AppState> {
             ServiceFactory.register("configuration", () => configService);
             ServiceFactory.register("local-storage", () => new LocalStorageService());
             ServiceFactory.register("tangle-cache", () => new TangleCacheService(config));
-            ServiceFactory.register("transactions", () => new TransactionsClient(config.apiEndpoint, config.networks));
+
+            for (const netConfig of config.networks) {
+                ServiceFactory.register(
+                    `transactions-${netConfig.network}`,
+                    serviceName => {
+                        const c = config.networks.find(n => n.network === serviceName.substring(13));
+
+                        if (c) {
+                            return new TransactionsClient(config.apiEndpoint, c);
+                        }
+                    }
+                );
+            }
+
             ServiceFactory.register("api-client", () => new ApiClient(config.apiEndpoint));
 
             this._settingsService = new SettingsService();

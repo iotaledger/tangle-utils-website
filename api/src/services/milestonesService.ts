@@ -1,6 +1,5 @@
 import { ServiceFactory } from "../factories/serviceFactory";
 import { INetworkConfiguration } from "../models/configuration/INetworkConfiguration";
-import { Network } from "../models/network";
 import { IAddress } from "../models/zmq/IAddress";
 import { MilestoneStoreService } from "./milestoneStoreService";
 import { ZmqService } from "./zmqService";
@@ -10,16 +9,14 @@ import { ZmqService } from "./zmqService";
  */
 export class MilestonesService {
     /**
-     * The network configurations.
+     * The network configuration.
      */
-    private readonly _networkConfigurations: INetworkConfiguration[];
+    private readonly _config: INetworkConfiguration;
 
     /**
      * The zmq service.
      */
-    private readonly _zmqServices: {
-        [key in Network]?: ZmqService
-    };
+    private _zmqService: ZmqService;
 
     /**
      * The milestone store service.
@@ -29,16 +26,12 @@ export class MilestonesService {
     /**
      * Subscription ids.
      */
-    private readonly _subscriptionIds: {
-        [key in Network]?: string
-    };
+    private _subscriptionId: string;
 
     /**
      * Last updates
      */
-    private readonly _lastUpdates: {
-        [key in Network]?: number
-    };
+    private _lastUpdate: number;
 
     /**
      * Timer id.
@@ -53,8 +46,7 @@ export class MilestonesService {
     /**
      * The most recent milestones.
      */
-    private readonly _milestones: {
-        [key in Network]?: {
+    private _milestones: {
             /**
              * The transaction hash.
              */
@@ -63,49 +55,33 @@ export class MilestonesService {
              * The milestone index.
              */
             milestoneIndex: number;
-        }[]
-    };
+        }[];
 
     /**
      * Create a new instance of MilestoneService.
-     * @param networkConfigurations The network configurations.
+     * @param networkConfiguration The network configuration.
      */
-    constructor(networkConfigurations: INetworkConfiguration[]) {
-        this._networkConfigurations = networkConfigurations;
-
-        this._zmqServices = {};
-        this._milestones = {};
-        this._subscriptionIds = {};
-        this._lastUpdates = {};
+    constructor(networkConfiguration: INetworkConfiguration) {
+        this._config = networkConfiguration;
     }
 
     /**
      * Initialise the milestones.
      */
     public async init(): Promise<void> {
-        for (const networkConfig of this._networkConfigurations) {
-            const zmqService = ServiceFactory.get<ZmqService>(`zmq-${networkConfig.network}`);
-
-            if (zmqService) {
-                this._zmqServices[networkConfig.network] = zmqService;
-                this._milestones[networkConfig.network] = [];
-            }
-        }
+        this._zmqService = ServiceFactory.get<ZmqService>(`zmq-${this._config.network}`);
+        this._milestones = [];
 
         this._milestoneStoreService = ServiceFactory.get<MilestoneStoreService>("milestone-store");
 
         if (this._milestoneStoreService) {
-            for (const network in this._zmqServices) {
-                const store = await this._milestoneStoreService.get(network);
-                if (store && store.indexes) {
-                    this._milestones[network] = store.indexes;
-                }
+            const store = await this._milestoneStoreService.get(this._config.network);
+            if (store && store.indexes) {
+                this._milestones = store.indexes;
             }
         }
 
-        for (const network in this._zmqServices) {
-            await this.initNetwork(network as Network);
-        }
+        await this.initNetwork();
 
         this.startTimer();
     }
@@ -116,23 +92,18 @@ export class MilestonesService {
     public async reset(): Promise<void> {
         this.stopTimer();
 
-        for (const network in this._zmqServices) {
-            this.closeNetwork(network as Network);
-        }
+        this.closeNetwork();
 
-        for (const network in this._zmqServices) {
-            await this.initNetwork(network as Network);
-        }
+        await this.initNetwork();
 
         this.startTimer();
     }
 
     /**
      * Get the milestones for the request network.
-     * @param network The network to get.
      * @returns The milestones for the network.
      */
-    public getMilestones(network: Network): {
+    public getMilestones(): {
         /**
          * The transaction hash.
          */
@@ -142,37 +113,34 @@ export class MilestonesService {
          */
         milestoneIndex: number;
     }[] {
-        return this._milestones[network];
+        return this._milestones;
     }
 
     /**
      * Initialise network.
-     * @param network The network to initialise.
      */
-    private async initNetwork(network: Network): Promise<void> {
-        const conf = this._networkConfigurations.find(nc => nc.network === network);
-
-        this._subscriptionIds[network] = await this._zmqServices[network].subscribeAddress(
-            conf.coordinatorAddress,
+    private async initNetwork(): Promise<void> {
+        this._subscriptionId = await this._zmqService.subscribeAddress(
+            this._config.coordinatorAddress,
             async (evnt: string, message: IAddress) => {
-                if (message.address === conf.coordinatorAddress) {
-                    this._lastUpdates[network] = Date.now();
+                if (message.address === this._config.coordinatorAddress) {
+                    this._lastUpdate = Date.now();
 
-                    if (!this._milestones[network].find(m => m.milestoneIndex === message.milestoneIndex)) {
-                        this._milestones[network].unshift({
+                    if (!this._milestones.find(m => m.milestoneIndex === message.milestoneIndex)) {
+                        this._milestones.unshift({
                             hash: message.transaction,
                             milestoneIndex: message.milestoneIndex
                         });
-                        this._milestones[network] = this._milestones[network].slice(0, 100);
+                        this._milestones = this._milestones.slice(0, 100);
 
                         if (this._milestoneStoreService) {
                             try {
                                 await this._milestoneStoreService.set({
-                                    network,
-                                    indexes: this._milestones[network]
+                                    network: this._config.network,
+                                    indexes: this._milestones
                                 });
                             } catch (err) {
-                                console.error(`Failed writing ${network} milestone store`, err);
+                                console.error(`Failed writing ${this._config.network} milestone store`, err);
                             }
                         }
                     }
@@ -182,12 +150,11 @@ export class MilestonesService {
 
     /**
      * Closedown network.
-     * @param network The network to closedown.
      */
-    private closeNetwork(network: Network): void {
-        if (this._subscriptionIds[network]) {
-            this._zmqServices[network].unsubscribe(this._subscriptionIds[network]);
-            delete this._subscriptionIds[network];
+    private closeNetwork(): void {
+        if (this._subscriptionId) {
+            this._zmqService.unsubscribe(this._subscriptionId);
+            this._subscriptionId = undefined;
         }
     }
 
@@ -202,16 +169,14 @@ export class MilestonesService {
                     this._updating = true;
                     const now = Date.now();
 
-                    for (const network in this._zmqServices) {
-                        try {
+                    try {
 
-                            if (now - this._lastUpdates[network] > 5 * 60 * 1000) {
-                                this.closeNetwork(network as Network);
-                                await this.initNetwork(network as Network);
-                            }
-                        } catch (err) {
-                            console.error(`Failed processing ${network} idle timeout`, err);
+                        if (now - this._lastUpdate > 5 * 60 * 1000) {
+                            this.closeNetwork();
+                            await this.initNetwork();
                         }
+                    } catch (err) {
+                        console.error(`Failed processing ${this._config.network} idle timeout`, err);
                     }
 
                     this._updating = false;

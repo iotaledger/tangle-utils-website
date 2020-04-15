@@ -2,7 +2,6 @@ import { asTransactionObject } from "@iota/transaction-converter";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { ITransactionsSubscriptionMessage } from "../models/api/ITransactionsSubscriptionMessage";
 import { INetworkConfiguration } from "../models/configuration/INetworkConfiguration";
-import { Network } from "../models/network";
 import { ITxTrytes } from "../models/zmq/ITxTrytes";
 import { TrytesHelper } from "../utils/trytesHelper";
 import { ZmqService } from "./zmqService";
@@ -17,37 +16,29 @@ export class TransactionsService {
     private static readonly TPS_INTERVAL: number = 5;
 
     /**
-     * The network configurations.
+     * The network configuration.
      */
-    private readonly _networkConfigurations: INetworkConfiguration[];
+    private readonly _config: INetworkConfiguration;
 
     /**
      * The zmq service.
      */
-    private readonly _zmqServices: {
-        [key in Network]?: ZmqService
-    };
+    private _zmqService: ZmqService;
 
     /**
      * The most recent transactions.
      */
-    private readonly _transactions: {
-        [key in Network]?: { [hash: string]: number }
-    };
+    private _transactions: { [hash: string]: number };
 
     /**
      * The tps history.
      */
-    private readonly _tps: {
-        [key in Network]?: number[]
-    };
+    private _tps: number[];
 
     /**
      * The current total since last timestamp.
      */
-    private readonly _totals: {
-        [key in Network]?: number
-    };
+    private _total: number;
 
     /**
      * The last time we sent any data.
@@ -57,9 +48,7 @@ export class TransactionsService {
     /**
      * Subscription ids.
      */
-    private readonly _subscriptionIds: {
-        [key in Network]?: string
-    };
+    private _subscriptionId: string;
 
     /**
      * Timer id.
@@ -75,21 +64,16 @@ export class TransactionsService {
      * The callback for different events.
      */
     private readonly _subscribers: {
-        [id: string]: (data: ITransactionsSubscriptionMessage) => void;
+        [id: string]: (data: ITransactionsSubscriptionMessage) => Promise<void>;
     };
 
     /**
      * Create a new instance of TransactionsService.
-     * @param networkConfigurations The network configurations.
+     * @param networkConfiguration The network configuration.
      */
-    constructor(networkConfigurations: INetworkConfiguration[]) {
-        this._networkConfigurations = networkConfigurations;
+    constructor(networkConfiguration: INetworkConfiguration) {
+        this._config = networkConfiguration;
 
-        this._zmqServices = {};
-        this._transactions = {};
-        this._tps = {};
-        this._totals = {};
-        this._subscriptionIds = {};
         this._subscribers = {};
         this._lastSend = 0;
         this._timerCounter = 0;
@@ -99,16 +83,10 @@ export class TransactionsService {
      * Initialise the service.
      */
     public async init(): Promise<void> {
-        for (const networkConfig of this._networkConfigurations) {
-            const zmqService = ServiceFactory.get<ZmqService>(`zmq-${networkConfig.network}`);
-
-            if (zmqService) {
-                this._zmqServices[networkConfig.network] = zmqService;
-                this._transactions[networkConfig.network] = {};
-                this._tps[networkConfig.network] = [];
-                this._totals[networkConfig.network] = 0;
-            }
-        }
+        this._zmqService = ServiceFactory.get<ZmqService>(`zmq-${this._config.network}`);
+        this._transactions = {};
+        this._tps = [];
+        this._total = 0;
 
         this.startTimer();
         await this.startZmq();
@@ -130,7 +108,7 @@ export class TransactionsService {
      * @param callback The callback to call with data for the event.
      * @returns An id to use for unsubscribe.
      */
-    public subscribe(callback: (data: ITransactionsSubscriptionMessage) => void): string {
+    public subscribe(callback: (data: ITransactionsSubscriptionMessage) => Promise<void>): string {
         const id = TrytesHelper.generateHash(27);
         this._subscribers[id] = callback;
         return id;
@@ -149,35 +127,24 @@ export class TransactionsService {
      */
     private async updateSubscriptions(): Promise<void> {
         const now = Date.now();
-        let anyMore = false;
-        let anyMore5 = false;
 
-        for (const network in this._zmqServices) {
-            const tranCount = Object.keys(this._transactions[network]).length;
-            if (tranCount >= 1) {
-                anyMore = true;
-            }
-            if (tranCount >= 5) {
-                anyMore5 = true;
-            }
-        }
+        const tranCount = Object.keys(this._transactions).length;
 
-        if (anyMore5 ||
-            (now - this._lastSend > 15000 && anyMore)) {
-
-            const data: ITransactionsSubscriptionMessage = {
-                transactions: this._transactions,
-                tps: this._tps,
-                tpsInterval: TransactionsService.TPS_INTERVAL
-            };
+        if (tranCount >= 5 ||
+            (now - this._lastSend > 15000 && tranCount > 0)) {
 
             for (const subscriptionId in this._subscribers) {
-                this._subscribers[subscriptionId](data);
+                const data: ITransactionsSubscriptionMessage = {
+                    subscriptionId,
+                    transactions: this._transactions,
+                    tps: this._tps,
+                    tpsInterval: TransactionsService.TPS_INTERVAL
+                };
+
+                await this._subscribers[subscriptionId](data);
             }
 
-            for (const network in this._zmqServices) {
-                this._transactions[network] = {};
-            }
+            this._transactions = {};
             this._lastSend = now;
         }
     }
@@ -186,12 +153,10 @@ export class TransactionsService {
      * Handle the transactions per second calculations.
      */
     private handleTps(): void {
-        for (const network in this._zmqServices) {
-            const lastTotal = this._totals[network];
-            this._totals[network] = 0;
-            this._tps[network].unshift(lastTotal);
-            this._tps[network] = this._tps[network].slice(0, 100);
-        }
+        const lastTotal = this._total;
+        this._total = 0;
+        this._tps.unshift(lastTotal);
+        this._tps = this._tps.slice(0, 100);
     }
 
     /**
@@ -200,30 +165,25 @@ export class TransactionsService {
     private async startZmq(): Promise<void> {
         this.stopZmq();
 
-        for (const network in this._zmqServices) {
-            const config = this._networkConfigurations.find(n => n.network === network);
-            const txMessage = config.zmqTransactionMessage || "tx_trytes";
-            this._subscriptionIds[network] = await this._zmqServices[network].subscribe(
-                txMessage, async (evnt: string, message: ITxTrytes) => {
-                    if (!this._transactions[network][message.hash]) {
-                        this._totals[network]++;
-                        const tx = asTransactionObject(message.trytes);
-                        this._transactions[network][message.hash] = tx.value;
-                    }
-                });
-        }
+        const txMessage = this._config.zmqTransactionMessage || "tx_trytes";
+        this._subscriptionId = await this._zmqService.subscribe(
+            txMessage, async (evnt: string, message: ITxTrytes) => {
+                if (!this._transactions[message.hash]) {
+                    this._total++;
+                    const tx = asTransactionObject(message.trytes);
+                    this._transactions[message.hash] = tx.value;
+                }
+            });
     }
 
     /**
      * Stop the zmq services.
      */
     private stopZmq(): void {
-        for (const network in this._zmqServices) {
-            this._totals[network] = 0;
-            if (this._subscriptionIds[network]) {
-                this._zmqServices[network].unsubscribe(this._subscriptionIds[network]);
-                delete this._subscriptionIds[network];
-            }
+        this._total = 0;
+        if (this._subscriptionId) {
+            this._zmqService.unsubscribe(this._subscriptionId);
+            this._subscriptionId = undefined;
         }
     }
 

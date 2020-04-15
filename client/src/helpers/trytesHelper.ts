@@ -1,4 +1,5 @@
-import { asciiToTrytes, trytesToAscii } from "@iota/converter";
+import { asciiToTrytes, trytesToAscii, TRYTE_ALPHABET } from "@iota/converter";
+import { randomBytes } from "crypto";
 import { TextHelper } from "./textHelper";
 
 /**
@@ -95,4 +96,21 @@ export class TrytesHelper {
         };
     }
 
+    /**
+     * Generate a random hash.
+     * @param length The length of the hash.
+     * @returns The hash.
+     */
+    public static generateHash(length: number = 81): string {
+        let hash = "";
+
+        while (hash.length < length) {
+            const byte = randomBytes(1);
+            if (byte[0] < 243) {
+                hash += TRYTE_ALPHABET.charAt(byte[0] % 27);
+            }
+        }
+
+        return hash;
+    }
 }

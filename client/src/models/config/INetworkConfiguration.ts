@@ -34,7 +34,7 @@ export interface INetworkConfiguration {
     /**
      * The zmq message to monitor.
      */
-    zmqTransactionMessage?: string;
+    zmqTransactionMessage?: "tx_trytes" | "trytes";
 
     /**
      * The address of the coordinator.

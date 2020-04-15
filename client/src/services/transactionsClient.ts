@@ -1,10 +1,10 @@
 import SocketIOClient from "socket.io-client";
-import { IResponse } from "../models/api/IResponse";
+import { TrytesHelper } from "../helpers/trytesHelper";
+import { ITransactionsSubscribeRequest } from "../models/api/ITransactionsSubscribeRequest";
 import { ITransactionsSubscribeResponse } from "../models/api/ITransactionsSubscribeResponse";
 import { ITransactionsSubscriptionMessage } from "../models/api/ITransactionsSubscriptionMessage";
 import { ITransactionsUnsubscribeRequest } from "../models/api/ITransactionsUnsubscribeRequest";
 import { INetworkConfiguration } from "../models/config/INetworkConfiguration";
-import { Network } from "../models/network";
 
 /**
  * Class to handle api communications.
@@ -16,9 +16,9 @@ export class TransactionsClient {
     private readonly _endpoint: string;
 
     /**
-     * Network configurations.
+     * Network configuration.
      */
-    private readonly _networkConfigurations: INetworkConfiguration[];
+    private readonly _config: INetworkConfiguration;
 
     /**
      * The web socket to communicate on.
@@ -29,24 +29,20 @@ export class TransactionsClient {
      * The latest transactions.
      */
     private readonly _transactions: {
-        [key in Network]?: {
-            /**
-             * The tx hash.
-             */
-            hash: string;
-            /**
-             * The tx value.
-             */
-            value: number
-        }[]
-    };
+        /**
+         * The tx hash.
+         */
+        hash: string;
+        /**
+         * The tx value.
+         */
+        value: number
+    }[];
 
     /**
      * The tps.
      */
-    private _tps: {
-        [key in Network]?: number[]
-    };
+    private _tps: number[];
 
     /**
      * The tps interval.
@@ -54,23 +50,29 @@ export class TransactionsClient {
     private _tspInterval: number;
 
     /**
+     * The subscription id.
+     */
+    private _subscriptionId?: string;
+
+    /**
+     * The subscribers.
+     */
+    private readonly _subscribers: { [id: string]: () => Promise<void> };
+
+    /**
      * Create a new instance of TransactionsClient.
      * @param endpoint The endpoint for the api.
-     * @param networkConfigurations The network configurations.
+     * @param networkConfiguration The network configurations.
      */
-    constructor(endpoint: string, networkConfigurations: INetworkConfiguration[]) {
+    constructor(endpoint: string, networkConfiguration: INetworkConfiguration) {
         this._endpoint = endpoint;
-        this._networkConfigurations = networkConfigurations;
+        this._config = networkConfiguration;
 
         this._socket = SocketIOClient(this._endpoint);
-        this._transactions = {};
-        this._tps = {};
+        this._transactions = [];
+        this._tps = [];
         this._tspInterval = 1;
-
-        for (const networkConfig of this._networkConfigurations) {
-            this._transactions[networkConfig.network] = [];
-            this._tps[networkConfig.network] = [];
-        }
+        this._subscribers = {};
     }
 
     /**
@@ -78,77 +80,95 @@ export class TransactionsClient {
      * @param callback Callback called with transactions data.
      * @returns The response from the request.
      */
-    public async subscribe(callback: () => void): Promise<ITransactionsSubscribeResponse> {
-        return new Promise<ITransactionsSubscribeResponse>((resolve, reject) => {
+    public async subscribe(callback: () => Promise<void>): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
             try {
-                this._socket.emit("subscribe");
-                this._socket.on("subscribe", (subscribeResponse: ITransactionsSubscribeResponse) => {
-                    resolve(subscribeResponse);
-                });
-                this._socket.on("transactions", (transactionsResponse: ITransactionsSubscriptionMessage) => {
-                    this._tps = transactionsResponse.tps;
-                    this._tspInterval = transactionsResponse.tpsInterval;
+                const subscriptionId = TrytesHelper.generateHash(27);
 
-                    for (const networkConfig of this._networkConfigurations) {
-                        const networkTrans = this._transactions[networkConfig.network];
+                this._subscribers[subscriptionId] = callback;
 
-                        if (networkTrans) {
-                            const newHashes = transactionsResponse.transactions[networkConfig.network];
+                if (this._subscriptionId) {
+                    resolve(subscriptionId);
+                } else {
+                    const subscribeRequest: ITransactionsSubscribeRequest = {
+                        network: this._config.network
+                    };
+                    this._socket.emit("subscribe", subscribeRequest);
+                    this._socket.on("subscribe", (subscribeResponse: ITransactionsSubscribeResponse) => {
+                        if (subscribeResponse.success) {
+                            this._subscriptionId = subscribeResponse.subscriptionId;
+                            resolve(subscriptionId);
+                        } else {
+                            reject(new Error(`There was a problem communicating with the API.\n${subscribeResponse.message}`));
+                        }
+                    });
+                    this._socket.on("transactions", async (transactionsResponse: ITransactionsSubscriptionMessage) => {
+                        if (transactionsResponse.subscriptionId === this._subscriptionId) {
+                            this._tps = transactionsResponse.tps;
+                            this._tspInterval = transactionsResponse.tpsInterval;
+
+                            const newHashes = transactionsResponse.transactions;
                             if (newHashes) {
                                 const newHashKeys = Object.keys(newHashes);
                                 for (const newHashKey of newHashKeys) {
-                                    if (networkTrans.findIndex(t => t.hash === newHashKey) === -1) {
-                                        networkTrans.unshift({
+                                    if (this._transactions.findIndex(t => t.hash === newHashKey) === -1) {
+                                        this._transactions.unshift({
                                             hash: newHashKey,
                                             value: newHashes[newHashKey]
                                         });
                                     }
                                 }
 
-                                if (networkTrans.length > 200) {
-                                    networkTrans.splice(200, networkTrans.length - 200);
+                                if (this._transactions.length > 200) {
+                                    this._transactions.splice(200, this._transactions.length - 200);
                                 }
                             }
+
+                            for (const sub in this._subscribers) {
+                                await this._subscribers[sub]();
+                            }
                         }
-                    }
-                    callback();
-                });
+                    });
+                }
             } catch (err) {
-                resolve({
-                    success: false,
-                    message: `There was a problem communicating with the API.\n${err}`
-                });
+                reject(new Error(`There was a problem communicating with the API.\n${err}`));
             }
         });
     }
 
     /**
      * Perform a request to unsubscribe to transactions events.
-     * @param request The request to send.
+     * @param subscriptionId The subscription id.
      * @returns The response from the request.
      */
-    public async unsubscribe(request: ITransactionsUnsubscribeRequest): Promise<IResponse> {
-        return new Promise<IResponse>((resolve, reject) => {
+    public async unsubscribe(subscriptionId: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
             try {
-                this._socket.emit("unsubscribe", request);
-                this._socket.on("unsubscribe", (subscribeResponse: IResponse) => {
-                    resolve(subscribeResponse);
-                });
+                delete this._subscribers[subscriptionId];
+
+                if (this._subscriptionId && Object.keys(this._subscribers).length === 0) {
+                    const unsubscribeRequest: ITransactionsUnsubscribeRequest = {
+                        network: this._config.network,
+                        subscriptionId: this._subscriptionId
+                    };
+                    this._socket.emit("unsubscribe", unsubscribeRequest);
+                    this._socket.on("unsubscribe", () => {
+                        resolve();
+                    });
+                } else {
+                    resolve();
+                }
             } catch (err) {
-                resolve({
-                    success: false,
-                    message: `There was a problem communicating with the API.\n${err}`
-                });
+                reject(new Error(`There was a problem communicating with the API.\n${err}`));
             }
         });
     }
 
     /**
      * Get the transactions as trytes.
-     * @param network The network the get the transactions.
      * @returns The trytes.
      */
-    public getTransactions(network: Network): {
+    public getTransactions(): {
         /**
          * The tx hash.
          */
@@ -158,16 +178,15 @@ export class TransactionsClient {
          */
         value: number
     }[] {
-        return this._transactions[network] || [];
+        return this._transactions;
     }
 
     /**
      * Calculate the tps.
-     * @param network The network to get the tps for.
      * @returns The tps.
      */
-    public getTps(network: Network): number {
-        const tps = this._tps[network];
+    public getTps(): number {
+        const tps = this._tps;
         if (tps && tps.length > 0) {
             const oneMinuteCount = Math.min(60 / this._tspInterval, tps.length);
             const total = tps.slice(0, oneMinuteCount).reduce((a, b) => a + b, 0);

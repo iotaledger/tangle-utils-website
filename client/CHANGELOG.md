@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.5
+
+* Separation of combined network messages.
+
 ## v1.4.3
 
 * Refactored to simplify code for additional networks
