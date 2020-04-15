@@ -14,12 +14,21 @@ To configure the `api` you should copy `./src/data/config.template.json` to `./s
         "secretAccessKey": "AWS-SECRET-ACCESS-KEY",  /* AWS Secret e.g. MUo72/UQWgL97QArGt9HVUA */
         "dbTablePrefix": "DATABASE-TABLE-PREFIX"     /* Prefix for database table names e.g. tangle-utils-dev- */
     },
-    "zmqMainNet": {                                  /* ZMQ Configuration for mainnet */
-        "endpoint": "ZMQ-ENDPOINT"                   /* IRI Node ZMQ Endpoint */
-    },
-    "zmqDevNet": {                                   /* ZMQ Configuration for devnet */
-        "endpoint": "ZMQ-ENDPOINT"                   /* IRI Node ZMQ Endpoint */
-    },
+    "networks": [                                    /* List of networks to support */
+        {
+            "network": "mainnet",                    /* Network type */
+            "label": "MainNet",                      /* Nework display label */
+            "node": {                                /* Node for requests */
+                "provider": "NODE_1",                /* Address for node */
+                "depth": 3,                          /* Depth for network */             
+                "mwm": 14                            /* MWM for network */
+            },
+            "zmqEndpoint": "ZMQ_ENDPOINT",           /* Endpoint for zmq subscriptions */
+            "zmqTransactionMessage": "tx_trytes",    /* ZMQ message for transaction data */
+            "permaNodeEndpoint": "PERMA_ENDPOINT",   /* Permanode endpoint for historical transactions */
+            "coordinatorAddress": "AAA...ZZZ"        /* Coordinator Address on network */
+        }
+    ],
     "allowedDomains": [                              /* A list of domains for the cors allow-origin */
         "www.mydomain.com"
     ]
