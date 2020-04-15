@@ -7,8 +7,8 @@ import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { PowHelper } from "../../helpers/powHelper";
 import { TextHelper } from "../../helpers/textHelper";
+import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
 import { SettingsService } from "../../services/settingsService";
@@ -29,7 +29,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
     /**
      * Networks.
      */
-    private readonly _networks: INetworkConfiguration[];
+    private readonly _networks: IClientNetworkConfiguration[];
 
     /**
      * The service to store settings.
@@ -258,7 +258,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
             },
             async () => {
                 try {
-                    const networkConfigs = ServiceFactory.get<INetworkConfiguration[]>("network-config");
+                    const networkConfigs = ServiceFactory.get<IClientNetworkConfiguration[]>("network-config");
                     const networkConfig = networkConfigs.find(n => n.network === this.props.network);
 
                     if (networkConfig) {

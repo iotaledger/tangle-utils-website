@@ -3,8 +3,8 @@ import React, { Component, ReactNode } from "react";
 import { FaChevronLeft } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
+import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { ConfigurationService } from "../../services/configurationService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import Confirmation from "./Confirmation";
@@ -24,7 +24,7 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
     /**
      * Networks.
      */
-    private readonly _networks: INetworkConfiguration[];
+    private readonly _networks: IClientNetworkConfiguration[];
 
     /**
      * Is the component mounted.

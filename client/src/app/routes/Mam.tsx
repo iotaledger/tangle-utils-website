@@ -4,8 +4,8 @@ import { Button, Fieldrow, Fieldset, Form, FormActions, Heading, Input, Select, 
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { TrytesHelper } from "../../helpers/trytesHelper";
+import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
 import { TangleCacheService } from "../../services/tangleCacheService";
@@ -25,7 +25,7 @@ class Mam extends Component<MamProps, MamState> {
     /**
      * Networks.
      */
-    private readonly _networks: INetworkConfiguration[];
+    private readonly _networks: IClientNetworkConfiguration[];
 
     /**
      * Update timer.

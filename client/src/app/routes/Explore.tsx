@@ -2,8 +2,8 @@ import { isHash, isTag, isTrytesOfExactLength } from "@iota/validators";
 import { Button, Fieldrow, Fieldset, Form, FormActions, Heading, Input, Select } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
+import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { HashType } from "../../models/hashType";
 import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
@@ -20,7 +20,7 @@ class Explore extends Component<ExploreProps, ExploreState> {
     /**
      * Networks.
      */
-    private readonly _networks: INetworkConfiguration[];
+    private readonly _networks: IClientNetworkConfiguration[];
 
     /**
      * Create a new instance of Explore.

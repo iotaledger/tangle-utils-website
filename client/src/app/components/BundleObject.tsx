@@ -4,8 +4,8 @@ import React, { Component, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { UnitsHelper } from "../../helpers/unitsHelper";
+import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { ConfirmationState } from "../../models/confirmationState";
 import { ConfigurationService } from "../../services/configurationService";
 import { CurrencyService } from "../../services/currencyService";
@@ -28,7 +28,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
     /**
      * Networks.
      */
-    private readonly _networks: INetworkConfiguration[];
+    private readonly _networks: IClientNetworkConfiguration[];
 
     /**
      * The currency service.

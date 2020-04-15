@@ -12,8 +12,8 @@ import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { TrytesHelper } from "../../helpers/trytesHelper";
 import { UnitsHelper } from "../../helpers/unitsHelper";
+import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { ConfirmationState } from "../../models/confirmationState";
 import { ConfigurationService } from "../../services/configurationService";
 import { TangleCacheService } from "../../services/tangleCacheService";
@@ -35,7 +35,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
     /**
      * Networks.
      */
-    private readonly _networks: INetworkConfiguration[];
+    private readonly _networks: IClientNetworkConfiguration[];
 
     /**
      * Confirmation state timer.
@@ -161,7 +161,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
                 let milestoneIndex = -1;
 
                 if (thisGroup.length >= 2) {
-                    const networkConfigs = ServiceFactory.get<INetworkConfiguration[]>("network-config");
+                    const networkConfigs = ServiceFactory.get<IClientNetworkConfiguration[]>("network-config");
                     const networkConfig = networkConfigs.find(n => n.network === this.props.network);
 
                     if (networkConfig) {

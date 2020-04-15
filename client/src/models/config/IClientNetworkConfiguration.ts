@@ -5,7 +5,7 @@ import { INodeConfiguration } from "./INodeConfiguration";
 /**
  * Definition of network configuration file.
  */
-export interface INetworkConfiguration {
+export interface IClientNetworkConfiguration {
     /**
      * The network.
      */
@@ -20,21 +20,6 @@ export interface INetworkConfiguration {
      * The node to communicate with.
      */
     node: INodeConfiguration;
-
-    /**
-     * The permanode endpoint.
-     */
-    permaNodeEndpoint?: string;
-
-    /**
-     * The zmq feed to communicate with.
-     */
-    zmqEndpoint?: string;
-
-    /**
-     * The zmq message to monitor.
-     */
-    zmqTransactionMessage?: "tx_trytes" | "trytes";
 
     /**
      * The address of the coordinator.

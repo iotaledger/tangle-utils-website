@@ -2,8 +2,8 @@ import { Unit } from "@iota/unit-converter";
 import { Fieldset, Form, Input, Select } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
+import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { ValueFilter } from "../../models/services/valueFilter";
 import { ConfigurationService } from "../../services/configurationService";
 import { SettingsService } from "../../services/settingsService";
@@ -28,7 +28,7 @@ class TransactionsFeed extends Component<any, TransactionsFeedState> {
     /**
      * Networks.
      */
-    private readonly _networks: INetworkConfiguration[];
+    private readonly _networks: IClientNetworkConfiguration[];
 
     /**
      * Create a new instance of TransactionsFeed.

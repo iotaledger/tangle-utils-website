@@ -2,8 +2,8 @@ import { asTransactionObject } from "@iota/transaction-converter";
 import { Fieldrow, Fieldset, Form, Heading, TextArea } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
+import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
 import TransactionObject from "../components/TransactionObject";
@@ -17,7 +17,7 @@ class TransactionDecoder extends Component<TransactionDecoderProps, TransactionD
     /**
      * Networks.
      */
-    private readonly _networks: INetworkConfiguration[];
+    private readonly _networks: IClientNetworkConfiguration[];
 
     /**
      * Create a new instance of TransactionDecoder.

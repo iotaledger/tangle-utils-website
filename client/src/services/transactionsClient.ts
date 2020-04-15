@@ -4,7 +4,7 @@ import { ITransactionsSubscribeRequest } from "../models/api/ITransactionsSubscr
 import { ITransactionsSubscribeResponse } from "../models/api/ITransactionsSubscribeResponse";
 import { ITransactionsSubscriptionMessage } from "../models/api/ITransactionsSubscriptionMessage";
 import { ITransactionsUnsubscribeRequest } from "../models/api/ITransactionsUnsubscribeRequest";
-import { INetworkConfiguration } from "../models/config/INetworkConfiguration";
+import { IClientNetworkConfiguration } from "../models/config/IClientNetworkConfiguration";
 
 /**
  * Class to handle api communications.
@@ -18,7 +18,7 @@ export class TransactionsClient {
     /**
      * Network configuration.
      */
-    private readonly _config: INetworkConfiguration;
+    private readonly _config: IClientNetworkConfiguration;
 
     /**
      * The web socket to communicate on.
@@ -64,7 +64,7 @@ export class TransactionsClient {
      * @param endpoint The endpoint for the api.
      * @param networkConfiguration The network configurations.
      */
-    constructor(endpoint: string, networkConfiguration: INetworkConfiguration) {
+    constructor(endpoint: string, networkConfiguration: IClientNetworkConfiguration) {
         this._endpoint = endpoint;
         this._config = networkConfiguration;
 

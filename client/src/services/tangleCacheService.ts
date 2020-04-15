@@ -3,8 +3,8 @@ import { mamFetch, MamMode } from "@iota/mam.js";
 import { asTransactionObject } from "@iota/transaction-converter";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { FindTransactionsMode } from "../models/api/findTransactionsMode";
+import { IClientNetworkConfiguration } from "../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../models/config/IConfiguration";
-import { INetworkConfiguration } from "../models/config/INetworkConfiguration";
 import { HashType } from "../models/hashType";
 import { ICachedTransaction } from "../models/ICachedTransaction";
 import { Network } from "../models/network";
@@ -400,7 +400,7 @@ export class TangleCacheService {
             if (!addrBalance[addressHash] ||
                 now - addrBalance[addressHash].balance > 30000) {
                 try {
-                    const networkConfigs = ServiceFactory.get<INetworkConfiguration[]>("network-config");
+                    const networkConfigs = ServiceFactory.get<IClientNetworkConfiguration[]>("network-config");
                     const networkConfig = networkConfigs.find(n => n.network === network);
 
                     if (networkConfig) {

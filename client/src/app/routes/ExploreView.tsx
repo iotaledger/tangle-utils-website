@@ -4,8 +4,8 @@ import { Button, ClipboardHelper, Form, FormStatus, Heading } from "iota-react-c
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { UnitsHelper } from "../../helpers/unitsHelper";
+import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { INetworkConfiguration } from "../../models/config/INetworkConfiguration";
 import { HashType } from "../../models/hashType";
 import { ICachedTransaction } from "../../models/ICachedTransaction";
 import { Network } from "../../models/network";
@@ -31,7 +31,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
     /**
      * Networks.
      */
-    private readonly _networks: INetworkConfiguration[];
+    private readonly _networks: IClientNetworkConfiguration[];
 
     /**
      * Is the component mounted.
