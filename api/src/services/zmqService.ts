@@ -234,10 +234,6 @@ export class ZmqService {
                         }
 
                         delete this._subscriptions[eventKey];
-
-                        if (Object.keys(this._subscriptions).length === 0) {
-                            this.disconnect();
-                        }
                     }
                     return;
                 }
@@ -248,7 +244,7 @@ export class ZmqService {
     /**
      * Connect the ZMQ service.
      */
-    private async connect(): Promise<void> {
+    public async connect(): Promise<void> {
         try {
             if (!this._connecting && !this._socket) {
                 this._connecting = true;
@@ -314,13 +310,11 @@ export class ZmqService {
      */
     private async keepAlive(): Promise<void> {
         if (!this._connecting) {
-            if (Object.keys(this._subscriptions).length > 0) {
-                if (Date.now() - this._lastMessageTime > 15000) {
-                    console.log("Idle disconnect", this._endpoint);
-                    this._lastMessageTime = Date.now();
-                    this.disconnect();
-                    await this.connect();
-                }
+            if (Date.now() - this._lastMessageTime > 30000) {
+                console.log("Idle disconnect", this._endpoint);
+                this._lastMessageTime = Date.now();
+                this.disconnect();
+                await this.connect();
             }
         }
     }
