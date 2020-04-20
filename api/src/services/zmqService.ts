@@ -286,7 +286,7 @@ export class ZmqService {
     /**
      * Disconnect the ZQM service.
      */
-    private disconnect(): void {
+    public disconnect(): void {
         const localSocket = this._socket;
         this._socket = undefined;
         if (localSocket) {
@@ -310,7 +310,7 @@ export class ZmqService {
      */
     private async keepAlive(): Promise<void> {
         if (!this._connecting) {
-            if (Date.now() - this._lastMessageTime > 30000) {
+            if (Date.now() - this._lastMessageTime > 15000) {
                 console.log("Idle disconnect", this._endpoint);
                 this._lastMessageTime = Date.now();
                 this.disconnect();

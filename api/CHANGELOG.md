@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.6
+
+* Added comnet
+
 ## v1.4.5
 
 * Separation of combined network messages.
