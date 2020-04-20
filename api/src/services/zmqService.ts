@@ -70,7 +70,7 @@ export class ZmqService {
         this._lastMessageTime = 0;
         this._connecting = false;
 
-        setInterval(() => this.keepAlive(), 5000);
+        setInterval(() => this.keepAlive(), 15000);
     }
 
     /**

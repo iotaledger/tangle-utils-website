@@ -14,7 +14,7 @@ export class TransactionsClient {
     /**
      * The web socket to communicate on.
      */
-    private static _socket: SocketIOClient.Socket;
+    private readonly _socket: SocketIOClient.Socket;
 
     /**
      * The endpoint for performing communications.
@@ -69,9 +69,7 @@ export class TransactionsClient {
         this._endpoint = endpoint;
         this._config = networkConfiguration;
 
-        if (!TransactionsClient._socket) {
-            TransactionsClient._socket = SocketIOClient(this._endpoint);
-        }
+        this._socket = SocketIOClient(this._endpoint);
         this._transactions = [];
         this._tps = [];
         this._tspInterval = 1;
@@ -96,8 +94,8 @@ export class TransactionsClient {
                     const subscribeRequest: ITransactionsSubscribeRequest = {
                         network: this._config.network
                     };
-                    TransactionsClient._socket.emit("subscribe", subscribeRequest);
-                    TransactionsClient._socket.on("subscribe", (subscribeResponse: ITransactionsSubscribeResponse) => {
+                    this._socket.emit("subscribe", subscribeRequest);
+                    this._socket.on("subscribe", (subscribeResponse: ITransactionsSubscribeResponse) => {
                         if (subscribeResponse.network === this._config.network) {
                             if (subscribeResponse.success) {
                                 this._subscriptionId = subscribeResponse.subscriptionId;
@@ -107,7 +105,7 @@ export class TransactionsClient {
                             }
                         }
                     });
-                    TransactionsClient._socket.on(
+                    this._socket.on(
                         "transactions",
                         async (transactionsResponse: ITransactionsSubscriptionMessage) => {
                             if (transactionsResponse.subscriptionId === this._subscriptionId) {
@@ -158,8 +156,8 @@ export class TransactionsClient {
                         network: this._config.network,
                         subscriptionId: this._subscriptionId
                     };
-                    TransactionsClient._socket.emit("unsubscribe", unsubscribeRequest);
-                    TransactionsClient._socket.on("unsubscribe", () => {
+                    this._socket.emit("unsubscribe", unsubscribeRequest);
+                    this._socket.on("unsubscribe", () => {
                         resolve();
                     });
                 } else {
