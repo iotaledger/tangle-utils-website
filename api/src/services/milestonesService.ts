@@ -47,15 +47,15 @@ export class MilestonesService {
      * The most recent milestones.
      */
     private _milestones: {
-            /**
-             * The transaction hash.
-             */
-            hash: string;
-            /**
-             * The milestone index.
-             */
-            milestoneIndex: number;
-        }[];
+        /**
+         * The transaction hash.
+         */
+        hash: string;
+        /**
+         * The milestone index.
+         */
+        milestoneIndex: number;
+    }[];
 
     /**
      * Create a new instance of MilestoneService.
@@ -126,7 +126,8 @@ export class MilestonesService {
                 if (message.address === this._config.coordinatorAddress) {
                     this._lastUpdate = Date.now();
 
-                    if (!this._milestones.find(m => m.milestoneIndex === message.milestoneIndex)) {
+                    if (this._milestones.length === 0 ||
+                        message.milestoneIndex > this._milestones[0].milestoneIndex) {
                         this._milestones.unshift({
                             hash: message.transaction,
                             milestoneIndex: message.milestoneIndex
