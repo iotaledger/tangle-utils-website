@@ -1,5 +1,3 @@
-import { Network } from "../../models/network";
-
 export interface BundleObjectProps {
     /**
      * The hash of the bundle.
@@ -14,5 +12,5 @@ export interface BundleObjectProps {
     /**
      * The network to use.
      */
-    network: Network;
+    network: string;
 }

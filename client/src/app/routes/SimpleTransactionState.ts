@@ -1,5 +1,3 @@
-import { Network } from "../../models/network";
-
 export interface SimpleTransactionState {
     /**
      * Tag for the transaction.
@@ -34,7 +32,7 @@ export interface SimpleTransactionState {
     /**
      * Trytes version of the text.
      */
-    network: Network;
+    network: string;
 
     /**
      * The transaction hash for the attached message.

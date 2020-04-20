@@ -500,20 +500,30 @@ export class ZmqService {
                 default: {
                     // Is this an address event
                     if (/^[A-Z9]{81}$/.test(event)) {
-                        data = <IAddress>{
-                            address: messageParams[0],
-                            transaction: messageParams[1],
-                            milestoneIndex: parseInt(messageParams[2], 10)
-                        };
+                        let mi = parseInt(messageParams[2], 10);
+                        let txIndex = 1;
+                        if (Number.isNaN(mi)) {
+                            mi = parseInt(messageParams[3], 10);
+                            txIndex++;
+                        }
+                        if (!Number.isNaN(mi)) {
+                            data = <IAddress>{
+                                address: messageParams[0],
+                                transaction: messageParams[txIndex],
+                                milestoneIndex: mi
+                            };
+                        }
                     }
                 }
             }
 
-            for (let i = 0; i < this._subscriptions[event].length; i++) {
-                try {
-                    await this._subscriptions[event][i].callback(event, data);
-                } catch (err) {
-                    console.error(`Exceptionin ZMQ callback`, event, data, err);
+            if (data) {
+                for (let i = 0; i < this._subscriptions[event].length; i++) {
+                    try {
+                        await this._subscriptions[event][i].callback(event, data);
+                    } catch (err) {
+                        console.error(`Exceptionin ZMQ callback`, event, data, err);
+                    }
                 }
             }
         }

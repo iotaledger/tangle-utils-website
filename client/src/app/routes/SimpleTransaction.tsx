@@ -9,7 +9,6 @@ import { PowHelper } from "../../helpers/powHelper";
 import { TextHelper } from "../../helpers/textHelper";
 import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
 import { SettingsService } from "../../services/settingsService";
 import { TangleCacheService } from "../../services/tangleCacheService";
@@ -174,7 +173,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                 <label>Network</label>
                                 <Select
                                     value={this.state.network}
-                                    onChange={e => this.setState({ network: e.target.value as Network })}
+                                    onChange={e => this.setState({ network: e.target.value })}
                                     selectSize="small"
                                     disabled={this.state.isBusy}
                                 >

@@ -4,7 +4,6 @@ import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
 import TransactionObject from "../components/TransactionObject";
 import { TransactionDecoderProps } from "./TransactionDecoderProps";
@@ -30,15 +29,17 @@ class TransactionDecoder extends Component<TransactionDecoderProps, TransactionD
         this._networks = configService.get().networks;
 
         let paramTrytes = "";
-        let paramNetwork: Network = this._networks[0].network;
+        let paramNetwork = this._networks[0].network;
 
         if (this.props.match && this.props.match.params) {
             const netNames = this._networks.map(n => n.network);
             if (this.props.match.params.trytes) {
                 paramTrytes = this.props.match.params.trytes.toUpperCase();
             }
-            if (netNames.includes(this.props.match.params.network as Network)) {
-                paramNetwork = this.props.match.params.network as Network;
+            if (netNames &&
+                this.props.match.params.network &&
+                netNames.includes(this.props.match.params.network)) {
+                paramNetwork = this.props.match.params.network;
             }
         }
 

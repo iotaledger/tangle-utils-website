@@ -6,7 +6,6 @@ import { ServiceFactory } from "../../factories/serviceFactory";
 import { TrytesHelper } from "../../helpers/trytesHelper";
 import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
-import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import "./Mam.scss";
@@ -59,7 +58,7 @@ class Mam extends Component<MamProps, MamState> {
         let paramRoot = "";
         let paramMode: MamMode = "public";
         let paramKey = "";
-        let paramNetwork: Network = this._networks[0].network;
+        let paramNetwork = this._networks[0].network;
 
         if (this.props.match && this.props.match.params) {
             const netNames = this._networks.map(n => n.network);
@@ -85,8 +84,8 @@ class Mam extends Component<MamProps, MamState> {
                     paramProps[i] === "private" ||
                     paramProps[i] === "restricted") {
                     paramMode = paramProps[i] as MamMode;
-                } else if (netNames.includes(paramProps[i] as Network)) {
-                    paramNetwork = paramProps[i] as Network;
+                } else if (netNames.includes(paramProps[i])) {
+                    paramNetwork = paramProps[i];
                 } else if (isTrytes(paramProps[i])) {
                     possibleKey = paramProps[i];
                 }
@@ -185,7 +184,7 @@ class Mam extends Component<MamProps, MamState> {
                         <label>Network</label>
                         <Select
                             value={this.state.network}
-                            onChange={e => this.setState({ network: e.target.value as Network })}
+                            onChange={e => this.setState({ network: e.target.value })}
                             selectSize="small"
                             disabled={this.state.isBusy}
                         >

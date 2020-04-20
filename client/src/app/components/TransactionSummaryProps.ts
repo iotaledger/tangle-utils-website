@@ -1,5 +1,3 @@
-import { Network } from "../../models/network";
-
 export interface TransactionSummaryProps {
     /**
      * The hash for the object.
@@ -9,5 +7,5 @@ export interface TransactionSummaryProps {
     /**
      * The network to use.
      */
-    network: Network;
+    network: string;
 }

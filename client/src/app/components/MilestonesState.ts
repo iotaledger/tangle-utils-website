@@ -1,5 +1,3 @@
-import { Network } from "../../models/network";
-
 export interface MilestonesState {
     /**
      * The milestones.

@@ -1,6 +1,3 @@
-import { Transaction } from "@iota/core";
-import { Network } from "../../models/network";
-
 export interface TransactionDecoderState {
     /**
      * The trytes for the transaction.
@@ -20,5 +17,5 @@ export interface TransactionDecoderState {
     /**
      * The network.
      */
-    network: Network;
+    network: string;
 }

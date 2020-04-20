@@ -8,7 +8,6 @@ import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkC
 import { IConfiguration } from "../../models/config/IConfiguration";
 import { HashType } from "../../models/hashType";
 import { ICachedTransaction } from "../../models/ICachedTransaction";
-import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
 import { TangleCacheService } from "../../services/tangleCacheService";
 import BundleObject from "../components/BundleObject";
@@ -55,7 +54,7 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
         let paramHash = "";
         let paramHashChecksum = "";
         let paramHashType: HashType = "transaction";
-        let paramNetwork: Network = this._networks[0].network;
+        let paramNetwork = this._networks[0].network;
 
         if (this.props.match && this.props.match.params) {
             const netNames = this._networks.map(n => n.network);
@@ -75,8 +74,10 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                     }
                 }
             }
-            if (netNames.includes(this.props.match.params.network as Network)) {
-                paramNetwork = this.props.match.params.network as Network;
+            if (netNames &&
+                this.props.match.params.network &&
+                netNames.includes(this.props.match.params.network)) {
+                paramNetwork = this.props.match.params.network;
             }
         }
 

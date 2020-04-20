@@ -20,6 +20,16 @@
                 "mwm": 9
             },
             "coordinatorAddress": "EQQFCZBIHRHWPXKMTOLMYUYPCN9XLMJPYZVFJSAY9FQHCCLWTOLLUGKKMXYFDBOOYFBLBI9WUEILGECYM"
+        },
+        {
+            "network": "comnet",
+            "label": "ComNet",
+            "node": {
+                "provider": "https://comnet.iota.works:443",
+                "depth": 3,
+                "mwm": 10
+            },
+            "coordinatorAddress": "ZNCCPOTBCDZXCBQYBWUYYFO9PLRHNAROWOS9KGMYWNVIXWGYGUSJBZUTUQBNQRADHPUEONZZTYGVMSRZD"
         }
     ],
     "googleMapsKey": "GOOGLE-MAPS-KEY",

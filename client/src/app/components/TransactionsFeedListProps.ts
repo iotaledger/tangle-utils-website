@@ -1,11 +1,10 @@
 import { Unit } from "@iota/unit-converter";
-import { Network } from "../../models/network";
 
 export interface TransactionsFeedListProps {
     /**
      * The network to display.
      */
-    network: Network;
+    network: string;
 
     /**
      * The network name to display.

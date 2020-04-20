@@ -5,7 +5,6 @@ import { ServiceFactory } from "../../factories/serviceFactory";
 import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
 import { HashType } from "../../models/hashType";
-import { Network } from "../../models/network";
 import { ConfigurationService } from "../../services/configurationService";
 import Milestones from "../components/Milestones";
 import TransactionsFeed from "../components/TransactionsFeed";
@@ -85,7 +84,7 @@ class Explore extends Component<ExploreProps, ExploreState> {
                         <Select
                             value={this.state.network}
                             onChange={e => this.setState(
-                                { network: e.target.value as Network }, () => this.validate())}
+                                { network: e.target.value }, () => this.validate())}
                             selectSize="small"
                         >
                             {this._networks.map(networkConfig => (

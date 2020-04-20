@@ -1,7 +1,5 @@
-import { ConfirmationState } from "../../models/api/confirmationState";
 import { HashType } from "../../models/hashType";
 import { ICachedTransaction } from "../../models/ICachedTransaction";
-import { Network } from "../../models/network";
 
 export interface ExploreViewState {
     /**
@@ -52,7 +50,7 @@ export interface ExploreViewState {
     /**
      * The network.
      */
-    network: Network;
+    network: string;
 
     /**
      * The balance for an address.

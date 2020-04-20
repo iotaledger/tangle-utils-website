@@ -7,7 +7,6 @@ import { IClientNetworkConfiguration } from "../models/config/IClientNetworkConf
 import { IConfiguration } from "../models/config/IConfiguration";
 import { HashType } from "../models/hashType";
 import { ICachedTransaction } from "../models/ICachedTransaction";
-import { Network } from "../models/network";
 import { ApiClient } from "./apiClient";
 import { ApiMamClient } from "./apiMamClient";
 
@@ -32,7 +31,7 @@ export class TangleCacheService {
         /**
          * Network.
          */
-        [key in Network]?: {
+        [network: string]: {
             /**
              * Transaction hash.
              */
@@ -47,7 +46,7 @@ export class TangleCacheService {
         /**
          * Network.
          */
-        [networkKey in Network]?: {
+        [network: string]: {
             /**
              * The hash type.
              */
@@ -81,7 +80,7 @@ export class TangleCacheService {
         /**
          * Network.
          */
-        [key in Network]?: {
+        [network: string]: {
             /**
              * The address hash.
              */
@@ -105,7 +104,7 @@ export class TangleCacheService {
         /**
          * Network.
          */
-        [key in Network]?: {
+        [network: string]: {
             /**
              * The root.
              */
@@ -163,7 +162,7 @@ export class TangleCacheService {
      * @returns The transactions hashes returned from the looked up type.
      */
     public async findTransactionHashes(
-        hashType: HashType, hash: string, network: Network): Promise<{
+        hashType: HashType, hash: string, network: string): Promise<{
             /**
              * The lookup hashes.
              */
@@ -230,7 +229,7 @@ export class TangleCacheService {
      * @param network Which network are we getting the transactions for.
      * @returns The trytes for the hashes.
      */
-    public async getTransactions(hashes: ReadonlyArray<string>, network: Network):
+    public async getTransactions(hashes: ReadonlyArray<string>, network: string):
         Promise<ICachedTransaction[]> {
         let cachedTransactions: ICachedTransaction[] | undefined;
         const tranCache = this._transactionCache[network];
@@ -304,7 +303,7 @@ export class TangleCacheService {
      * @param trytes The trytes of the transactions to cache.
      * @param network Which network are we getting the transactions for.
      */
-    public addTransactions(hashes: ReadonlyArray<string>, trytes: ReadonlyArray<string>, network: Network): void {
+    public addTransactions(hashes: ReadonlyArray<string>, trytes: ReadonlyArray<string>, network: string): void {
         const tranCache = this._transactionCache[network];
 
         if (tranCache) {
@@ -326,7 +325,7 @@ export class TangleCacheService {
      * @param hashes The hashes of the transactions to cache.
      * @param network Which network are we getting the transactions for.
      */
-    public removeTransactions(hashes: ReadonlyArray<string>, network: Network): void {
+    public removeTransactions(hashes: ReadonlyArray<string>, network: string): void {
         const tranCache = this._transactionCache[network];
 
         if (tranCache) {
@@ -346,7 +345,7 @@ export class TangleCacheService {
      */
     public async getBundleGroups(
         transactionHashes: ReadonlyArray<string>,
-        network: Network): Promise<ICachedTransaction[][]> {
+        network: string): Promise<ICachedTransaction[][]> {
         const cachedTransactions
             = await this.getTransactions(transactionHashes, network);
 
@@ -391,7 +390,7 @@ export class TangleCacheService {
      * @param network Which network are we getting the transactions for.
      * @returns The balance for the address.
      */
-    public async getAddressBalance(addressHash: string, network: Network): Promise<number> {
+    public async getAddressBalance(addressHash: string, network: string): Promise<number> {
         const addrBalance = this._addressBalances[network];
 
         if (addrBalance) {
@@ -439,7 +438,7 @@ export class TangleCacheService {
      * @param network Which network are we getting the transactions for.
      * @returns The balance for the address.
      */
-    public async getMamPacket(root: string, mode: MamMode, key: string, network: Network): Promise<{
+    public async getMamPacket(root: string, mode: MamMode, key: string, network: string): Promise<{
         /**
          * The payload at the given root.
          */
@@ -481,7 +480,7 @@ export class TangleCacheService {
      * @returns The transactions bundle group.
      */
     public async getTransactionBundleGroup(
-        transaction: ICachedTransaction, network: Network): Promise<ICachedTransaction[]> {
+        transaction: ICachedTransaction, network: string): Promise<ICachedTransaction[]> {
         let thisGroup: ICachedTransaction[] = [];
         if (transaction.tx.lastIndex === 0) {
             thisGroup = [transaction];
@@ -524,7 +523,7 @@ export class TangleCacheService {
         const now = Date.now();
 
         for (const net in this._transactionCache) {
-            const tranCache = this._transactionCache[net as Network];
+            const tranCache = this._transactionCache[net];
             if (tranCache) {
                 for (const tx in tranCache) {
                     if (now - tranCache[tx].cached >= this.STALE_TIME) {
@@ -535,7 +534,7 @@ export class TangleCacheService {
         }
 
         for (const net in this._findCache) {
-            const findCache = this._findCache[net as Network];
+            const findCache = this._findCache[net];
             if (findCache) {
                 for (const hashType in findCache) {
                     const hashCache = findCache[hashType as HashType];
@@ -552,7 +551,7 @@ export class TangleCacheService {
         }
 
         for (const net in this._addressBalances) {
-            const addrBalance = this._addressBalances[net as Network];
+            const addrBalance = this._addressBalances[net];
             if (addrBalance) {
                 for (const address in addrBalance) {
                     if (now - addrBalance[address].cached >= this.STALE_TIME) {
@@ -563,7 +562,7 @@ export class TangleCacheService {
         }
 
         for (const net in this._mam) {
-            const mamCache = this._mam[net as Network];
+            const mamCache = this._mam[net];
             if (mamCache) {
                 for (const root in mamCache) {
                     if (now - mamCache[root].cached >= this.STALE_TIME) {

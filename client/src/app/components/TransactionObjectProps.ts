@@ -1,5 +1,4 @@
 import { ICachedTransaction } from "../../models/ICachedTransaction";
-import { Network } from "../../models/network";
 
 export interface TransactionObjectProps {
     /**
@@ -25,5 +24,5 @@ export interface TransactionObjectProps {
     /**
      * The network to use.
      */
-    network: Network;
+    network: string;
 }
