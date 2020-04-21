@@ -81,7 +81,7 @@ export class MilestonesService {
             }
         }
 
-        await this.initNetwork();
+        this.initNetwork();
 
         this.startTimer();
     }
@@ -94,7 +94,7 @@ export class MilestonesService {
 
         this.closeNetwork();
 
-        await this.initNetwork();
+        this.initNetwork();
 
         this.startTimer();
     }
@@ -119,8 +119,8 @@ export class MilestonesService {
     /**
      * Initialise network.
      */
-    private async initNetwork(): Promise<void> {
-        this._subscriptionId = await this._zmqService.subscribeAddress(
+    private initNetwork(): void {
+        this._subscriptionId = this._zmqService.subscribeAddress(
             this._config.coordinatorAddress,
             async (evnt: string, message: IAddress) => {
                 if (message.address === this._config.coordinatorAddress) {
@@ -174,7 +174,7 @@ export class MilestonesService {
 
                         if (now - this._lastUpdate > 5 * 60 * 1000) {
                             this.closeNetwork();
-                            await this.initNetwork();
+                            this.initNetwork();
                         }
                     } catch (err) {
                         console.error(`Failed processing ${this._config.network} idle timeout`, err);

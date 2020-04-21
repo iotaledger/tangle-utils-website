@@ -14,7 +14,7 @@ export class TransactionsService {
     /**
      * The transaction per second interval.
      */
-    private static readonly TPS_INTERVAL: number = 5;
+    private static readonly TPS_INTERVAL: number = 10;
 
     /**
      * The network configuration.
@@ -99,20 +99,20 @@ export class TransactionsService {
         this._loggingService.log("Transaction::init", this._config.network);
 
         this.startTimer();
-        await this.startZmq();
+        this.startZmq();
     }
 
     /**
      * Reset the service.
      */
-    public async reset(): Promise<void> {
+    public reset(): void {
         this._loggingService.log("Transaction::reset", this._config.network);
 
         this.stopTimer();
         this.stopZmq();
 
         this.startTimer();
-        await this.startZmq();
+        this.startZmq();
     }
 
     /**
@@ -183,13 +183,13 @@ export class TransactionsService {
     /**
      * Start the zmq services.
      */
-    private async startZmq(): Promise<void> {
+    private startZmq(): void {
         this.stopZmq();
 
         this._loggingService.log("Transaction::startZmq", this._config.network);
 
         const txMessage = this._config.zmqTransactionMessage || "tx_trytes";
-        this._subscriptionId = await this._zmqService.subscribe(
+        this._subscriptionId = this._zmqService.subscribe(
             txMessage, async (evnt: string, message: ITxTrytes) => {
                 if (!this._transactions[message.hash]) {
                     this._total++;
