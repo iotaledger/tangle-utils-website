@@ -54,6 +54,11 @@ AppHelper.build(
             ServiceFactory.register("milestone-store", () => new MilestoneStoreService(config.dynamoDbConnection));
         }
 
+        for (const networkConfig of config.networks) {
+            const zmqService = ServiceFactory.get<ZmqService>(`zmq-${networkConfig.network}`);
+            zmqService.connect();
+        }
+
         const server = new Server(app);
         const socketServer = SocketIO(server);
         server.listen(port);
@@ -63,9 +68,6 @@ AppHelper.build(
         });
 
         for (const networkConfig of config.networks) {
-            const zmqService = ServiceFactory.get<ZmqService>(`zmq-${networkConfig.network}`);
-            zmqService.connect();
-
             const milestonesService = ServiceFactory.get<MilestonesService>(`milestones-${networkConfig.network}`);
             await milestonesService.init();
 
