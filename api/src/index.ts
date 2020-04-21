@@ -6,6 +6,7 @@ import { ISchedule } from "./models/app/ISchedule";
 import { INetworkConfiguration } from "./models/configuration/INetworkConfiguration";
 import { transactionsSubscribe } from "./routes/transactions/transactionsSubscribe";
 import { transactionsUnsubscribe } from "./routes/transactions/transactionsUnsubscribe";
+import { LoggingService } from "./services/loggingService";
 import { MilestonesService } from "./services/milestonesService";
 import { MilestoneStoreService } from "./services/milestoneStoreService";
 import { StateService } from "./services/stateService";
@@ -16,6 +17,8 @@ import { ScheduleHelper } from "./utils/scheduleHelper";
 
 const routes: IRoute[] = [
     { path: "/init", method: "get", func: "init" },
+    { path: "/logs", method: "get", func: "logs" },
+    { path: "/logs/clear", method: "get", func: "logsClear" },
     { path: "/currencies", method: "get", folder: "currency", func: "get" },
     { path: "/find-transactions", method: "get", folder: "tangle", func: "findTransactions" },
     { path: "/get-trytes", method: "post", folder: "tangle", func: "getTrytes" },
@@ -26,6 +29,8 @@ AppHelper.build(
     routes,
     async (app, config, port) => {
         const networkByName: { [id: string]: INetworkConfiguration } = {};
+
+        ServiceFactory.register("logging", () => new LoggingService());
 
         for (const networkConfig of config.networks) {
             networkByName[networkConfig.network] = networkConfig;

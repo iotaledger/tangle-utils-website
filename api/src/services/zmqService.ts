@@ -1,4 +1,5 @@
 import { Subscriber } from "zeromq";
+import { ServiceFactory } from "../factories/serviceFactory";
 import { IAddress } from "../models/zmq/IAddress";
 import { IAntn } from "../models/zmq/IAntn";
 import { IDnscc } from "../models/zmq/IDnscc";
@@ -17,6 +18,7 @@ import { ITx } from "../models/zmq/ITx";
 import { ITxTrytes } from "../models/zmq/ITxTrytes";
 import { ZmqEvent } from "../models/zmq/zmqEvents";
 import { TrytesHelper } from "../utils/trytesHelper";
+import { LoggingService } from "./loggingService";
 
 /**
  * Class to handle ZMQ service.
@@ -26,6 +28,11 @@ export class ZmqService {
      * The configuration for the service.
      */
     private readonly _endpoint: string;
+
+    /**
+     * The logging service.
+     */
+    private readonly _loggingService: LoggingService;
 
     /**
      * The connected socket.
@@ -69,6 +76,8 @@ export class ZmqService {
         this._subscriptions = {};
         this._lastMessageTime = 0;
         this._connecting = false;
+
+        this._loggingService = ServiceFactory.get<LoggingService>("logging");
 
         setInterval(() => this.keepAlive(), 15000);
     }
@@ -221,6 +230,8 @@ export class ZmqService {
      * @param subscriptionId The id to unsubscribe.
      */
     public unsubscribe(subscriptionId: string): void {
+        this._loggingService.log("Zmq::socket->unsubscribe", this._endpoint, subscriptionId);
+
         const keys = Object.keys(this._subscriptions);
         for (let i = 0; i < keys.length; i++) {
             const eventKey = keys[i];
@@ -229,7 +240,7 @@ export class ZmqService {
                     this._subscriptions[eventKey].splice(j, 1);
                     if (this._subscriptions[eventKey].length === 0) {
                         if (this._socket) {
-                            console.log("Unsubscribe", keys[i], this._endpoint);
+                            this._loggingService.log("Zmq::socket->unsubscribe", keys[i], this._endpoint);
                             this._socket.unsubscribe(eventKey);
                         }
 
@@ -246,17 +257,19 @@ export class ZmqService {
      */
     public async connect(): Promise<void> {
         try {
+            this._loggingService.log("Zmq::connect", this._endpoint);
+
             if (!this._connecting && !this._socket) {
                 this._connecting = true;
 
                 const localSocket = new Subscriber();
                 localSocket.connect(this._endpoint);
 
-                console.log("Connect", this._endpoint);
+                this._loggingService.log("Zmq::socket->connect", this._endpoint);
 
                 const keys = Object.keys(this._subscriptions);
                 for (let i = 0; i < keys.length; i++) {
-                    console.log("Subscribe", keys[i], this._endpoint);
+                    this._loggingService.log("Zmq::socket->subscribe", keys[i], this._endpoint);
                     localSocket.subscribe(keys[i]);
                 }
 
@@ -279,7 +292,7 @@ export class ZmqService {
             this._socket = undefined;
             this._connecting = false;
 
-            console.log("ZMQ Connect Failed", err);
+            this._loggingService.log("Zmq::connect Failed", err);
         }
     }
 
@@ -287,20 +300,22 @@ export class ZmqService {
      * Disconnect the ZQM service.
      */
     public disconnect(): void {
+        this._loggingService.log("Zmq::disconnect", this._endpoint);
+
         const localSocket = this._socket;
         this._socket = undefined;
         if (localSocket) {
             try {
                 const keys = Object.keys(this._subscriptions);
                 for (let i = 0; i < keys.length; i++) {
-                    console.log("Unsubscribe", keys[i], this._endpoint);
+                    this._loggingService.log("Zmq::socket->unsubscribe", keys[i], this._endpoint);
                     localSocket.unsubscribe(keys[i]);
                 }
 
-                console.log("Close", this._endpoint);
+                this._loggingService.log("Zmq::socket->close", this._endpoint);
                 localSocket.close();
             } catch (err) {
-                console.log("Error on close", err, this._endpoint);
+                this._loggingService.log("Zmq::socket->Error on close", err, this._endpoint);
             }
         }
     }
@@ -311,7 +326,7 @@ export class ZmqService {
     private async keepAlive(): Promise<void> {
         if (!this._connecting) {
             if (Date.now() - this._lastMessageTime > 15000) {
-                console.log("Idle disconnect", this._endpoint);
+                this._loggingService.log("Zmq::keepAlive", this._endpoint);
                 this._lastMessageTime = Date.now();
                 this.disconnect();
                 await this.connect();
@@ -330,11 +345,14 @@ export class ZmqService {
         if (!this._subscriptions[event]) {
             this._subscriptions[event] = [];
             if (this._socket) {
-                console.log("Subscribe", event, this._endpoint);
+                this._loggingService.log("Zmq::socket->subscribe", event, this._endpoint);
                 this._socket.subscribe(event);
             }
         }
         const id = TrytesHelper.generateHash(27);
+
+        this._loggingService.log("Zmq::subscribe", this._endpoint, id);
+
         this._subscriptions[event].push({ id, callback });
 
         await this.connect();

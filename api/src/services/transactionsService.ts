@@ -4,6 +4,7 @@ import { ITransactionsSubscriptionMessage } from "../models/api/ITransactionsSub
 import { INetworkConfiguration } from "../models/configuration/INetworkConfiguration";
 import { ITxTrytes } from "../models/zmq/ITxTrytes";
 import { TrytesHelper } from "../utils/trytesHelper";
+import { LoggingService } from "./loggingService";
 import { ZmqService } from "./zmqService";
 
 /**
@@ -19,6 +20,11 @@ export class TransactionsService {
      * The network configuration.
      */
     private readonly _config: INetworkConfiguration;
+
+    /**
+     * The logging service.
+     */
+    private readonly _loggingService: LoggingService;
 
     /**
      * The zmq service.
@@ -77,6 +83,8 @@ export class TransactionsService {
         this._subscribers = {};
         this._lastSend = 0;
         this._timerCounter = 0;
+
+        this._loggingService = ServiceFactory.get<LoggingService>("logging");
     }
 
     /**
@@ -88,6 +96,8 @@ export class TransactionsService {
         this._tps = [];
         this._total = 0;
 
+        this._loggingService.log("Transaction::init", this._config.network);
+
         this.startTimer();
         await this.startZmq();
     }
@@ -96,6 +106,8 @@ export class TransactionsService {
      * Reset the service.
      */
     public async reset(): Promise<void> {
+        this._loggingService.log("Transaction::reset", this._config.network);
+
         this.stopTimer();
         this.stopZmq();
 
@@ -110,6 +122,9 @@ export class TransactionsService {
      */
     public subscribe(callback: (data: ITransactionsSubscriptionMessage) => Promise<void>): string {
         const id = TrytesHelper.generateHash(27);
+
+        this._loggingService.log("Transaction::subscribe", this._config.network, id);
+
         this._subscribers[id] = callback;
         return id;
     }
@@ -119,6 +134,8 @@ export class TransactionsService {
      * @param subscriptionId The id to unsubscribe.
      */
     public unsubscribe(subscriptionId: string): void {
+        this._loggingService.log("Transaction::unsubscribe", this._config.network, subscriptionId);
+
         delete this._subscribers[subscriptionId];
     }
 
@@ -132,6 +149,8 @@ export class TransactionsService {
 
         if (tranCount >= 5 ||
             (now - this._lastSend > 15000 && tranCount > 0)) {
+
+            this._loggingService.log("Transaction::updateSubscriptions", this._config.network, tranCount);
 
             for (const subscriptionId in this._subscribers) {
                 const data: ITransactionsSubscriptionMessage = {
@@ -153,6 +172,8 @@ export class TransactionsService {
      * Handle the transactions per second calculations.
      */
     private handleTps(): void {
+        this._loggingService.log("Transaction::handleTps", this._config.network, this._total);
+
         const lastTotal = this._total;
         this._total = 0;
         this._tps.unshift(lastTotal);
@@ -164,6 +185,8 @@ export class TransactionsService {
      */
     private async startZmq(): Promise<void> {
         this.stopZmq();
+
+        this._loggingService.log("Transaction::startZmq", this._config.network);
 
         const txMessage = this._config.zmqTransactionMessage || "tx_trytes";
         this._subscriptionId = await this._zmqService.subscribe(
@@ -180,6 +203,8 @@ export class TransactionsService {
      * Stop the zmq services.
      */
     private stopZmq(): void {
+        this._loggingService.log("Transaction::stopZmq", this._config.network);
+
         this._total = 0;
         if (this._subscriptionId) {
             this._zmqService.unsubscribe(this._subscriptionId);
@@ -192,6 +217,8 @@ export class TransactionsService {
      */
     private startTimer(): void {
         this.stopTimer();
+        this._loggingService.log("Transaction::startTimer", this._config.network);
+
         this._timerId = setInterval(
             async () => {
                 if (this._timerCounter++ % TransactionsService.TPS_INTERVAL === 0) {
@@ -206,6 +233,8 @@ export class TransactionsService {
      * Stop the timer for tps.
      */
     private stopTimer(): void {
+        this._loggingService.log("Transaction::stopTimer", this._config.network);
+
         if (this._timerId) {
             clearInterval(this._timerId);
             this._timerId = undefined;
