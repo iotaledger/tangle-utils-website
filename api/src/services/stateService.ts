@@ -56,6 +56,9 @@ export class StateService extends AmazonDynamoDbService<IState> {
 
                 if (currency && currency.quote && currency.quote.EUR) {
                     currentState.coinMarketCapRateEUR = currency.quote.EUR.price;
+                    currentState.marketCapEur = currency.quote.EUR.market_cap;
+                    currentState.volume24h = currency.quote.EUR.volume_24h;
+                    currentState.percentageChange24h = currency.quote.EUR.percent_change_24h;
                     updated = true;
                 }
 
