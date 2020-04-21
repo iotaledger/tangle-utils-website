@@ -150,7 +150,7 @@ export class TransactionsService {
         if (tranCount >= 5 ||
             (now - this._lastSend > 15000 && tranCount > 0)) {
 
-            this._loggingService.log("Transaction::updateSubscriptions", this._config.network, tranCount);
+            // this._loggingService.log("Transaction::updateSubscriptions", this._config.network, tranCount);
 
             for (const subscriptionId in this._subscribers) {
                 const data: ITransactionsSubscriptionMessage = {
@@ -172,7 +172,7 @@ export class TransactionsService {
      * Handle the transactions per second calculations.
      */
     private handleTps(): void {
-        this._loggingService.log("Transaction::handleTps", this._config.network, this._total);
+        // this._loggingService.log("Transaction::handleTps", this._config.network, this._total);
 
         const lastTotal = this._total;
         this._total = 0;

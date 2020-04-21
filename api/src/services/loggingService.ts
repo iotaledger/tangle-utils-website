@@ -21,6 +21,8 @@ export class LoggingService {
         console.log(message, ...optionalParams);
 
         this._logs.push(`${message}: ${JSON.stringify(optionalParams)}`);
+
+        this._logs = this._logs.slice(-500);
     }
 
     /**
