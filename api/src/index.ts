@@ -64,7 +64,7 @@ AppHelper.build(
 
         for (const networkConfig of config.networks) {
             const zmqService = ServiceFactory.get<ZmqService>(`zmq-${networkConfig.network}`);
-            await zmqService.connect();
+            zmqService.connect();
 
             const milestonesService = ServiceFactory.get<MilestonesService>(`milestones-${networkConfig.network}`);
             await milestonesService.init();
