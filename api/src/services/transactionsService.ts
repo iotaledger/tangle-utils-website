@@ -197,16 +197,18 @@ export class TransactionsService {
                     this._transactions[message.hash] = tx.value;
                 }
             });
+
+        this._loggingService.log("Transaction::startZmq", this._config.network, this._subscriptionId);
     }
 
     /**
      * Stop the zmq services.
      */
     private stopZmq(): void {
-        this._loggingService.log("Transaction::stopZmq", this._config.network);
-
         this._total = 0;
         if (this._subscriptionId) {
+            this._loggingService.log("Transaction::stopZmq", this._config.network, this._subscriptionId);
+
             this._zmqService.unsubscribe(this._subscriptionId);
             this._subscriptionId = undefined;
         }
@@ -233,9 +235,9 @@ export class TransactionsService {
      * Stop the timer for tps.
      */
     private stopTimer(): void {
-        this._loggingService.log("Transaction::stopTimer", this._config.network);
-
         if (this._timerId) {
+            this._loggingService.log("Transaction::stopTimer", this._config.network);
+
             clearInterval(this._timerId);
             this._timerId = undefined;
         }

@@ -342,8 +342,6 @@ export class ZmqService {
 
         this._subscriptions[event].push({ id, callback });
 
-        this.connect();
-
         return id;
     }
 
