@@ -40,11 +40,6 @@ export class ZmqService {
     private _socket?: Subscriber;
 
     /**
-     * Avoid interlock when connecting.
-     */
-    private _connecting: boolean;
-
-    /**
      * Last time a message was received.
      */
     private _lastMessageTime: number;
@@ -75,7 +70,6 @@ export class ZmqService {
         this._endpoint = endpoint;
         this._subscriptions = {};
         this._lastMessageTime = 0;
-        this._connecting = false;
 
         this._loggingService = ServiceFactory.get<LoggingService>("logging");
 
@@ -259,9 +253,7 @@ export class ZmqService {
         try {
             this._loggingService.log("Zmq::connect", this._endpoint);
 
-            if (!this._connecting && !this._socket) {
-                this._connecting = true;
-
+            if (!this._socket) {
                 this._socket = new Subscriber();
                 this._loggingService.log("Zmq::socket->connect", this._endpoint);
 
@@ -273,7 +265,7 @@ export class ZmqService {
                     this._socket.subscribe(keys[i]);
                 }
 
-                this._connecting = false;
+                this._lastMessageTime = Date.now();
 
                 // Run this as a background task otherwise
                 // it will block this method
@@ -288,8 +280,7 @@ export class ZmqService {
                     500);
             }
         } catch (err) {
-            this._socket = undefined;
-            this._connecting = false;
+            this.disconnect();
 
             this._loggingService.log("Zmq::connect Failed", err);
         }
@@ -323,13 +314,10 @@ export class ZmqService {
      * Keep the connection alive.
      */
     private async keepAlive(): Promise<void> {
-        if (!this._connecting) {
-            if (Date.now() - this._lastMessageTime > 15000) {
-                this._loggingService.log("Zmq::keepAlive", this._endpoint);
-                this._lastMessageTime = Date.now();
-                this.disconnect();
-                this.connect();
-            }
+        if (Date.now() - this._lastMessageTime > 15000) {
+            this._loggingService.log("Zmq::keepAlive", this._endpoint);
+            this.disconnect();
+            this.connect();
         }
     }
 
