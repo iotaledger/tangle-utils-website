@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.7
+
+* Improved ZMQ reconnect
+
 ## v1.4.6
 
 * Added comnet
