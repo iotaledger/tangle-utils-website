@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.8
+
+* WebSocket timing
+
 ## v1.4.7
 
 * Improved ZMQ reconnect
