@@ -140,47 +140,6 @@ export class TransactionsService {
     }
 
     /**
-     * Update the subscriptions with newest trytes.
-     */
-    private async updateSubscriptions(): Promise<void> {
-        const now = Date.now();
-
-        const tranCount = Object.keys(this._transactions).length;
-
-        if (tranCount >= 5 ||
-            (now - this._lastSend > 15000 && tranCount > 0)) {
-
-            // this._loggingService.log("Transaction::updateSubscriptions", this._config.network, tranCount);
-
-            for (const subscriptionId in this._subscribers) {
-                const data: ITransactionsSubscriptionMessage = {
-                    subscriptionId,
-                    transactions: this._transactions,
-                    tps: this._tps,
-                    tpsInterval: TransactionsService.TPS_INTERVAL
-                };
-
-                await this._subscribers[subscriptionId](data);
-            }
-
-            this._transactions = {};
-            this._lastSend = now;
-        }
-    }
-
-    /**
-     * Handle the transactions per second calculations.
-     */
-    private handleTps(): void {
-        // this._loggingService.log("Transaction::handleTps", this._config.network, this._total);
-
-        const lastTotal = this._total;
-        this._total = 0;
-        this._tps.unshift(lastTotal);
-        this._tps = this._tps.slice(0, 100);
-    }
-
-    /**
      * Start the zmq services.
      */
     private startZmq(): void {
@@ -241,5 +200,46 @@ export class TransactionsService {
             clearInterval(this._timerId);
             this._timerId = undefined;
         }
+    }
+
+    /**
+     * Update the subscriptions with newest trytes.
+     */
+    private async updateSubscriptions(): Promise<void> {
+        const now = Date.now();
+
+        const tranCount = Object.keys(this._transactions).length;
+
+        if (tranCount > 0 ||
+            (now - this._lastSend > TransactionsService.TPS_INTERVAL * 1000)) {
+
+            // this._loggingService.log("Transaction::updateSubscriptions", this._config.network, tranCount);
+
+            for (const subscriptionId in this._subscribers) {
+                const data: ITransactionsSubscriptionMessage = {
+                    subscriptionId,
+                    transactions: this._transactions,
+                    tps: this._tps,
+                    tpsInterval: TransactionsService.TPS_INTERVAL
+                };
+
+                await this._subscribers[subscriptionId](data);
+            }
+
+            this._transactions = {};
+            this._lastSend = now;
+        }
+    }
+
+    /**
+     * Handle the transactions per second calculations.
+     */
+    private handleTps(): void {
+        // this._loggingService.log("Transaction::handleTps", this._config.network, this._total);
+
+        const lastTotal = this._total;
+        this._total = 0;
+        this._tps.unshift(lastTotal);
+        this._tps = this._tps.slice(0, 100);
     }
 }
