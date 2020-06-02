@@ -1,37 +1,8 @@
 {
-    "apiEndpoint": "ENDPOINT",
+    "apiEndpoint": "API-ENDPOINT",
     "networks": [
-        {
-            "network": "mainnet",
-            "label": "MainNet",
-            "node": {
-                "provider": "https://nodes.iota.cafe:443",
-                "depth": 3,
-                "mwm": 14
-            },
-            "coordinatorAddress": "EQSAUZXULTTYZCLNJNTXQTQHOMOFZERHTCGTXOLTVAHKSA9OGAZDEKECURBRIXIJWNPFCQIOVFVVXJVD9"
-        },
-        {
-            "network": "devnet",
-            "label": "DevNet",
-            "node": {
-                "provider": "https://nodes.devnet.iota.org:443",
-                "depth": 3,
-                "mwm": 9
-            },
-            "coordinatorAddress": "EQQFCZBIHRHWPXKMTOLMYUYPCN9XLMJPYZVFJSAY9FQHCCLWTOLLUGKKMXYFDBOOYFBLBI9WUEILGECYM"
-        },
-        {
-            "network": "comnet",
-            "label": "ComNet",
-            "node": {
-                "provider": "https://comnet.iota.works:443",
-                "depth": 3,
-                "mwm": 10
-            },
-            "coordinatorAddress": "ZNCCPOTBCDZXCBQYBWUYYFO9PLRHNAROWOS9KGMYWNVIXWGYGUSJBZUTUQBNQRADHPUEONZZTYGVMSRZD"
-        }
+        NETWORKS
     ],
     "googleMapsKey": "GOOGLE-MAPS-KEY",
-    "googleAnalyticsId": ""
+    "googleAnalyticsId": "GOOGLE-ANALYTICS-ID"
 }
