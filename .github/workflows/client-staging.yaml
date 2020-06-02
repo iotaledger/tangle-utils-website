@@ -31,10 +31,10 @@ jobs:
         run: |
           cd client/public/data/
           mv config.template.json config.$CONFIG_ID.json
-          sed -i 's/API-ENDPOINT/${{ env.CONFIG_API_ENDPOINT }}/g' config.$CONFIG_ID.json
-          sed -i 's/NETWORKS/${{ env.CONFIG_NETWORKS }}/g' config.$CONFIG_ID.json
-          sed -i 's/GOOGLE-MAPS-KEY/${{ env.CONFIG_GOOGLE_MAPS_KEY }}/g' config.$CONFIG_ID.json
-          sed -i 's/GOOGLE-ANALYTICS-ID/${{ env.CONFIG_GOOGLE_ANALYTICS_ID }}/g' config.$CONFIG_ID.json
+          sed -i "s/API-ENDPOINT/${{ env.CONFIG_API_ENDPOINT }}/g" config.$CONFIG_ID.json
+          sed -i "s/NETWORKS/${{ env.CONFIG_NETWORKS }}/g" config.$CONFIG_ID.json
+          sed -i "s/GOOGLE-MAPS-KEY/${{ env.CONFIG_GOOGLE_MAPS_KEY }}/g" config.$CONFIG_ID.json
+          sed -i "s/GOOGLE-ANALYTICS-ID/${{ env.CONFIG_GOOGLE_ANALYTICS_ID }}/g" config.$CONFIG_ID.json
       - name: Use Node.js 12.x
         uses: actions/setup-node@v1
         with:
