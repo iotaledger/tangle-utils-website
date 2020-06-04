@@ -90,7 +90,7 @@ class InlineCurrency extends Component<InlineCurrencyProps, InlineCurrencyState>
                     )}
                     selectSize="small"
                 >
-                    {this.state.currencies.map(is => (
+                    {this.state.currencies && this.state.currencies.map(is => (
                         <option key={is.id} value={is.id}>{is.id}</option>
                     ))}
                 </Select>
@@ -114,7 +114,7 @@ class InlineCurrency extends Component<InlineCurrencyProps, InlineCurrencyState>
                         baseCurrencyRate: isAvailable && data ? data.baseCurrencyRate : 1
                     },
                     async () => {
-                        if (this._mounted) {
+                        if (this._mounted && this.state.currencies) {
                             this.setState({
                                 valueConverted: await this._currencyService.currencyConvert(
                                     valueIota,
