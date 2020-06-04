@@ -1,6 +1,6 @@
 runtime: nodejs
 env: flex
-service: %SERVICE_ID
+service: %SERVICE_ID%
 
 network:
   session_affinity: true
