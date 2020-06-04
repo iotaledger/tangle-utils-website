@@ -28,6 +28,7 @@ const routes: IRoute[] = [
 AppHelper.build(
     routes,
     async (app, config, port) => {
+        console.log(config);
         const networkByName: { [id: string]: INetworkConfiguration } = {};
 
         ServiceFactory.register("logging", () => new LoggingService());
