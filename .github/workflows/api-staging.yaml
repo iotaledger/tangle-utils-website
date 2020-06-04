@@ -46,8 +46,8 @@ jobs:
           sed -i 's/%SERVICE_ID%/${{ env.GCP_SERVICE_ID }}/g' app.yaml
           sed -i 's/%CONFIG_ID%/${{ env.CONFIG_ID }}/g' app.yaml
           mv dispatch.template.yaml dispatch.yaml
-          sed -i 's/#%GCP_DOMAIN%/${{ env.GCP_DOMAIN }}/g' dispatch.yaml
-          sed -i 's/#%SERVICE_ID%/${{ env.GCP_SERVICE_ID }}/g' dispatch.yaml
+          sed -i 's/%GCP_DOMAIN%/${{ env.GCP_DOMAIN }}/g' dispatch.yaml
+          sed -i 's/%SERVICE_ID%/${{ env.GCP_SERVICE_ID }}/g' dispatch.yaml
       - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
         with:
           version: latest
