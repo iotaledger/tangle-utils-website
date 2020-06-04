@@ -31,9 +31,9 @@ jobs:
         run: |
           cd api/src/data/
           mv config.template.json config.$CONFIG_ID.json
-          sed -i 's/NETWORKS/${{ env.CONFIG_API_NETWORKS }}/g' config.$CONFIG_ID.json
-          sed -i 's/CONFIG-CMC-API-KEY/${{ env.CONFIG_CMC_API_KEY }}/g' config.$CONFIG_ID.json
-          sed -i 's/CONFIG-FIXER-API-KEY/${{ env.CONFIG_FIXER_API_KEY }}/g' config.$CONFIG_ID.json
+          sed -i 's/API-NETWORKS/${{ env.CONFIG_API_NETWORKS }}/g' config.$CONFIG_ID.json
+          sed -i 's/CMC-API-KEY/${{ env.CONFIG_CMC_API_KEY }}/g' config.$CONFIG_ID.json
+          sed -i 's/FIXER-API-KEY/${{ env.CONFIG_FIXER_API_KEY }}/g' config.$CONFIG_ID.json
           sed -i 's/DB-AWS-REGION/${{ env.CONFIG_DB_AWS_REGION }}/g' config.$CONFIG_ID.json
           sed -i 's/DB-AWS-ACCESS-KEY-ID/${{ env.CONFIG_DB_AWS_ACCESS_KEY_ID }}/g' config.$CONFIG_ID.json
           sed -i 's/DB-AWS-SECRET-ACCESS-KEY/${{ env.CONFIG_DB_AWS_SECRET_ACCESS_KEY }}/g' config.$CONFIG_ID.json
