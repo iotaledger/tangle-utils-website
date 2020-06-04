@@ -66,7 +66,7 @@ class InlineCurrency extends Component<InlineCurrencyProps, InlineCurrencyState>
      * @returns The node to render.
      */
     public render(): ReactNode {
-        return this.state.currencies && this.state.currencies.length > 0 && (
+        return this.state.currencies && this.state.currencies.length > 0 ? (
             <div className="inline-currency">
                 <Select
                     value={this.state.fiatCode}
@@ -96,8 +96,7 @@ class InlineCurrency extends Component<InlineCurrencyProps, InlineCurrencyState>
                 </Select>
                 <span className="currency">{this.state.valueConverted}</span>
             </div>
-        );
-
+        ) : null;
     }
 
     /**
