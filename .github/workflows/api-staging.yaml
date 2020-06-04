@@ -48,6 +48,12 @@ jobs:
           mv dispatch.template.yaml dispatch.yaml
           sed -i 's/%GCP_DOMAIN%/${{ env.GCP_DOMAIN }}/g' dispatch.yaml
           sed -i 's/%SERVICE_ID%/${{ env.GCP_SERVICE_ID }}/g' dispatch.yaml
+      - name: Use Node.js 12.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - run: npm install
+      - run: npm run build
       - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
         with:
           version: latest

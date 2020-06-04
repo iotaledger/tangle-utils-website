@@ -16,7 +16,6 @@
         "build-lint": "tslint -p ./tsconfig.json -c ./tslint.json -t verbose",
         "build-config": "copyfiles -u 2 ./src/data/config*.json ./dist/data/",
         "build": "npm-run-all build-clean build-compile build-lint build-config",
-        "gcp-build": "npm-run-all build-clean build-compile build-lint build-config",
         "serve-mon": "nodemon ./dist/index",
         "start-dev": "run-p serve-mon build-watch",
         "start": "node ./dist/index"
