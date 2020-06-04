@@ -116,7 +116,7 @@ export class CurrencyService {
                     const settings = await this._settingsService.get();
 
                     settings.lastCurrencyUpdate = Date.now();
-                    settings.baseCurrencyRate = currencyResponse.baseRate || 0;
+                    settings.baseCurrencyRate = currencyResponse.baseRate || settings.baseCurrencyRate || 0;
                     const cur = currencyResponse.currencies || {};
                     const ids = Object.keys(cur).sort();
                     settings.currencies = ids.map(i => ({ id: i, rate: cur[i] }));
