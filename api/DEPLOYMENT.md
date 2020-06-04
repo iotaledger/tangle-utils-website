@@ -6,8 +6,8 @@ To configure the `api` you should copy `./src/data/config.template.json` to `./s
 
 ```js
 {
-    "cmcApiKey": "CMC_API_KEY"                       /* API Key for using CoinMarketCap */
-    "fixerApiKey": "FIXER_API_KEY"                   /* API Key for using fixer.io */
+    "cmcApiKey": "CMC-API-KEY"                       /* API Key for using CoinMarketCap */
+    "fixerApiKey": "FIXER-API-KEY"                   /* API Key for using fixer.io */
     "dynamoDbConnection": {
         "region": "AWS-REGION",                      /* AWS Region e.g. eu-central-1 */
         "accessKeyId": "AWS-ACCESS-KEY-ID",          /* AWS Access Key e.g. AKIAI57SG4YC2ZUCSABC */
@@ -19,13 +19,13 @@ To configure the `api` you should copy `./src/data/config.template.json` to `./s
             "network": "mainnet",                    /* Network type */
             "label": "MainNet",                      /* Nework display label */
             "node": {                                /* Node for requests */
-                "provider": "NODE_1",                /* Address for node */
+                "provider": "NODE-1",                /* Address for node */
                 "depth": 3,                          /* Depth for network */             
                 "mwm": 14                            /* MWM for network */
             },
-            "zmqEndpoint": "ZMQ_ENDPOINT",           /* Endpoint for zmq subscriptions */
+            "zmqEndpoint": "ZMQ-ENDPOINT",           /* Endpoint for zmq subscriptions */
             "zmqTransactionMessage": "tx_trytes",    /* ZMQ message for transaction data */
-            "permaNodeEndpoint": "PERMA_ENDPOINT",   /* Permanode endpoint for historical transactions */
+            "permaNodeEndpoint": "PERMA-ENDPOINT",   /* Permanode endpoint for historical transactions */
             "coordinatorAddress": "AAA...ZZZ"        /* Coordinator Address on network */
         }
     ],
