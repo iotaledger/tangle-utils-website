@@ -23,6 +23,7 @@ jobs:
       CONFIG_DB_TABLE_PREFIX: ${{ secrets.STAGING_CONFIG_DB_TABLE_PREFIX }}
       CONFIG_ALLOWED_DOMAIN: ${{ secrets.STAGING_CONFIG_ALLOWED_DOMAIN }}
       GCP_SERVICE_ID: ${{ secrets.GCP_STAGING_SERVICE_ID }}
+      GCP_MIN_INSTANCES: ${{ secrets.GCP_STAGING_MIN_INSTANCES }}
       GCP_PROD_SERVICE_ID: ${{ secrets.GCP_PROD_SERVICE_ID }}
       GCP_PROD_DOMAIN: ${{ secrets.GCP_PROD_DOMAIN }}
       GCP_STAGING_SERVICE_ID: ${{ secrets.GCP_STAGING_SERVICE_ID }}
@@ -48,6 +49,7 @@ jobs:
           mv app.template.yaml app.yaml
           sed -i 's/%SERVICE-ID%/${{ env.GCP_SERVICE_ID }}/g' app.yaml
           sed -i 's/%CONFIG-ID%/${{ env.CONFIG_ID }}/g' app.yaml
+          sed -i 's/%MIN-INSTANCES%/${{ env.GCP_MIN_INSTANCES }}/g' app.yaml
           mv dispatch.template.yaml dispatch.yaml
           sed -i 's/%GCP-PROD-DOMAIN%/${{ env.GCP_PROD_DOMAIN }}/g' dispatch.yaml
           sed -i 's/%GCP-PROD-SERVICE-ID%/${{ env.GCP_PROD_SERVICE_ID }}/g' dispatch.yaml

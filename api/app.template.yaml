@@ -5,8 +5,9 @@ service: %SERVICE-ID%
 network:
   session_affinity: true
 
-manual_scaling:
-  instances: 1
+automatic_scaling:
+   min_instances: %MIN-INSTANCES%
+   max_instances: 1
 
 handlers:
   - url: /(.*)
