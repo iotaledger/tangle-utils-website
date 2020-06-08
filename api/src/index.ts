@@ -87,7 +87,8 @@ AppHelper.build(
                     func: async () => {
                         const stateService = new StateService(config.dynamoDbConnection);
 
-                        await stateService.updateCurrencies(config);
+                        const log = await stateService.updateCurrencies(config);
+                        console.log(log);
                     }
                 }
             ];
