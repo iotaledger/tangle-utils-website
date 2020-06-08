@@ -258,7 +258,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
             async () => {
                 try {
                     const networkConfigs = ServiceFactory.get<IClientNetworkConfiguration[]>("network-config");
-                    const networkConfig = networkConfigs.find(n => n.network === this.props.network);
+                    const networkConfig = networkConfigs.find(n => n.network === this.state.network);
 
                     if (networkConfig) {
                         const api = composeAPI({
