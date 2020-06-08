@@ -5,8 +5,8 @@ service: %SERVICE-ID%
 network:
   session_affinity: true
 
-automatic_scaling:
-  max_instances: 1
+manual_scaling:
+  instances: 1
 
 resources:
   cpu: 1
