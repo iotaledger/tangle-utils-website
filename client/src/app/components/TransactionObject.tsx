@@ -166,7 +166,7 @@ class TransactionObject extends Component<TransactionObjectProps, TransactionObj
 
                     if (networkConfig) {
                         if (thisGroup[0].tx.address === networkConfig.coordinatorAddress &&
-                            /^[9]+$/.test(thisGroup[thisGroup.length - 1].tx.address)) {
+                            thisGroup.length === networkConfig.coordinatorSecurityLevel + 1) {
                             const mi = value(trytesToTrits(thisGroup[0].tx.tag));
                             if (!Number.isNaN(mi)) {
                                 milestoneIndex = mi;
