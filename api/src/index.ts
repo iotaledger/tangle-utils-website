@@ -83,7 +83,7 @@ AppHelper.build(
             const schedules: ISchedule[] = [
                 {
                     name: "Update Currencies",
-                    schedule: "* 0/4 * * * *", // Every 4 hours on 0 minute
+                    schedule: "0 0 */4 * * *", // Every 4 hours on 0 minute 0 seconds
                     func: async () => {
                         const stateService = new StateService(config.dynamoDbConnection);
 
