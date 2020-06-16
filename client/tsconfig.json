@@ -24,6 +24,6 @@
     ]
   },
   "include": [
-    "src", "../api/src/models/clients/chronicle", "../api/src/models/clients/chronicleClient.ts"
+    "src"
   ]
 }
