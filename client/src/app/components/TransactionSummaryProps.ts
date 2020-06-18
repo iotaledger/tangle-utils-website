@@ -8,4 +8,9 @@ export interface TransactionSummaryProps {
      * The network to use.
      */
     network: string;
+
+    /**
+     * Show if non zero.
+     */
+    showNonZeroOnly: boolean;
 }

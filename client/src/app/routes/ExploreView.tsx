@@ -1,6 +1,6 @@
 import { addChecksum } from "@iota/checksum";
 import { isHash, isTag, isTrytesOfExactLength } from "@iota/validators";
-import { Button, ClipboardHelper, Form, FormStatus, Heading } from "iota-react-components";
+import { Button, Checkbox, ClipboardHelper, Form, FormStatus, Heading } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { UnitsHelper } from "../../helpers/unitsHelper";
@@ -90,7 +90,8 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
             isErrored: false,
             network: paramNetwork,
             balance: 0,
-            currencies: []
+            currencies: [],
+            showNonZeroOnly: false
         };
     }
 
@@ -185,9 +186,22 @@ class ExploreView extends Component<ExploreViewProps, ExploreViewState> {
                                         <span className="transactions-count">
                                             [{this.state.transactionsCount}]
                                         </span>
+                                        <div className="filter-form">
+                                            <Checkbox
+                                                label="Show Non Zero Only"
+                                                checked={this.state.showNonZeroOnly}
+                                                onChange={e => this.setState({ showNonZeroOnly: e })}
+                                            />
+                                        </div>
                                     </Heading>
+
                                     {this.state.transactionHashes.map((t, idx) => (
-                                        <TransactionSummary hash={t} key={idx} network={this.state.network} />
+                                        <TransactionSummary
+                                            hash={t}
+                                            key={idx}
+                                            network={this.state.network}
+                                            showNonZeroOnly={this.state.showNonZeroOnly}
+                                        />
                                     ))}
                                 </React.Fragment>
                             </div>

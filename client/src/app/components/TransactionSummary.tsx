@@ -106,7 +106,7 @@ class TransactionSummary extends Component<TransactionSummaryProps, TransactionS
     public render(): ReactNode {
         const network = this.props.network === this._networks[0].network ? "" : `/${this.props.network}`;
 
-        return (
+        return (this.props.showNonZeroOnly && this.state.transactionObject?.value === 0) ? null : (
             <div className="transaction-summary">
                 <div className="transaction-summary--row">
                     <div className="col1 time">

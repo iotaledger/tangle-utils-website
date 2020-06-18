@@ -1,9 +1,8 @@
 import "iota-css-theme";
-import { Footer, GoogleAnalytics, Header, LayoutAppSingle, SideMenu, StatusMessage } from "iota-react-components";
+import { Footer, FoundationDataHelper, GoogleAnalytics, Header, LayoutAppSingle, SideMenu, StatusMessage } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { Link, Route, RouteComponentProps, Switch, withRouter } from "react-router-dom";
 import logo from "../assets/logo.svg";
-import contentHomePage from "../content/contentHomePage.json";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { IConfiguration } from "../models/config/IConfiguration";
 import { ApiClient } from "../services/apiClient";
@@ -68,6 +67,8 @@ class App extends Component<RouteComponentProps, AppState> {
      */
     public async componentDidMount(): Promise<void> {
         try {
+            this.setState({ foundationData: await FoundationDataHelper.loadData() });
+
             const configService = new ConfigurationService<IConfiguration>();
             const configId = process.env.REACT_APP_CONFIG_ID || "local";
             const config = await configService.load(`/data/config.${configId}.json`);
@@ -122,7 +123,7 @@ class App extends Component<RouteComponentProps, AppState> {
             <React.Fragment>
                 <Header
                     title="IOTA Tangle Utilities"
-                    topLinks={contentHomePage.headerTopLinks}
+                    foundationData={this.state.foundationData}
                     logo={logo}
                     compact={true}
                     hamburgerClick={() => this.setState({ isSideMenuOpen: !this.state.isSideMenuOpen })}
@@ -286,9 +287,55 @@ class App extends Component<RouteComponentProps, AppState> {
                 </section>
                 <Footer
                     history={this.props.history}
-                    sections={contentHomePage.footerSections}
-                    staticContent={contentHomePage.footerStaticContent}
-                />
+                    sections={[
+                        {
+                            heading: "IOTA Tangle Utilities",
+                            links: [
+                                {
+                                    href: "/",
+                                    text: "Tangle Explorer"
+                                },
+                                {
+                                    href: "/mam",
+                                    text: "MAM Subscriber"
+                                },
+                                {
+                                    href: "/currency-conversion",
+                                    text: "Currency Converter"
+                                },
+                                {
+                                    href: "/text-conversion",
+                                    text: "Text Converter"
+                                },
+                                {
+                                    href: "/transaction-decoder",
+                                    text: "Transaction Decoder"
+                                },
+                                {
+                                    href: "/compress",
+                                    text: "Trytes Compressor"
+                                },
+                                {
+                                    href: "/qr-create",
+                                    text: "QR Code Generator"
+                                },
+                                {
+                                    href: "/qr-scan",
+                                    text: "QR Code Scanner"
+                                },
+                                {
+                                    href: "/simple-transaction",
+                                    text: "Simple Transaction Sender"
+                                },
+                                {
+                                    href: "/area-codes",
+                                    text: "Area Code Finder"
+                                }
+                            ]
+                        }
+                    ]}
+                    foundationData = {this.state.foundationData}
+                / >
                 <GoogleAnalytics id={this._configuration && this._configuration.googleAnalyticsId} />
             </React.Fragment>
         );
