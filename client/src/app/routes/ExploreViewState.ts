@@ -43,6 +43,11 @@ export interface ExploreViewState {
     transactionHashes?: ReadonlyArray<string>;
 
     /**
+     * The transaction values from the tangle.
+     */
+    transactionValues?: ReadonlyArray<number>;
+
+    /**
      * The transaction count from the tangle.
      */
     transactionsCount?: string;
@@ -85,4 +90,9 @@ export interface ExploreViewState {
          */
         rate: number
     }[];
+
+    /**
+     * Show only non-zero transactions.
+     */
+    showNonZeroOnly: boolean;
 }
