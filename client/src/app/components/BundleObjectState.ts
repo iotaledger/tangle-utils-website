@@ -14,7 +14,20 @@ export interface BundleObjectState {
         /**
          * The transactions in the group.
          */
-        transactions: ReadonlyArray<{
+        inputs: ReadonlyArray<{
+            /**
+             * The transaction.
+             */
+            transaction: Transaction;
+            /**
+             * The value converted.
+             */
+            currencyConverted: string;
+        }>;
+        /**
+         * The transactions in the group.
+         */
+        outputs: ReadonlyArray<{
             /**
              * The transaction.
              */

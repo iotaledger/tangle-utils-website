@@ -73,7 +73,20 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
             /**
              * The transactions in the group.
              */
-            transactions: ReadonlyArray<{
+            inputs: ReadonlyArray<{
+                /**
+                 * The transaction.
+                 */
+                transaction: Transaction;
+                /**
+                 * The value converted.
+                 */
+                currencyConverted: string;
+            }>;
+            /**
+             * The transactions in the group.
+             */
+            outputs: ReadonlyArray<{
                 /**
                  * The transaction.
                  */
@@ -86,8 +99,14 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
         }[] = [];
 
         for (let i = 0; i < confirmationStates.length; i++) {
+            const inputAddresses = bundleGroupsPlain[i].filter(tx => tx.tx.value < 0).map(t => t.tx.address);
+
             bundleGroups.push({
-                transactions: bundleGroupsPlain[i].map(t => ({
+                inputs: bundleGroupsPlain[i].filter(t => inputAddresses.includes(t.tx.address)).map(t => ({
+                    transaction: t.tx,
+                    currencyConverted: ""
+                })),
+                outputs: bundleGroupsPlain[i].filter(t => !inputAddresses.includes(t.tx.address)).map(t => ({
                     transaction: t.tx,
                     currencyConverted: ""
                 })),
@@ -102,13 +121,22 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
             if (isAvailable && currencyData) {
                 this.setState({ currencyData }, async () => {
                     for (let i = 0; i < bundleGroups.length; i++) {
-                        for (let k = 0; k < bundleGroups[i].transactions.length; k++) {
-                            const tx = bundleGroups[i].transactions[k].transaction;
+                        for (let k = 0; k < bundleGroups[i].inputs.length; k++) {
+                            const tx = bundleGroups[i].inputs[k].transaction;
                             const converted = await this._currencyService.currencyConvert(
                                 tx.value,
                                 currencyData,
                                 false);
-                            bundleGroups[i].transactions[k].currencyConverted =
+                            bundleGroups[i].inputs[k].currencyConverted =
+                                `${currencyData.fiatCode} ${converted}`;
+                        }
+                        for (let k = 0; k < bundleGroups[i].outputs.length; k++) {
+                            const tx = bundleGroups[i].outputs[k].transaction;
+                            const converted = await this._currencyService.currencyConvert(
+                                tx.value,
+                                currencyData,
+                                false);
+                            bundleGroups[i].outputs[k].currencyConverted =
                                 `${currencyData.fiatCode} ${converted}`;
                         }
                     }
@@ -150,9 +178,9 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                             <div
                                 className="caption"
                             >
-                                Inputs [{group.transactions.filter(f => f.transaction.value < 0).length}]
+                                Inputs [{group.inputs.length}]
                             </div>
-                            {group.transactions.filter(f => f.transaction.value < 0).map((t, idx2) => (
+                            {group.inputs.map((t, idx2) => (
                                 <div className="transaction" key={idx2}>
                                     <div className="row top">
                                         <div className="label">Hash</div>
@@ -177,7 +205,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                                     )}
                                 </div>
                             ))}
-                            {group.transactions.filter(f => f.transaction.value > 0).length === 0 && (
+                            {group.inputs.length === 0 && (
                                 <div>None</div>
                             )}
                         </div>
@@ -186,11 +214,11 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                                 <div
                                     className="caption"
                                 >
-                                    Outputs [{group.transactions.filter(f => f.transaction.value >= 0).length}]
+                                    Outputs [{group.outputs.length}]
                                 </div>
                                 <Confirmation state={group.confirmationState} />
                             </div>
-                            {group.transactions.filter(f => f.transaction.value >= 0).map((t, idx2) => (
+                            {group.outputs.map((t, idx2) => (
                                 <div className="transaction" key={idx2}>
                                     <div className="row top">
                                         <div className="label">Hash</div>
@@ -215,7 +243,7 @@ class BundleObject extends Component<BundleObjectProps, BundleObjectState> {
                                     )}
                                 </div>
                             ))}
-                            {group.transactions.filter(f => f.transaction.value <= 0).length === 0 && (
+                            {group.outputs.length === 0 && (
                                 <div>None</div>
                             )}
                         </div>
