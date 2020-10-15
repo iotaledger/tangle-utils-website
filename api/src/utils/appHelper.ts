@@ -56,27 +56,19 @@ export class AppHelper {
 
         const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
         if (!customListener) {
-            app.listen(port, async err => {
-                if (err) {
-                    throw err;
-                }
-
+            app.listen(port, () => {
                 console.log(`Started API Server on port ${port} v${packageJson.version}`);
                 console.log(`Running Config '${configId}'`);
 
                 if (onComplete) {
-                    try {
-                        await onComplete(app, config, port);
-                    } catch (err) {
-                        console.error("Failed running startup", err);
-                    }
+                    onComplete(app, config, port)
+                        .catch(err2 => console.error("Failed running startup", err2));
                 }
             });
         } else {
             if (onComplete) {
-                onComplete(app, config, port).catch(err => {
-                    console.error("Failed running startup", err);
-                });
+                onComplete(app, config, port)
+                    .catch(err => console.error("Failed running startup", err));
             }
         }
 
