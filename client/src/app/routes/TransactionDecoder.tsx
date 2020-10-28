@@ -91,8 +91,6 @@ class TransactionDecoder extends Component<TransactionDecoderProps, TransactionD
                             <TransactionObject
                                 hash={this.state.hash}
                                 trytes={this.state.trytes}
-                                network={this.state.network}
-                                hideInteractive={true}
                             />
                         </React.Fragment>
                     )}
