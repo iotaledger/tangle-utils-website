@@ -1,29 +1,16 @@
 import "iota-css-theme";
-import { Footer, FoundationDataHelper, GoogleAnalytics, Header, LayoutAppSingle, SideMenu, StatusMessage } from "iota-react-components";
+import { Footer, FoundationDataHelper, GoogleAnalytics, Header, Heading, LayoutAppSingle, SideMenu, StatusMessage } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
 import { Link, Route, RouteComponentProps, Switch, withRouter } from "react-router-dom";
 import logo from "../assets/logo.svg";
 import { ServiceFactory } from "../factories/serviceFactory";
 import { IConfiguration } from "../models/config/IConfiguration";
-import { ApiClient } from "../services/apiClient";
 import { ConfigurationService } from "../services/configurationService";
-import { CurrencyService } from "../services/currencyService";
-import { LocalStorageService } from "../services/localStorageService";
-import { SettingsService } from "../services/settingsService";
-import { TangleCacheService } from "../services/tangleCacheService";
-import { TransactionsClient } from "../services/transactionsClient";
 import { AppState } from "./AppState";
 import AreaCodes from "./routes/AreaCodes";
 import { AreaCodesProps } from "./routes/AreaCodesProps";
 import Compress from "./routes/Compress";
 import { CompressProps } from "./routes/CompressProps";
-import CurrencyConversion from "./routes/CurrencyConversion";
-import Explore from "./routes/Explore";
-import { ExploreProps } from "./routes/ExploreProps";
-import ExploreView from "./routes/ExploreView";
-import { ExploreViewProps } from "./routes/ExploreViewProps";
-import Mam from "./routes/Mam";
-import { MamProps } from "./routes/MamProps";
 import QRCreate from "./routes/QRCreate";
 import { QRCreateProps } from "./routes/QRCreateProps";
 import QRScan from "./routes/QRScan";
@@ -41,11 +28,6 @@ class App extends Component<RouteComponentProps, AppState> {
      * The configuration for the app.
      */
     private _configuration?: IConfiguration;
-
-    /**
-     * The settings service.
-     */
-    private _settingsService!: SettingsService;
 
     /**
      * Create a new instance of App.
@@ -74,27 +56,6 @@ class App extends Component<RouteComponentProps, AppState> {
             const config = await configService.load(`/data/config.${configId}.json`);
 
             ServiceFactory.register("configuration", () => configService);
-            ServiceFactory.register("local-storage", () => new LocalStorageService());
-            ServiceFactory.register("tangle-cache", () => new TangleCacheService(config));
-
-            for (const netConfig of config.networks) {
-                ServiceFactory.register(
-                    `transactions-${netConfig.network}`,
-                    serviceName => {
-                        const c = config.networks.find(n => n.network === serviceName.substring(13));
-
-                        if (c) {
-                            return new TransactionsClient(config.apiEndpoint, c);
-                        }
-                    }
-                );
-            }
-
-            ServiceFactory.register("api-client", () => new ApiClient(config.apiEndpoint));
-
-            this._settingsService = new SettingsService();
-            ServiceFactory.register("settings", () => this._settingsService);
-            ServiceFactory.register("currency", () => new CurrencyService(config.apiEndpoint));
 
             ServiceFactory.register("network-config", () => config.networks);
 
@@ -130,9 +91,7 @@ class App extends Component<RouteComponentProps, AppState> {
                     hamburgerMediaQuery="tablet-up-hidden"
                 />
                 <nav className="tablet-down-hidden">
-                    <Link className="link" to="/">Tangle Explorer</Link>
-                    <Link className="link" to="/mam">Mam Subscriber</Link>
-                    <Link className="link" to="/currency-conversion">Currency Converter</Link>
+                    <Link className="link" to="/">Home</Link>
                     <Link className="link" to="/text-conversion">Text Converter</Link>
                     <Link className="link" to="/transaction-decoder">Transaction Decoder</Link>
                     <Link className="link" to="/compress">Trytes Compressor</Link>
@@ -152,18 +111,6 @@ class App extends Component<RouteComponentProps, AppState> {
                             items: [
                                 {
                                     items: [
-                                        {
-                                            name: "Tangle Explorer",
-                                            link: "/"
-                                        },
-                                        {
-                                            name: "Mam Subscriber",
-                                            link: "/mam"
-                                        },
-                                        {
-                                            name: "Currency Converter",
-                                            link: "/currency-conversion"
-                                        },
                                         {
                                             name: "Text Converter",
                                             link: "/text-conversion"
@@ -212,41 +159,148 @@ class App extends Component<RouteComponentProps, AppState> {
                                 <Route
                                     exact={true}
                                     path="/"
-                                    component={(props: ExploreProps) => (<Explore {...props} bust={Date.now()} />)}
+                                    component={() => (<div className="explore">
+                                        <Heading level={1}>Tangle Explorer</Heading>
+                                        <p>The explorer has moved to&nbsp;
+                                            <a href="https://explorer.iota.org">explorer.iota.org</a>
+                                            <br />
+                                            <br />
+                                            Streams v0 (MAM) Decoder:&nbsp;
+                                            <a href="https://explorer.iota.org/mainnet/streams/0/">
+                                                explorer.iota.org/mainnet/streams/0/
+                                            </a>
+                                            <br />
+                                            <br />
+                                            Currency Conversion:&nbsp;
+                                            <a href="https://explorer.iota.org/mainnet/currency-converter/">
+                                                explorer.iota.org/mainnet/currency-converter/
+                                            </a>
+                                        </p>
+                                    </div>)}
                                 />
                                 <Route
                                     exact={true}
                                     path="/transaction/:hash?/:network?"
-                                    component={(props: ExploreViewProps) =>
-                                        (<ExploreView {...props} hashType="transaction" bust={Date.now()} />)}
-                                />
+                                    component={(props: RouteComponentProps<{
+                                        /**
+                                         * Transaction hash.
+                                         */
+                                        hash?: string;
+                                        /**
+                                         * Network.
+                                         */
+                                        network?: string
+                                    }>) => {
+                                        window.location.href = props.match.params.hash && props.match.params.network
+                                            ? `https://explorer.iota.org/${props.match.params.network}/transaction/${props.match.params.hash}`
+                                            : "https://explorer.iota.org/";
+                                        return null;
+                                    }} />
                                 <Route
                                     exact={true}
                                     path="/bundle/:hash?/:network?"
-                                    component={(props: ExploreViewProps) =>
-                                        (<ExploreView {...props} hashType="bundle" bust={Date.now()} />)}
-                                />
+                                    component={(props: RouteComponentProps<{
+                                        /**
+                                         * Bundle hash.
+                                         */
+                                        hash?: string;
+                                        /**
+                                         * Network.
+                                         */
+                                        network?: string
+                                    }>) => {
+                                        window.location.href = props.match.params.hash && props.match.params.network
+                                            ? `https://explorer.iota.org/${props.match.params.network}/bundle/${props.match.params.hash}`
+                                            : "https://explorer.iota.org/";
+                                        return null;
+                                    }} />
                                 <Route
                                     exact={true}
                                     path="/address/:hash?/:network?"
-                                    component={(props: ExploreViewProps) =>
-                                        (<ExploreView {...props} hashType="address" bust={Date.now()} />)}
+                                    component={(props: RouteComponentProps<{
+                                        /**
+                                         * Address hash.
+                                         */
+                                        hash?: string;
+                                        /**
+                                         * Network.
+                                         */
+                                        network?: string
+                                    }>) => {
+                                        window.location.href = props.match.params.hash && props.match.params.network
+                                            ? `https://explorer.iota.org/${props.match.params.network}/address/${props.match.params.hash}`
+                                            : "https://explorer.iota.org/";
+                                        return null;
+                                    }} />
+                                <Route
+                                    exact={true}
+                                    path="/bundle/:hash?/:network?"
+                                    component={(props: RouteComponentProps<{
+                                        /**
+                                         * Tag hash.
+                                         */
+                                        hash?: string;
+                                        /**
+                                         * Network.
+                                         */
+                                        network?: string
+                                    }>) => {
+                                        window.location.href = props.match.params.hash && props.match.params.network
+                                            ? `https://explorer.iota.org/${props.match.params.network}/tag/${props.match.params.hash}`
+                                            : "https://explorer.iota.org/";
+                                        return null;
+                                    }} />
+                                <Route
+                                    exact={true}
+                                    path="/mam"
+                                    component={() => (<div className="explore">
+                                        <Heading level={1}>MAM Subscriber</Heading>
+                                        <p>The MAM Subscriber has moved to&nbsp;
+                                            <a href="https://explorer.iota.org/mainnet/streams/0/">
+                                                explorer.iota.org/mainnet/streams/0/</a>
+                                        </p>
+                                    </div>)}
                                 />
                                 <Route
                                     exact={true}
-                                    path="/tag/:hash?/:network?"
-                                    component={(props: ExploreViewProps) =>
-                                        (<ExploreView {...props} hashType="tag" bust={Date.now()} />)}
-                                />
-                                <Route
-                                    exact={true}
-                                    path="/mam/:root?/:prop1?/:prop2?/:prop3?"
-                                    component={(props: MamProps) => (<Mam {...props} bust={Date.now()} />)}
-                                />
+                                    path="/mam/:root?/:mode?/:key?/:network"
+                                    component={(props: RouteComponentProps<{
+                                        /**
+                                         * Root hash.
+                                         */
+                                        root?: string;
+                                        /**
+                                         * Mode.
+                                         */
+                                        mode?: string;
+                                        /**
+                                         * Key.
+                                         */
+                                        key?: string;
+                                        /**
+                                         * Network.
+                                         */
+                                        network?: string
+                                    }>) => {
+                                        window.location.href = props.match.params.root &&
+                                            props.match.params.mode &&
+                                            props.match.params.key && props.match.params.network
+                                            ? `https://explorer.iota.org/${props.match.params.network}/streams/0/${props.match.params.root}/${props.match.params.mode}/${props.match.params.key}`
+                                            : "https://explorer.iota.org/mainnet/streams/0/";
+                                        return null;
+                                    }} />
                                 <Route
                                     exact={true}
                                     path="/currency-conversion"
-                                    component={() => (<CurrencyConversion bust={Date.now()} />)}
+                                    component={() => (<div className="explore">
+                                        <Heading level={1}>Currency Conversion</Heading>
+                                        <p>The currency conversion has moved to&nbsp;
+                                        <a href="https://explorer.iota.org/mainnet/currency-converter">
+                                                explorer.iota.org/mainnet/currency-converter
+                                        </a>
+                                        </p>
+                                    </div>
+                                    )}
                                 />
                                 <Route
                                     exact={true}
@@ -293,14 +347,14 @@ class App extends Component<RouteComponentProps, AppState> {
                             links: [
                                 {
                                     href: "/",
-                                    text: "Tangle Explorer"
+                                    text: "Home"
                                 },
                                 {
-                                    href: "/mam",
-                                    text: "MAM Subscriber"
+                                    href: "https://explorer.iota.org",
+                                    text: "Explorer"
                                 },
                                 {
-                                    href: "/currency-conversion",
+                                    href: "https://explorer.iota.org/mainnet/currency-converter",
                                     text: "Currency Converter"
                                 },
                                 {
@@ -334,8 +388,8 @@ class App extends Component<RouteComponentProps, AppState> {
                             ]
                         }
                     ]}
-                    foundationData = {this.state.foundationData}
-                / >
+                    foundationData={this.state.foundationData}
+                />
                 <GoogleAnalytics id={this._configuration && this._configuration.googleAnalyticsId} />
             </React.Fragment>
         );

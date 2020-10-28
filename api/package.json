@@ -1,24 +1,35 @@
 {
-    "name": "tangle-utils-api",
-    "description": "API for Tangle Utilities",
-    "version": "1.4.8",
+    "name": "tangle-utils-client",
+    "description": "Tangle Utilities UI",
+    "version": "1.4.6",
     "author": "Martyn Janes <martyn.janes@iota.org>",
     "repository": {
         "type": "git",
-        "url": "https://github.com/iotaledger/tangle-utils.git/tree/master/api"
+        "url": "https://github.com/iotaledger/tangle-utils.git/tree/master/client"
     },
     "license": "MIT",
-    "private": true,
-    "scripts": {
-        "build-clean": "rimraf ./dist/*",
-        "build-compile": "tsc",
-        "build-watch": "tsc --watch",
-        "build-lint": "tslint -p ./tsconfig.json -c ./tslint.json -t verbose",
-        "build-config": "copyfiles -u 2 ./src/data/config*.json ./dist/data/",
-        "build": "npm-run-all build-clean build-compile build-lint build-config",
-        "serve-mon": "nodemon ./dist/index",
-        "start-dev": "run-p serve-mon build-watch",
-        "start": "node ./dist/index"
+    "dependencies": {
+        "@iota/area-codes": "github:iotaledger/iota-area-codes",
+        "@iota/checksum": "^1.0.0-beta.29",
+        "@iota/core": "^1.0.0-beta.29",
+        "@iota/tryte-compress": "github:iotaledger/tryte-compress-js",
+        "@iota/unit-converter": "^1.0.0-beta.23",
+        "@iota/validators": "^1.0.0-beta.29",
+        "@tangle-frost/iota-qr-lib": "0.0.9",
+        "axios": "^0.19.2",
+        "babel-loader": "^8.1.0",
+        "bluebird": "^3.7.2",
+        "classnames": "^2.2.6",
+        "curl.lib.js": "github:iotaledger/curl.lib.js",
+        "google-map-react": "^1.1.7",
+        "iota-css-theme": "github:iotaledger/iota-css-theme",
+        "iota-react-components": "github:iotaledger/iota-react-components",
+        "moment": "^2.26.0",
+        "react": "^16.13.1",
+        "react-dom": "^16.13.1",
+        "react-icons": "^3.10.0",
+        "react-router-dom": "^5.2.0",
+        "react-scripts": "^3.4.1"
     },
     "engines": {
         "node": "10.x.x"
@@ -35,6 +46,12 @@
         "socket.io": "^2.3.0",
         "zeromq": "^6.0.0-beta.6"
     },
+    "browserslist": [
+        ">0.2%",
+        "not dead",
+        "not ie <= 11",
+        "not op_mini all"
+    ],
     "devDependencies": {
         "@types/cors": "^2.8.8",
         "@types/cron": "^1.7.2",

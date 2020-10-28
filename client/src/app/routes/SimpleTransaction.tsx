@@ -1,17 +1,13 @@
 import { composeAPI } from "@iota/core";
-import { asTransactionTrytes } from "@iota/transaction-converter";
 import { isTrytesOfExactLength, isTrytesOfMaxLength } from "@iota/validators";
 import { Button, Fieldrow, Fieldset, Form, FormActions, FormStatus, Heading, Input, Select, Success, TextArea } from "iota-react-components";
 import React, { Component, ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { ServiceFactory } from "../../factories/serviceFactory";
 import { PowHelper } from "../../helpers/powHelper";
 import { TextHelper } from "../../helpers/textHelper";
 import { IClientNetworkConfiguration } from "../../models/config/IClientNetworkConfiguration";
 import { IConfiguration } from "../../models/config/IConfiguration";
 import { ConfigurationService } from "../../services/configurationService";
-import { SettingsService } from "../../services/settingsService";
-import { TangleCacheService } from "../../services/tangleCacheService";
 import AreaCodeMap from "../components/AreaCodeMap";
 import "./SimpleTransaction.scss";
 import { SimpleTransactionState } from "./SimpleTransactionState";
@@ -21,19 +17,9 @@ import { SimpleTransactionState } from "./SimpleTransactionState";
  */
 class SimpleTransaction extends Component<any, SimpleTransactionState> {
     /**
-     * The tangle cache service.
-     */
-    private readonly _tangleCacheService: TangleCacheService;
-
-    /**
      * Networks.
      */
     private readonly _networks: IClientNetworkConfiguration[];
-
-    /**
-     * The service to store settings.
-     */
-    private readonly _settingsService: SettingsService;
 
     /**
      * Create a new instance of SimpleTransaction.
@@ -41,9 +27,6 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
      */
     constructor(props: any) {
         super(props);
-
-        this._tangleCacheService = ServiceFactory.get<TangleCacheService>("tangle-cache");
-        this._settingsService = ServiceFactory.get<SettingsService>("settings");
 
         const configService = ServiceFactory.get<ConfigurationService<IConfiguration>>("configuration");
         this._networks = configService.get().networks;
@@ -71,12 +54,6 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
      * The component mounted.
      */
     public async componentDidMount(): Promise<void> {
-        const settings = await this._settingsService.get();
-
-        if (settings.isMapExpanded) {
-            this.setState({ showLocation: settings.isMapExpanded });
-        }
-
         const isPowAvailable = PowHelper.isAvailable();
         this.setState({ isPowAvailable });
     }
@@ -86,8 +63,6 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
      * @returns The node to render.
      */
     public render(): ReactNode {
-        const network = this.state.network === this._networks[0].network ? "" : `/${this.state.network}`;
-
         return (
             <div className="simple-transaction">
                 <Heading level={1}>Simple Transaction Sender</Heading>
@@ -148,7 +123,7 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                     disabled={this.state.isBusy}
                                     color="secondary"
                                     onClick={e => this.setState(
-                                        { showLocation: !this.state.showLocation }, () => this.saveSettings())}
+                                        { showLocation: !this.state.showLocation })}
                                 >
                                     {this.state.showLocation ? "Hide" : "Show"} Location
                                 </Button>
@@ -209,11 +184,13 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                                         </div>
                                     </Fieldrow>
                                     <Fieldrow>
-                                        <Link
-                                            to={`/transaction/${this.state.transactionHash}${network}`}
+                                        <a
+                                            href={`https://explorer.iota.org/${this.state.network}/transaction/${this.state.transactionHash}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                         >
                                             {this.state.transactionHash}
-                                        </Link>
+                                        </a>
                                     </Fieldrow>
                                 </React.Fragment>
                             )}
@@ -230,12 +207,10 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
     private validate(): void {
         const addressValidation = isTrytesOfExactLength(this.state.address.toUpperCase(), 81)
             || isTrytesOfExactLength(this.state.address.toUpperCase(), 90) ?
-            "" : `The address hash must contain A-Z or 9 and be 81 or 90 trytes in length, it is length ${
-            this.state.address.length}`;
+            "" : `The address hash must contain A-Z or 9 and be 81 or 90 trytes in length, it is length ${this.state.address.length}`;
 
         const tagValidation = this.state.tag.length === 0 || isTrytesOfMaxLength(this.state.tag.toUpperCase(), 27) ?
-            "" : `The tag hash must contain A-Z or 9 and be a maximum 27 trytes in length, it is length ${
-            this.state.tag.length}`;
+            "" : `The tag hash must contain A-Z or 9 and be a maximum 27 trytes in length, it is length ${this.state.tag.length}`;
 
         this.setState({
             addressValidation,
@@ -284,9 +259,6 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                             networkConfig.node.mwm
                         );
 
-                        this._tangleCacheService.addTransactions(
-                            txs.map(t => t.hash), asTransactionTrytes(txs), this.state.network);
-
                         this.setState(
                             {
                                 isBusy: false,
@@ -306,15 +278,6 @@ class SimpleTransaction extends Component<any, SimpleTransactionState> {
                     );
                 }
             });
-    }
-
-    /**
-     * Save the map settings.
-     */
-    private async saveSettings(): Promise<void> {
-        const settings = await this._settingsService.get();
-        settings.isMapExpanded = this.state.showLocation;
-        await this._settingsService.save();
     }
 }
 
