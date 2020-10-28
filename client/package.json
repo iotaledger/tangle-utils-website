@@ -12,7 +12,6 @@
         "@iota/area-codes": "github:iotaledger/iota-area-codes",
         "@iota/checksum": "^1.0.0-beta.29",
         "@iota/core": "^1.0.0-beta.29",
-        "@iota/mam.js": "github:iotaledger/mam.js",
         "@iota/tryte-compress": "github:iotaledger/tryte-compress-js",
         "@iota/unit-converter": "^1.0.0-beta.23",
         "@iota/validators": "^1.0.0-beta.29",
@@ -30,8 +29,7 @@
         "react-dom": "^16.13.1",
         "react-icons": "^3.10.0",
         "react-router-dom": "^5.2.0",
-        "react-scripts": "^3.4.1",
-        "socket.io-client": "^2.3.0"
+        "react-scripts": "^3.4.1"
     },
     "engines": {
         "node": "10.x.x"
@@ -59,9 +57,7 @@
         "@types/react": "^16.9.35",
         "@types/react-dom": "^16.9.8",
         "@types/react-router-dom": "^5.1.5",
-        "@types/socket.io-client": "^1.4.33",
         "cross-env": "^7.0.2",
-        "husky": "^4.2.5",
         "node-sass": "^4.14.1",
         "react-app-rewired": "^2.1.6",
         "sass-lint": "^1.13.1",
@@ -70,10 +66,5 @@
         "tslint-microsoft-contrib": "^6.2.0",
         "tslint-react": "^5.0.0",
         "typescript": "^3.9.3"
-    },
-    "husky": {
-        "hooks": {
-            "pre-commit": "npm run lint"
-        }
     }
 }

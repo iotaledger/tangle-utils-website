@@ -33,7 +33,7 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
                 }
             }
             if (this.props.match.params.message) {
-                paramMessage = this.props.match.params.message;
+                paramMessage = decodeURIComponent(this.props.match.params.message);
             }
         }
 
@@ -106,12 +106,12 @@ class QRCreate extends Component<QRCreateProps, QRCreateState> {
                     </Fieldset>
                     <Fieldset>
                         <label>Message</label>
-                        <input
-                            type="text"
+                        <textarea
                             placeholder="Enter a message to include"
                             value={this.state.message}
                             onChange={e => this.setState({ message: e.target.value }, () => this.qrCode())}
                             readOnly={this.state.isBusy}
+                            rows={5}
                         />
                     </Fieldset>
                     {this.state.qrHtml && (

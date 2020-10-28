@@ -29,11 +29,6 @@ export interface TransactionObjectState {
     confirmationState: ConfirmationState;
 
     /**
-     * Is the transaction data missing.
-     */
-    isMissing: boolean;
-
-    /**
      * The mwm for the transaction.
      */
     mwm?: number;

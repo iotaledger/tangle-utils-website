@@ -1,59 +1,70 @@
 {
-    "name": "tangle-utils-api",
-    "description": "API for Tangle Utilities",
-    "version": "1.4.8",
+    "name": "tangle-utils-client",
+    "description": "Tangle Utilities UI",
+    "version": "1.4.6",
     "author": "Martyn Janes <martyn.janes@iota.org>",
     "repository": {
         "type": "git",
-        "url": "https://github.com/iotaledger/tangle-utils.git/tree/master/api"
+        "url": "https://github.com/iotaledger/tangle-utils.git/tree/master/client"
     },
     "license": "MIT",
-    "private": true,
-    "scripts": {
-        "build-clean": "rimraf ./dist/*",
-        "build-compile": "tsc",
-        "build-watch": "tsc --watch",
-        "build-lint": "tslint -p ./tsconfig.json -c ./tslint.json -t verbose",
-        "build-config": "copyfiles -u 2 ./src/data/config*.json ./dist/data/",
-        "build": "npm-run-all build-clean build-compile build-lint build-config",
-        "serve-mon": "nodemon ./dist/index",
-        "start-dev": "run-p serve-mon build-watch",
-        "start": "node ./dist/index"
+    "dependencies": {
+        "@iota/area-codes": "github:iotaledger/iota-area-codes",
+        "@iota/checksum": "^1.0.0-beta.29",
+        "@iota/core": "^1.0.0-beta.29",
+        "@iota/tryte-compress": "github:iotaledger/tryte-compress-js",
+        "@iota/unit-converter": "^1.0.0-beta.23",
+        "@iota/validators": "^1.0.0-beta.29",
+        "@tangle-frost/iota-qr-lib": "0.0.9",
+        "axios": "^0.19.2",
+        "babel-loader": "^8.1.0",
+        "bluebird": "^3.7.2",
+        "classnames": "^2.2.6",
+        "curl.lib.js": "github:iotaledger/curl.lib.js",
+        "google-map-react": "^1.1.7",
+        "iota-css-theme": "github:iotaledger/iota-css-theme",
+        "iota-react-components": "github:iotaledger/iota-react-components",
+        "moment": "^2.26.0",
+        "react": "^16.13.1",
+        "react-dom": "^16.13.1",
+        "react-icons": "^3.10.0",
+        "react-router-dom": "^5.2.0",
+        "react-scripts": "^3.4.1"
     },
     "engines": {
         "node": "10.x.x"
     },
-    "dependencies": {
-        "@iota/core": "^1.0.0-beta.29",
-        "@iota/transaction-converter": "^1.0.0-beta.23",
-        "aws-sdk": "^2.689.0",
-        "axios": "^0.19.2",
-        "body-parser": "^1.19.0",
-        "cors": "^2.8.5",
-        "cron": "^1.8.2",
-        "express": "^4.17.1",
-        "socket.io": "^2.3.0",
-        "zeromq": "^6.0.0-beta.6"
+    "scripts": {
+        "start": "cross-env PORT=3000 react-app-rewired start",
+        "lint": "tslint --project ./tsconfig.json",
+        "build": "react-app-rewired build",
+        "test": "react-app-rewired test",
+        "eject": "react-scripts eject",
+        "sass-lint": "sass-lint -v -c ./.sass-lint.yml"
     },
+    "browserslist": [
+        ">0.2%",
+        "not dead",
+        "not ie <= 11",
+        "not op_mini all"
+    ],
     "devDependencies": {
-        "@types/cors": "^2.8.6",
-        "@types/cron": "^1.7.2",
-        "@types/express": "^4.17.6",
+        "@types/bluebird": "^3.5.32",
+        "@types/classnames": "^2.2.10",
+        "@types/google-map-react": "^1.1.8",
+        "@types/jest": "^25.2.3",
         "@types/node": "^14.0.10",
-        "@types/socket.io": "^2.1.8",
-        "copyfiles": "^2.3.0",
-        "husky": "^4.2.5",
-        "nodemon": "^2.0.4",
-        "npm-run-all": "^4.1.5",
-        "rimraf": "^3.0.2",
+        "@types/react": "^16.9.35",
+        "@types/react-dom": "^16.9.8",
+        "@types/react-router-dom": "^5.1.5",
+        "cross-env": "^7.0.2",
+        "node-sass": "^4.14.1",
+        "react-app-rewired": "^2.1.6",
+        "sass-lint": "^1.13.1",
         "tslint": "^6.1.2",
         "tslint-eslint-rules": "^5.4.0",
         "tslint-microsoft-contrib": "^6.2.0",
+        "tslint-react": "^5.0.0",
         "typescript": "^3.9.3"
-    },
-    "husky": {
-        "hooks": {
-            "pre-commit": "npm run build-lint"
-        }
     }
 }
